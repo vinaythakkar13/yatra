@@ -73,26 +73,28 @@ export default function FeaturesSection() {
             });
 
             // Hover animation setup
-            const cards = sectionRef.current.querySelectorAll('.feature-card');
-            cards.forEach((card) => {
-                card.addEventListener('mouseenter', () => {
-                    gsap.to(card, {
-                        y: -10,
-                        scale: 1.02,
-                        duration: 0.3,
-                        ease: 'power2.out',
+            const cards = sectionRef.current?.querySelectorAll('.feature-card');
+            if (cards) {
+                cards.forEach((card) => {
+                    card.addEventListener('mouseenter', () => {
+                        gsap.to(card, {
+                            y: -10,
+                            scale: 1.02,
+                            duration: 0.3,
+                            ease: 'power2.out',
+                        });
                     });
-                });
 
-                card.addEventListener('mouseleave', () => {
-                    gsap.to(card, {
-                        y: 0,
-                        scale: 1,
-                        duration: 0.3,
-                        ease: 'power2.out',
+                    card.addEventListener('mouseleave', () => {
+                        gsap.to(card, {
+                            y: 0,
+                            scale: 1,
+                            duration: 0.3,
+                            ease: 'power2.out',
+                        });
                     });
                 });
-            });
+            }
         }, sectionRef);
 
         return () => ctx.revert();
