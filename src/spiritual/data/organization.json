@@ -1,0 +1,49 @@
+{
+    "name": "Sant Seva Charitable Trust",
+    "founded": "1985",
+    "mission": "To serve humanity with compassion, equality, and selflessness, following the eternal principles of Sikhism",
+    "lineage": [
+        {
+            "id": "org1",
+            "name": "Sant Baba Kartar Singh Ji",
+            "role": "Founder & Spiritual Guide",
+            "period": "1985 - 2005",
+            "photo": "/images/spiritual/org/founder.jpg",
+            "bio": "A visionary saint who dedicated his life to serving humanity. Sant Baba Kartar Singh Ji established this charitable organization with the noble mission of providing free healthcare, education, and food to all, regardless of caste, creed, or religion."
+        },
+        {
+            "id": "org2",
+            "name": "Sant Baba Gurbachan Singh Ji",
+            "role": "Successor & Administrator",
+            "period": "2005 - 2018",
+            "photo": "/images/spiritual/org/successor1.jpg",
+            "bio": "Following in the footsteps of his guru, Sant Baba Gurbachan Singh Ji expanded the organization's reach, establishing the hospital and education center. His leadership brought modern infrastructure while maintaining the spiritual essence of seva."
+        },
+        {
+            "id": "org3",
+            "name": "Sant Baba Avtar Singh Ji",
+            "role": "Current Head & Spiritual Leader",
+            "period": "2018 - Present",
+            "photo": "/images/spiritual/org/current.jpg",
+            "bio": "The present administrator continues the sacred legacy with dedication and humility. Under his guidance, the organization has embraced technology and expanded its charitable programs, while staying rooted in spiritual values and selfless service."
+        }
+    ],
+    "trustees": [
+        {
+            "name": "S. Manjit Singh Sandhu",
+            "position": "Managing Trustee"
+        },
+        {
+            "name": "Bibi Kulwant Kaur",
+            "position": "Secretary"
+        },
+        {
+            "name": "Dr. Harbhajan Singh",
+            "position": "Medical Director"
+        },
+        {
+            "name": "Prof. Jagtar Singh",
+            "position": "Education Coordinator"
+        }
+    ]
+}

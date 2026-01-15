@@ -1,0 +1,16 @@
+{
+    "address": "Sant Seva Charitable Trust, Village Nangal, District Amritsar, Punjab - 143001, India",
+    "phone": "+91-183-2500123",
+    "email": "contact@santseva.org",
+    "whatsappBroadcast": "https://chat.whatsapp.com/InviteCodeHere",
+    "socialMedia": {
+        "facebook": "https://facebook.com/santseva",
+        "instagram": "https://instagram.com/santseva",
+        "youtube": "https://youtube.com/@santseva"
+    },
+    "hours": {
+        "hospital": "Monday - Sunday: 7:00 AM - 7:00 PM",
+        "langar": "Monday - Sunday: 6:00 AM - 9:00 PM",
+        "office": "Monday - Saturday: 9:00 AM - 5:00 PM"
+    }
+}

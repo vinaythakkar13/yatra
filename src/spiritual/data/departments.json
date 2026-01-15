@@ -1,0 +1,72 @@
+[
+    {
+        "id": "dept1",
+        "name": "Dental Care",
+        "description": "Comprehensive dental services including checkups, cleanings, fillings, and minor surgeries. Serving the community with compassion and care.",
+        "icon": "🦷",
+        "services": [
+            "General Dental Checkup",
+            "Teeth Cleaning",
+            "Cavity Filling",
+            "Root Canal Treatment",
+            "Tooth Extraction",
+            "Dentures & Bridges"
+        ]
+    },
+    {
+        "id": "dept2",
+        "name": "Physiotherapy",
+        "description": "Expert physical therapy services for pain relief, rehabilitation, and improved mobility. Helping you restore strength and function.",
+        "icon": "🤸",
+        "services": [
+            "Pain Management",
+            "Sports Injury Rehabilitation",
+            "Post-Surgery Recovery",
+            "Joint Mobility Therapy",
+            "Spinal Treatment",
+            "Geriatric Physiotherapy"
+        ]
+    },
+    {
+        "id": "dept3",
+        "name": "General Medicine",
+        "description": "Primary healthcare services for all ages. Diagnosis, treatment, and preventive care for common health concerns.",
+        "icon": "🩺",
+        "services": [
+            "Health Checkups",
+            "Fever & Infection Treatment",
+            "Blood Pressure Monitoring",
+            "Diabetes Management",
+            "Vaccination Services",
+            "Health Counseling"
+        ]
+    },
+    {
+        "id": "dept4",
+        "name": "Pediatrics",
+        "description": "Specialized care for infants, children, and adolescents. Nurturing the health and well-being of our youngest community members.",
+        "icon": "👶",
+        "services": [
+            "Child Health Checkups",
+            "Immunizations",
+            "Growth Monitoring",
+            "Common Childhood Illnesses",
+            "Nutritional Guidance",
+            "Developmental Assessments"
+        ]
+    },
+    {
+        "id": "dept5",
+        "name": "Orthopedics",
+        "description": "Treatment for bone, joint, and muscle conditions. Expert care for fractures, arthritis, and musculoskeletal disorders.",
+        "icon": "🦴",
+        "services": [
+            "Fracture Treatment",
+            "Joint Pain Management",
+            "Arthritis Care",
+            "Sports Medicine",
+            "Bone Density Screening",
+            "Rehabilitation"
+        ]
+    }
+]

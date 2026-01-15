@@ -1,0 +1,45 @@
+[
+    {
+        "id": "proj1",
+        "title": "Sewa Hospital - Free Medical Care",
+        "description": "Providing compassionate healthcare to those in need. Our hospital offers free medical consultations, treatments, and medicines to underprivileged communities, embodying the spirit of selfless service.",
+        "image": "/images/spiritual/charity/hospital.jpg",
+        "category": "health",
+        "link": "/spiritual/charity/hospital"
+    },
+    {
+        "id": "proj2",
+        "title": "Langar Seva - Community Kitchen",
+        "description": "Daily free meals for all, regardless of background. Our langar serves nutritious vegetarian food to thousands, upholding the Sikh tradition of equality and sharing.",
+        "image": "/images/spiritual/charity/langar.jpg",
+        "category": "food"
+    },
+    {
+        "id": "proj3",
+        "title": "Vidya Kendra - Education Initiative",
+        "description": "Empowering children through education. Free schooling, books, and supplies for children from economically disadvantaged families, lighting the path to a brighter future.",
+        "image": "/images/spiritual/charity/education.jpg",
+        "category": "education"
+    },
+    {
+        "id": "proj4",
+        "title": "Shelter Home - Saran Griha",
+        "description": "Safe shelter and care for the homeless and elderly. Providing dignity, warmth, and support to those who need it most.",
+        "image": "/images/spiritual/charity/shelter.jpg",
+        "category": "shelter"
+    },
+    {
+        "id": "proj5",
+        "title": "Water Wells Project",
+        "description": "Bringing clean water to rural villages. Installing and maintaining water wells to ensure access to safe drinking water for remote communities.",
+        "image": "/images/spiritual/charity/water.jpg",
+        "category": "other"
+    },
+    {
+        "id": "proj6",
+        "title": "Skill Development Program",
+        "description": "Training and empowerment for youth. Vocational training in tailoring, computer literacy, and handicrafts to promote self-reliance and employment.",
+        "image": "/images/spiritual/charity/skills.jpg",
+        "category": "education"
+    }
+]
