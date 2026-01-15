@@ -50,7 +50,7 @@ const OccupancyBarChart: React.FC<OccupancyBarChartProps> = ({ data }) => {
                             boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
                         }}
                         itemStyle={{ color: '#1F2937', fontSize: '12px', fontWeight: 600 }}
-                        formatter={(value: number) => [`${value}%`, 'Occupancy']}
+                        formatter={(value: number | undefined) => [`${value ?? 0}%`, 'Occupancy']}
                     />
                     <Bar dataKey="percent" radius={[4, 4, 0, 0]}>
                         {data.map((entry, index) => (
