@@ -1,5 +1,4 @@
 'use client';
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
@@ -9,7 +8,7 @@ import Input from '@/components/ui/Input';
 import { toast } from 'react-toastify';
 import { tokenStorage, userStorage, yatraStorage } from '@/utils/storage';
 import { useLoginMutation } from '@/services/authApi';
-import { useGetAllYatrasQuery } from '@/services/yatraApi';
+import { useLazyGetAllYatrasQuery } from '@/services/yatraApi';
 
 interface AdminLoginForm {
   email: string;
@@ -22,11 +21,9 @@ export default function AdminLogin() {
 
   // RTK Query admin login mutation hook
   const [login, { isLoading }] = useLoginMutation();
-  
-  // Fetch yatras query (skipped initially, will be triggered after login)
-  const { data: yatras = [], refetch: fetchYatras } = useGetAllYatrasQuery(undefined, {
-    skip: true, // Don't fetch until after login
-  });
+
+  // Fetch yatras query (triggered after login)
+  const [fetchYatras] = useLazyGetAllYatrasQuery();
 
   const {
     control,
@@ -46,7 +43,7 @@ export default function AdminLogin() {
   useEffect(() => {
     // Ensure we're in the browser and router is ready
     if (typeof window === 'undefined') return;
-    
+
     const token = tokenStorage.getAccessToken();
     if (token) {
       router.push('/admin');
@@ -80,53 +77,53 @@ export default function AdminLogin() {
         const { token, user } = result.data;
 
         // Store token and user data
-        tokenStorage.setAccessToken(token);
-        userStorage.setUser(user);
+        await tokenStorage.setAccessToken(token);
+        await userStorage.setUser(user);
 
         // Fetch yatras and select the nearest one
         try {
           const yatrasResult = await fetchYatras().unwrap();
-          
-          if (yatrasResult && yatrasResult.length > 0) {
+
+          if (yatrasResult && yatrasResult?.length > 0) {
             const now = new Date();
-            
+
             // Find the nearest yatra (prioritize: active > upcoming > most recent past)
             const nearestYatra = yatrasResult.reduce((nearest, current) => {
               const nearestStartDate = new Date(nearest.start_date);
               const nearestEndDate = new Date(nearest.end_date);
               const currentStartDate = new Date(current.start_date);
               const currentEndDate = new Date(current.end_date);
-              
+
               // Check if yatras are active (started but not ended)
               const nearestIsActive = nearestStartDate <= now && nearestEndDate >= now;
               const currentIsActive = currentStartDate <= now && currentEndDate >= now;
-              
+
               // Prefer active yatras
               if (currentIsActive && !nearestIsActive) return current;
               if (!currentIsActive && nearestIsActive) return nearest;
-              
+
               // If both active, prefer the one ending later
               if (currentIsActive && nearestIsActive) {
                 return currentEndDate > nearestEndDate ? current : nearest;
               }
-              
+
               // Check if yatras are upcoming
               const nearestIsUpcoming = nearestStartDate > now;
               const currentIsUpcoming = currentStartDate > now;
-              
+
               // Prefer upcoming yatras over past ones
               if (currentIsUpcoming && !nearestIsUpcoming) return current;
               if (!currentIsUpcoming && nearestIsUpcoming) return nearest;
-              
+
               // If both upcoming, prefer the one starting sooner
               if (currentIsUpcoming && nearestIsUpcoming) {
                 return currentStartDate < nearestStartDate ? current : nearest;
               }
-              
+
               // If both are past, prefer the most recent one
               return currentStartDate > nearestStartDate ? current : nearest;
             });
-            
+
             // Store the selected yatra ID (UUID string)
             if (nearestYatra?.id) {
               yatraStorage.setSelectedYatraId(nearestYatra.id);

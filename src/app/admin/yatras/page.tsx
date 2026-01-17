@@ -89,7 +89,7 @@ export default function YatrasPage() {
         try {
           // Convert file to base64
           const base64Image = await fileToBase64(data.bannerImage);
-          
+
           // Generate public_id from yatra title (sanitized)
           const sanitizedTitle = data.title
             .toLowerCase()
@@ -104,10 +104,6 @@ export default function YatrasPage() {
             public_id: publicId,
             tags: ['yatra', 'banner', 'upload'],
           }).unwrap();
-
-  
-
-          console.log('Upload result:', uploadResult);
 
           if (uploadResult.success && uploadResult.data) {
             bannerImageUrl = uploadResult.data.secure_url;
@@ -127,11 +123,11 @@ export default function YatrasPage() {
         bannerImageUrl = data.bannerImage;
       }
 
-    if (editingYatra) {
-      // Update existing yatra - transform to snake_case for API
+      if (editingYatra) {
+        // Update existing yatra - transform to snake_case for API
         await updateYatra({
-        id: editingYatra.id,
-        data: {
+          id: editingYatra.id,
+          data: {
             name: data.title,
             banner_image: bannerImageUrl,
             start_date: data.startDate,
@@ -140,21 +136,21 @@ export default function YatrasPage() {
             registration_end_date: data.registerEndDate,
           },
         }).unwrap();
-      toast.success(`Yatra "${data.title}" updated successfully!`);
-    } else {
-      // Create new yatra - transform to snake_case for API
+        toast.success(`Yatra "${data.title}" updated successfully!`);
+      } else {
+        // Create new yatra - transform to snake_case for API
         await createYatra({
-        name: data.title,
+          name: data.title,
           banner_image: bannerImageUrl,
-        start_date: data.startDate,
-        end_date: data.endDate,
+          start_date: data.startDate,
+          end_date: data.endDate,
           registration_start_date: data.registerStartDate,
           registration_end_date: data.registerEndDate,
         }).unwrap();
-      toast.success(`Yatra "${data.title}" created successfully!`);
-    }
-    setShowModal(false);
-    setEditingYatra(null);
+        toast.success(`Yatra "${data.title}" created successfully!`);
+      }
+      setShowModal(false);
+      setEditingYatra(null);
     } catch (err: any) {
       const errorMessage = err?.data?.message || err?.message || 'An error occurred';
       toast.error(errorMessage);
@@ -171,8 +167,8 @@ export default function YatrasPage() {
       try {
         const yatra = yatras.find((y) => y.id === deleteConfirmId);
         await deleteYatra(deleteConfirmId).unwrap();
-      toast.success(`Yatra "${yatra?.name}" deleted successfully!`);
-      setDeleteConfirmId(null);
+        toast.success(`Yatra "${yatra?.name}" deleted successfully!`);
+        setDeleteConfirmId(null);
       } catch (err: any) {
         const errorMessage = err?.data?.message || err?.message || 'Failed to delete yatra';
         toast.error(errorMessage);
@@ -193,17 +189,17 @@ export default function YatrasPage() {
                 </div>
                 Yatra Management
               </h1>
-          
+
             </div>
             <Button
               onClick={handleAddYatra}
               variant="admin"
               size="lg"
               className="w-full sm:w-auto"
-                disabled={isUploading}
+              disabled={isUploading}
             >
               <Plus className="w-5 h-5 mr-2" />
-                {isUploading ? 'Uploading...' : 'Create Yatra'}
+              {isUploading ? 'Uploading...' : 'Create Yatra'}
             </Button>
           </div>
         </div>
@@ -248,11 +244,11 @@ export default function YatrasPage() {
 
         {/* Yatras Table */}
         {!isLoading && !isError && (
-        <YatraTable
-          yatras={yatras}
-          onEdit={handleEditYatra}
-          onDelete={handleDeleteYatra}
-        />
+          <YatraTable
+            yatras={yatras}
+            onEdit={handleEditYatra}
+            onDelete={handleDeleteYatra}
+          />
         )}
       </div>
 
@@ -310,6 +306,6 @@ export default function YatrasPage() {
           </div>
         </div>
       </Modal>
-      </Fragment>
+    </Fragment>
   );
 }

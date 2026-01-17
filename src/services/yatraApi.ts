@@ -81,12 +81,12 @@ export const yatraApi = baseApi.injectEndpoints({
         method: 'GET',
         // Token is automatically added via baseApi's prepareHeaders
       }),
-      
+
       // Transform response to return just the yatras array
       transformResponse: (response: GetAllYatrasResponse) => {
         return response?.data || [];
       },
-      
+
       // Provide tags for cache invalidation
       providesTags: ['Yatra'],
     }),
@@ -105,7 +105,7 @@ export const yatraApi = baseApi.injectEndpoints({
         body: yatraData, // Already in snake_case format
         // Token is automatically added via baseApi's prepareHeaders
       }),
-      
+
       // Invalidate yatras cache after creation
       invalidatesTags: ['Yatra'],
     }),
@@ -124,7 +124,7 @@ export const yatraApi = baseApi.injectEndpoints({
         body: data, // Already in snake_case format
         // Token is automatically added via baseApi's prepareHeaders
       }),
-      
+
       // Invalidate yatras cache after update
       invalidatesTags: ['Yatra'],
     }),
@@ -141,7 +141,7 @@ export const yatraApi = baseApi.injectEndpoints({
         method: 'DELETE',
         // Token is automatically added via baseApi's prepareHeaders
       }),
-      
+
       // Invalidate yatras cache after deletion
       invalidatesTags: ['Yatra'],
     }),
@@ -159,12 +159,12 @@ export const yatraApi = baseApi.injectEndpoints({
         method: 'GET',
         // Token is automatically added via baseApi's prepareHeaders
       }),
-      
+
       // Transform response to return just the yatra object
       transformResponse: (response: GetYatraByIdResponse) => {
         return response?.data;
       },
-      
+
       // Provide tags for cache invalidation
       providesTags: (result, error, id) => [{ type: 'Yatra', id }],
     }),
@@ -182,12 +182,12 @@ export const yatraApi = baseApi.injectEndpoints({
         method: 'GET',
         // Token is automatically added via baseApi's prepareHeaders
       }),
-      
+
       // Transform response to return just the yatras array
       transformResponse: (response: GetAllYatrasResponse) => {
         return response?.data || [];
       },
-      
+
       // Provide tags for cache invalidation
       providesTags: ['Yatra'],
     }),
@@ -197,6 +197,7 @@ export const yatraApi = baseApi.injectEndpoints({
 // Export hooks for usage in components
 export const {
   useGetAllYatrasQuery,
+  useLazyGetAllYatrasQuery,
   useGetYatraByIdQuery,
   useLazyGetYatraByIdQuery,
   useGetActiveYatrasQuery,

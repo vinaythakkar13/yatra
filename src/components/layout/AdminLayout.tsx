@@ -47,6 +47,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const prevPathRef = React.useRef<string | null>(null);
   const [user, setUser] = useState<any>(null);
   const [selectedYatraId, setSelectedYatraId] = useState<string | null>(() => {
     // Initialize from localStorage if available
@@ -74,6 +75,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   ];
 
   useEffect(() => {
+
+    const prevPath = prevPathRef.current;
+    prevPathRef.current = pathname;
+
+    // 🔁 If redirected from /admin/login to any admin route
+    if (prevPath === '/admin/login' && pathname.startsWith('/admin')) {
+      setIsChecking(true);
+      setIsAuthenticated(false);
+    }
+
     // Skip auth check on login page
     if (isLoginPage) {
       setIsChecking(false);

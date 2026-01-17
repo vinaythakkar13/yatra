@@ -384,9 +384,6 @@ export default function RegistrationForm({ initialPnr = '', yatraDetails }: Regi
         })),
       };
 
-      // Debug: Log the payload to verify isHandicapped is included
-      console.log('Registration API Payload:', JSON.stringify(apiPayload, null, 2));
-
       // Step 4: Call registration API
       const result = await createRegistration(apiPayload).unwrap();
 

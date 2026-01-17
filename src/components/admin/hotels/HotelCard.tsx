@@ -10,9 +10,6 @@ interface HotelCardProps {
 }
 
 const HotelCard: React.FC<HotelCardProps> = ({ hotel, onEdit, onDelete }) => {
-
-  console.log("hotel", hotel);
-
   const [isExpanded, setIsExpanded] = useState(false);
 
   const getTotalRooms = (hotel: any) => hotel.rooms?.length || 0;
