@@ -27,9 +27,9 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     const isNumberType = props.type === 'number';
 
     // Normalize value to ensure controlled component consistency
-    // Since we extract 'value' from props, if it exists (even as undefined/null), we treat it as controlled
-    // Convert null/undefined to empty string to maintain controlled state
-    const normalizedValue = value != null ? String(value) : '';
+    // If value is provided as a prop, we treat it as controlled
+    const normalizedValue = value !== undefined && value !== null ? String(value) : undefined;
+    const isControlled = normalizedValue !== undefined;
 
     // Prevent typing 'e', 'E', '+', '-' in number inputs and enforce maxLength
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -105,7 +105,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           const input = e.currentTarget;
           const start = input.selectionStart || 0;
           const end = input.selectionEnd || 0;
-          const currentValue = normalizedValue !== undefined ? String(normalizedValue) : (input.value || '');
+          const currentValue = isControlled ? normalizedValue! : (input.value || '');
           let newValue = currentValue.substring(0, start) + numericText + currentValue.substring(end);
 
           // Enforce maxLength if specified
@@ -113,7 +113,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             newValue = newValue.slice(0, maxLength);
           }
 
-          // Use onChange to update controlled value instead of direct DOM manipulation
+          // Use onChange to update value
           if (onChange) {
             const syntheticEvent = {
               ...e,
@@ -121,6 +121,10 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
               currentTarget: { ...input, value: newValue },
             } as React.ChangeEvent<HTMLInputElement>;
             onChange(syntheticEvent);
+          } else if (!isControlled) {
+            // If uncontrolled and no onChange, we can't easily update without a ref, 
+            // but react-hook-form uses refs so this is mainly for other cases
+            input.value = newValue;
           }
         }
       } else {
@@ -171,7 +175,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
               ${className}
             `}
             {...props}
-            value={normalizedValue}
+            {...(isControlled ? { value: normalizedValue } : {})}
             maxLength={isNumberType ? undefined : maxLength}
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}

@@ -93,7 +93,16 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ isOpen, onClose, us
                                     <p className="font-semibold text-heritage-textDark">{person.name}</p>
                                     <p className="text-sm text-heritage-text/70">
                                         {person.age} years • {person.gender}
+
+                                        {/* is handicaped badge UI */}
+                                        {person.isHandicapped && (
+                                            <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                Handicapped
+                                            </span>
+                                        )}
                                     </p>
+
+
                                 </div>
                             </div>
                         ))}
