@@ -18,10 +18,8 @@ export interface State {
 
 export interface LocationResponse {
     success: boolean;
-    data: {
-        states: State[];
-        total: number;
-    };
+    states: State[];
+    total: number;
 }
 
 /**
@@ -44,14 +42,11 @@ export const locationApi = createApi({
     endpoints: (builder) => ({
         // Get all Indian states
         getIndianStates: builder.query<State[], void>({
-            query: () => ({
-                url: '/states',
-                method: 'GET',
-            }),
+            query: () => '/states',
 
             // Transform response to return just the states array
             transformResponse: (response: LocationResponse) => {
-                return response?.data?.states || [];
+                return response?.states || [];
             },
 
             // Cache states for 1 hour (they rarely change)
