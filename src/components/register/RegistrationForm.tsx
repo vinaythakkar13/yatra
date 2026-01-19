@@ -232,6 +232,7 @@ export default function RegistrationForm({ initialPnr = '', yatraDetails }: Regi
     watch,
     formState: { errors },
     setValue,
+    setFocus,
   } = useForm<RegistrationFormData>({
     defaultValues: {
       pnr: initialPnr,
@@ -269,7 +270,7 @@ export default function RegistrationForm({ initialPnr = '', yatraDetails }: Regi
     const currentLength = fields.length;
 
     // Skip if not a valid integer or if lengths already match
-    if (!Number.isInteger(targetLength) || targetLength < 1 || targetLength > 10 || currentLength === targetLength) {
+    if (!Number.isInteger(targetLength) || targetLength < 1 || targetLength > 20 || currentLength === targetLength) {
       return;
     }
 
@@ -279,7 +280,7 @@ export default function RegistrationForm({ initialPnr = '', yatraDetails }: Regi
 
     if (currentLength < targetLength) {
       for (let i = currentLength; i < targetLength; i++) {
-        append({ name: '', age: 0, gender: 'male', isHandicapped: false });
+        append({ name: '', age: 0, gender: 'male', isHandicapped: false }, { shouldFocus: false });
       }
     } else if (currentLength > targetLength) {
       for (let i = currentLength; i > targetLength; i--) {
@@ -718,13 +719,17 @@ export default function RegistrationForm({ initialPnr = '', yatraDetails }: Regi
                   field.onBlur();
                   // Ensure fields are synced when user finishes editing
                   const value = Number(e.target.value);
-                  if (Number.isInteger(value) && value >= 1 && value <= 10) {
+                  if (Number.isInteger(value) && value >= 1 && value <= 20) {
                     const currentLength = fields.length;
                     if (currentLength !== value) {
                       if (currentLength < value) {
                         for (let i = currentLength; i < value; i++) {
-                          append({ name: '', age: 0, gender: 'male', isHandicapped: false });
+                          append({ name: '', age: 0, gender: 'male', isHandicapped: false }, { shouldFocus: false });
                         }
+                        // Focus the first traveler's name field after adding fields
+                        setTimeout(() => {
+                          setFocus('persons.0.name');
+                        }, 100);
                       } else if (currentLength > value) {
                         for (let i = currentLength; i > value; i--) {
                           remove(i - 1);
