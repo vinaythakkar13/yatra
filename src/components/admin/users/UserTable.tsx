@@ -64,7 +64,7 @@ const UserTable: React.FC<UserTableProps> = ({
             header: 'Arrival',
             render: (row: any) => (
                 <span className="text-heritage-text">
-                    {new Date(row.arrivalDate).toLocaleDateString()}
+                    {row.arrivalDate}
                 </span>
             ),
         },
@@ -75,8 +75,8 @@ const UserTable: React.FC<UserTableProps> = ({
                 <div className="flex flex-col gap-1">
                     <span
                         className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold w-fit ${row.roomStatus === 'Assigned'
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-yellow-100 text-yellow-700'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-yellow-100 text-yellow-700'
                             }`}
                     >
                         {row.roomStatus}
@@ -102,18 +102,18 @@ const UserTable: React.FC<UserTableProps> = ({
                                 <FileText className="w-3.5 h-3.5" />
                                 {row.ticketImages.length} doc(s)
                             </button>
-                            {row.documentStatus && (
-                                <span
-                                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold w-fit ${row.documentStatus === 'approved'
-                                            ? 'bg-green-100 text-green-700'
-                                            : row.documentStatus === 'rejected'
-                                                ? 'bg-red-100 text-red-700'
-                                                : 'bg-yellow-100 text-yellow-700'
-                                        }`}
-                                >
-                                    {row.documentStatus === 'approved' ? '✓ Approved' : row.documentStatus === 'rejected' ? '✕ Rejected' : '⏳ Pending'}
-                                </span>
-                            )}
+                            <span
+                                className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold w-fit ${row.documentStatus === 'approved'
+                                    ? 'bg-green-100 text-green-700'
+                                    : row.documentStatus === 'rejected'
+                                        ? 'bg-red-100 text-red-700'
+                                        : row.documentStatus === 'cancelled'
+                                            ? 'bg-red-600 text-white shadow-sm'
+                                            : 'bg-yellow-100 text-yellow-700'
+                                    }`}
+                            >
+                                {row.documentStatus === 'approved' ? '✓ Approved' : row.documentStatus === 'rejected' ? '✕ Rejected' : row.documentStatus === 'cancelled' ? '🗙 Cancelled' : '⏳ Pending'}
+                            </span>
                         </>
                     ) : (
                         <span className="text-xs text-gray-400">No docs</span>
@@ -170,6 +170,7 @@ const UserTable: React.FC<UserTableProps> = ({
                 columns={columns}
                 data={data}
                 emptyMessage="No registrations found"
+                getRowClassName={(row) => row.documentStatus === 'cancelled' ? 'bg-red-50 hover:bg-red-100/80 transition-colors' : ''}
             />
         </div>
     );

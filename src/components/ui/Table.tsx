@@ -14,6 +14,7 @@ interface TableProps {
   isLoading?: boolean;
   onRowClick?: (row: any) => void;
   className?: string;
+  getRowClassName?: (row: any) => string;
 }
 
 /**
@@ -33,6 +34,7 @@ export default function Table({
   isLoading = false,
   onRowClick,
   className = '',
+  getRowClassName,
 }: TableProps) {
   if (isLoading) {
     return (
@@ -91,6 +93,7 @@ export default function Table({
               className={`
                 transition-colors hover:bg-primary-50/50
                 ${onRowClick ? 'cursor-pointer' : ''}
+                ${getRowClassName ? getRowClassName(row) : ''}
               `}
             >
               {columns?.length > 0 && columns?.map((column) => (

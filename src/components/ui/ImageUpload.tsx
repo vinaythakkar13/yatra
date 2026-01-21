@@ -41,6 +41,7 @@ export default function ImageUpload({
   value = [],
 }: ImageUploadProps) {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>(value);
+  const [previews, setPreviews] = useState<string[]>([]);
   const [showCamera, setShowCamera] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [showPermissionModal, setShowPermissionModal] = useState(false);
@@ -51,10 +52,28 @@ export default function ImageUpload({
   const [isMobile, setIsMobile] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [capturedFile, setCapturedFile] = useState<File | null>(null);
-  
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Synchronize internal state with value prop
+  useEffect(() => {
+    if (value !== uploadedFiles) {
+      setUploadedFiles(value);
+    }
+  }, [value]);
+
+  // Manage object URLs for previews to prevent memory leaks
+  useEffect(() => {
+    const newPreviews = uploadedFiles.map((file) => URL.createObjectURL(file));
+    setPreviews(newPreviews);
+
+    // Clean up URLs when files change or component unmounts
+    return () => {
+      newPreviews.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [uploadedFiles]);
 
   // Detect device and browser
   const getDeviceInfo = () => {
@@ -248,9 +267,9 @@ export default function ImageUpload({
     try {
       setPermissionDenied(false);
       const facingMode = mode || cameraMode;
-      
+
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { 
+        video: {
           facingMode: { ideal: facingMode },
           width: { ideal: 1920 },
           height: { ideal: 1080 }
@@ -262,7 +281,7 @@ export default function ImageUpload({
       setShowCamera(true);
     } catch (err: any) {
       console.error('Camera error:', err);
-      
+
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
         setPermissionDenied(true);
         setShowPermissionModal(true);
@@ -277,11 +296,11 @@ export default function ImageUpload({
   const switchCamera = async () => {
     // Stop current stream
     stopCamera();
-    
+
     // Toggle camera mode
     const newMode = cameraMode === 'user' ? 'environment' : 'user';
     setCameraMode(newMode);
-    
+
     // Start camera with new mode
     await startCamera(newMode);
   };
@@ -290,21 +309,21 @@ export default function ImageUpload({
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
-      
+
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-      
+
       const ctx = canvas.getContext('2d');
       if (ctx) {
         ctx.drawImage(video, 0, 0);
-        
+
         // Get image data URL for preview
         const imageDataUrl = canvas.toDataURL('image/jpeg', 0.9);
         setCapturedImage(imageDataUrl);
-        
+
         // Stop camera to save resources
         stopCamera();
-        
+
         // Create file for later submission
         canvas.toBlob((blob) => {
           if (blob) {
@@ -329,7 +348,7 @@ export default function ImageUpload({
 
   const handleSubmitPhoto = () => {
     if (capturedFile) {
-     stopCamera();
+      stopCamera();
       handleAddFile(capturedFile);
       setCapturedImage(null);
       setCapturedFile(null);
@@ -339,8 +358,23 @@ export default function ImageUpload({
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    files.forEach((file) => handleAddFile(file));
-    
+    if (files.length === 0) return;
+
+    const remainingSlots = maxFiles - uploadedFiles.length;
+    if (remainingSlots <= 0) {
+      alert(`Maximum ${maxFiles} images allowed`);
+      return;
+    }
+
+    const filesToAdd = files.slice(0, remainingSlots);
+    if (files.length > remainingSlots) {
+      alert(`Only ${remainingSlots} more images could be added. Maximum is ${maxFiles}.`);
+    }
+
+    const newFiles = [...uploadedFiles, ...filesToAdd];
+    setUploadedFiles(newFiles);
+    onChange(newFiles);
+
     // Reset input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -438,7 +472,7 @@ export default function ImageUpload({
                 className="relative group border-2 border-spiritual-zen-accent/20 rounded-xl overflow-hidden aspect-square shadow-md hover:shadow-lg transition-all duration-300 hover:border-spiritual-zen-accent/40 bg-white"
               >
                 <img
-                  src={URL.createObjectURL(file)}
+                  src={previews[index]}
                   alt={`Preview ${index + 1}`}
                   className="w-full h-full object-cover"
                 />
@@ -551,7 +585,7 @@ export default function ImageUpload({
                   muted
                   className="w-full h-full object-cover"
                 />
-                
+
                 {/* Loading indicator */}
                 {!stream && (
                   <div className="absolute inset-0 flex items-center justify-center bg-black/50">
@@ -561,7 +595,7 @@ export default function ImageUpload({
                     </div>
                   </div>
                 )}
-                
+
                 {/* Camera Switcher - Only show on mobile with multiple cameras */}
                 {isMobile && availableCameras >= 2 && (
                   <button
@@ -580,7 +614,7 @@ export default function ImageUpload({
                 {isMobile && availableCameras >= 2 && (
                   <p className="text-xs text-gray-500 flex items-center justify-center gap-1">
                     <Info className="w-3 h-3" />
-                    Using {cameraMode === 'environment' ? 'back' : 'front'} camera • Tap 
+                    Using {cameraMode === 'environment' ? 'back' : 'front'} camera • Tap
                     <RefreshCw className="w-3 h-3 inline" /> to switch
                   </p>
                 )}

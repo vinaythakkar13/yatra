@@ -42,33 +42,33 @@ const fetchWithCredentials: typeof fetch = async (input, init = {}) => {
 const baseQuery = fetchBaseQuery({
   baseUrl: API_BASE_URL,
   fetchFn: fetchWithCredentials,
-  
+
   // Prepare headers for every request (REQUEST INTERCEPTOR)
   prepareHeaders: (headers, { getState, endpoint }) => {
     // Get token from storage
     const token = tokenStorage.getAccessToken();
-    
+
     // Add authorization header if token exists
     if (token) {
       headers.set('authorization', `Bearer ${token}`);
     }
-    
+
     // Add content type if not already set
     if (!headers.has('content-type')) {
       headers.set('content-type', 'application/json');
     }
-    
+
     // Add accept header
     if (!headers.has('accept')) {
       headers.set('accept', 'application/json');
     }
-    
+
     // Add custom headers (e.g., API version, client info)
     headers.set('X-Client-Version', '1.0.0');
-    headers.set('X-Client-Platform', 'web');    
+    headers.set('X-Client-Platform', 'web');
     return headers;
   },
-  
+
   // Credentials configuration
   credentials: 'include', // Include cookies for cross-origin requests
 });
@@ -83,18 +83,18 @@ const baseQueryWithInterceptor: BaseQueryFn<
 > = async (args, api, extraOptions) => {
   // Execute the base query
   let result = await baseQuery(args, api, extraOptions);
-  
-  
+
+
   // Handle different response statuses
   if (result.error) {
     const { status, data } = result.error;
-    
+
     switch (status) {
       case 401:
         // Get the request URL to check if it's a login endpoint
         const requestUrl = typeof args === 'string' ? args : args.url;
         const isLoginRequest = requestUrl.includes('/login') || requestUrl.includes('/auth/login');
-        
+
         // If 401 is from login endpoint, don't logout (invalid credentials)
         if (isLoginRequest) {
           console.warn('[API] 401 Unauthorized - Invalid login credentials');
@@ -102,10 +102,10 @@ const baseQueryWithInterceptor: BaseQueryFn<
           // Let the component handle the error display
           break;
         }
-        
+
         // Unauthorized - Try to refresh token or logout
         console.warn('[API] 401 Unauthorized - Token may be expired');
-        
+
         // Attempt token refresh
         const refreshToken = tokenStorage.getRefreshToken();
         if (refreshToken) {
@@ -120,12 +120,12 @@ const baseQueryWithInterceptor: BaseQueryFn<
               api,
               extraOptions
             );
-            
+
             if (refreshResult.data) {
               // Store new token and retry original request
               const { accessToken } = refreshResult.data as any;
               tokenStorage.setAccessToken(accessToken);
-              
+
               // Retry the original query with new token
               result = await baseQuery(args, api, extraOptions);
             } else {
@@ -141,7 +141,7 @@ const baseQueryWithInterceptor: BaseQueryFn<
           handleLogout();
         }
         break;
-        
+
       case 403:
         // Forbidden - User doesn't have permission
         console.warn('[API] 403 Forbidden - Insufficient permissions');
@@ -149,7 +149,7 @@ const baseQueryWithInterceptor: BaseQueryFn<
           toastId: 'forbidden-error',
         });
         break;
-        
+
       case 404:
         // Not Found
         console.warn('[API] 404 Not Found');
@@ -157,7 +157,7 @@ const baseQueryWithInterceptor: BaseQueryFn<
           toastId: 'not-found-error',
         });
         break;
-        
+
       case 500:
       case 502:
       case 503:
@@ -168,7 +168,7 @@ const baseQueryWithInterceptor: BaseQueryFn<
           toastId: `server-error-${status}`,
         });
         break;
-        
+
       case 'FETCH_ERROR':
         // Network error or CORS error
         console.error('[API] Network/CORS Error - Unable to connect to server');
@@ -176,42 +176,42 @@ const baseQueryWithInterceptor: BaseQueryFn<
         console.error('[API] 1. Backend server is running');
         console.error('[API] 2. CORS is configured on backend');
         console.error('[API] 3. API_URL is correct:', API_BASE_URL);
-        
+
         // Show toast with toastId to prevent duplicates
         toast.error(
           'Unable to connect to server. Check console for CORS fix guide.',
-          { 
+          {
             position: 'top-center',
             autoClose: 10000,
             toastId: 'fetch-error', // Prevent duplicate toasts
           }
         );
         break;
-        
+
       case 'PARSING_ERROR':
         // Response parsing error
         console.error('[API] Response Parsing Error');
         toast.error('Invalid response from server');
         break;
-        
+
       case 'TIMEOUT_ERROR':
         // Request timeout
         console.error('[API] Request Timeout');
         toast.error('Request timed out. Please try again.');
         break;
-        
+
       default:
         // Handle other errors
         const errorMessage = (data as any)?.message || 'An unexpected error occurred';
         console.error('[API] Error:', status, errorMessage);
-        
+
         // Only show toast for non-validation errors
         if (status !== 400) {
           toast.error(errorMessage);
         }
     }
   }
-  
+
   return result;
 };
 
@@ -221,10 +221,14 @@ const baseQueryWithInterceptor: BaseQueryFn<
 const handleLogout = () => {
   clearStorage();
   // toast.warning('Session expired. Please login again.');
-  
-  // Redirect to login page
+
+  // Redirect to login page ONLY if on admin portal
+  // Prevents public users from being redirected to admin login
   if (typeof window !== 'undefined') {
-    window.location.href = '/admin/login';
+    const isAdminPage = window.location.pathname.includes('/admin');
+    if (isAdminPage) {
+      window.location.href = '/admin/login';
+    }
   }
 };
 
@@ -254,7 +258,7 @@ const baseQueryWithRetry = retry(
 export const baseApi = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithRetry,
-  
+
   // Tag types for cache invalidation
   tagTypes: [
     'Auth',
@@ -266,19 +270,19 @@ export const baseApi = createApi({
     'Document',
     'Cloudinary',
   ],
-  
+
   // Endpoints will be injected by individual API slices
   endpoints: () => ({}),
-  
+
   // Keep unused data in cache for 60 seconds
   keepUnusedDataFor: 60,
-  
+
   // Refetch data when component remounts
   refetchOnMountOrArgChange: 30,
-  
+
   // Refetch on window focus (useful for real-time data)
   refetchOnFocus: false,
-  
+
   // Refetch on network reconnection
   refetchOnReconnect: true,
 });

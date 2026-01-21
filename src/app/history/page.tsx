@@ -3,25 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLazyGetRegistrationByPnrQuery, useCancelRegistrationMutation } from '@/services/registrationApi';
+import { formatDate } from '@/utils/dateUtils';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import { Calendar, MapPin, Users, FileText, CheckCircle, XCircle, Clock, Ticket, Search, Loader2, AlertCircle, Hotel, Bed, Map, Phone, X, AlertTriangle } from 'lucide-react';
+import { Calendar, MapPin, Users, FileText, CheckCircle, XCircle, Clock, Ticket, Search, Loader2, AlertCircle, Hotel, Bed, Map, Phone, X, AlertTriangle, ExternalLink, Eye, Image as ImageIcon, Accessibility } from 'lucide-react';
 import { toast } from 'react-toastify';
 
-function formatDate(dateString: string): string {
-  if (!dateString) return 'N/A';
-  try {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-IN', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    });
-  } catch {
-    return dateString;
-  }
-}
 
 function getStatusBadge(status: string) {
   const statusConfig = {
@@ -44,8 +32,8 @@ function getStatusBadge(status: string) {
       label: 'Pending',
     },
     cancelled: {
-      bg: 'bg-gray-100',
-      text: 'text-gray-800',
+      bg: 'bg-red-50',
+      text: 'text-red-700 font-bold',
       icon: XCircle,
       label: 'Cancelled',
     },
@@ -132,7 +120,7 @@ export default function HistoryPage() {
     try {
       const result = await cancelRegistration({
         registrationId: data.data.registration.id,
-        cancellationReason: cancellationReason.trim() || undefined,
+        reason: cancellationReason.trim() || undefined,
       }).unwrap();
 
       if (result.success) {
@@ -312,8 +300,8 @@ export default function HistoryPage() {
                     <p className="text-xs font-semibold text-spiritual-textLight uppercase tracking-wide mb-1">Boarding</p>
                     <div className="flex items-center gap-1.5">
                       <MapPin className="w-3.5 h-3.5 text-spiritual-textLight" />
-                      <p className="text-sm font-medium text-spiritual-zen-charcoal truncate">
-                        {data.data.registration.boardingPoint.city}
+                      <p className="text-sm font-medium text-spiritual-zen-charcoal capitalize">
+                        {data.data.registration.boardingPoint.city}, {data.data.registration.boardingPoint.state}
                       </p>
                     </div>
                   </div>
@@ -349,7 +337,10 @@ export default function HistoryPage() {
                       {data.data.persons.map((person, index) => (
                         <div
                           key={index}
-                          className="p-2.5 bg-spiritual-zen-mist/30 rounded-lg border border-spiritual-zen-accent/10"
+                          className={`p-3 rounded-xl border transition-all duration-300 ${person.isHandicapped
+                            ? 'bg-orange-50/50 border-orange-200 shadow-sm ring-1 ring-orange-100'
+                            : 'bg-spiritual-zen-mist/30 border-spiritual-zen-accent/10'
+                            }`}
                         >
                           <div className="flex items-center justify-between mb-1">
                             <p className="text-sm font-medium text-spiritual-zen-charcoal">{person.name}</p>
@@ -360,7 +351,12 @@ export default function HistoryPage() {
                           <div className="flex items-center gap-3 text-xs text-spiritual-textLight">
                             <span>Age: {person.age}</span>
                             {person.isHandicapped && (
-                              <span className="text-orange-600 font-medium">Special Assistance</span>
+                              <div className="flex items-center gap-1.5 px-2 py-1 bg-white border border-orange-200 rounded-md shadow-sm">
+                                <Accessibility className="w-3.5 h-3.5 text-orange-600 animate-pulse" />
+                                <span className="text-orange-700 font-bold text-[10px] uppercase tracking-wide">
+                                  Special Assistance
+                                </span>
+                              </div>
                             )}
                           </div>
                         </div>
@@ -407,11 +403,11 @@ export default function HistoryPage() {
                 )}
 
                 {data.data.registration.documentStatus === 'cancelled' && (
-                  <div className="flex items-start gap-2.5 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                    <XCircle className="w-4 h-4 text-gray-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex items-start gap-2.5 p-3 bg-red-50 border border-red-100 rounded-lg">
+                    <XCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-sm font-medium text-gray-900 mb-0.5">Registration Cancelled</p>
-                      <p className="text-xs text-gray-700">
+                      <p className="text-sm font-bold text-red-900 mb-0.5 uppercase tracking-wide">Registration Cancelled</p>
+                      <p className="text-xs text-red-700">
                         {data.data.registration.cancellationReason
                           ? `Reason: ${data.data.registration.cancellationReason}`
                           : 'This registration has been cancelled.'}
@@ -449,6 +445,57 @@ export default function HistoryPage() {
                 </div>
               </div>
             </Card>
+
+            {/* Uploaded Ticket Images Section */}
+            {data.data.registration.ticketImages && data.data.registration.ticketImages.length > 0 && (
+              <Card className="p-5 md:p-6 shadow-md border border-spiritual-zen-accent/20">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2.5 pb-3 border-b border-spiritual-zen-accent/20">
+                    <div className="p-1.5 bg-spiritual-zen-accent rounded-lg">
+                      <ImageIcon className="w-4 h-4 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-spiritual-zen-charcoal">Uploaded Ticket Images</h3>
+                      <p className="text-xs text-spiritual-textLight">Your uploaded journey tickets and documents</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {data.data.registration.ticketImages.map((image, index) => (
+                      <div
+                        key={index}
+                        className="group relative rounded-xl overflow-hidden border border-spiritual-zen-accent/20 bg-spiritual-zen-mist/10 aspect-video flex items-center justify-center transition-all duration-300 hover:shadow-lg hover:border-spiritual-zen-accent/40"
+                      >
+                        <img
+                          src={image}
+                          alt={`Ticket Image ${index + 1}`}
+                          className="w-full h-full object-contain bg-white transition-transform duration-500 group-hover:scale-105"
+                        />
+
+                        {/* Overlay on Hover */}
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3">
+
+                          <a
+                            href={image}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-4 py-2 bg-white rounded-full text-sm font-bold text-spiritual-zen-charcoal hover:bg-spiritual-zen-accent hover:text-white transition-all duration-200 shadow-lg flex items-center gap-2"
+                          >
+                            <Eye className="w-4 h-4" />
+                            View Full
+                          </a>
+                        </div>
+
+                        {/* Image Counter Badge */}
+                        <div className="absolute top-3 left-3 px-2 py-1 bg-white/80 backdrop-blur-sm border border-white/50 rounded-md text-[10px] font-bold text-spiritual-zen-charcoal shadow-sm">
+                          Image #{index + 1}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </Card>
+            )}
 
             {/* Hotel & Room Information Card */}
             {data.data.hotel && data.data.room && (

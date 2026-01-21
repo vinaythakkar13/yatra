@@ -39,18 +39,16 @@ export interface UploadBase64Response {
 export const cloudinaryApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     /**
-     * Upload Base64 Image Endpoint
-     * POST /cloudinary/upload-base64
+     * Upload Ticket Image Endpoint
+     * POST /cloudinary/upload-ticket
      * 
-     * Uses backend API endpoint with baseApi's baseQuery
-     * Automatically includes Authorization header via baseApi's prepareHeaders
+     * Uses backend API endpoint for yatra registration ticket uploads.
      */
     uploadBase64: builder.mutation<UploadBase64Response, UploadBase64Request>({
       query: (uploadData) => ({
-        url: '/cloudinary/upload-base64',
+        url: '/cloudinary/upload-ticket',
         method: 'POST',
         body: uploadData,
-        // Token is automatically added via baseApi's prepareHeaders
       }),
     }),
   }),

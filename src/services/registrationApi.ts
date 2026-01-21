@@ -8,6 +8,7 @@
  */
 
 import { baseApi } from './baseApi';
+import { formatDate } from '@/utils/dateUtils';
 
 // Type Definitions
 export interface CreateRegistrationRequest {
@@ -256,7 +257,7 @@ export const registrationApi = baseApi.injectEndpoints({
         if (pnr) params.pnr = pnr;
         if (page) params.page = page;
         if (limit) params.limit = limit;
-        
+
         return {
           url: '/registrations',
           method: 'GET',
@@ -293,13 +294,14 @@ export const registrationApi = baseApi.injectEndpoints({
                 city: apiReg.boarding_city,
                 state: apiReg.boarding_state,
               },
-              arrivalDate: apiReg.arrival_date,
-              returnDate: apiReg.return_date,
+              arrivalDate: formatDate(apiReg.arrival_date),
+              returnDate: formatDate(apiReg.return_date),
               ticketImages: apiReg.ticket_images || [],
               yatraId: apiReg.yatra_id,
               roomStatus: roomStatusMap[apiReg.status] || 'Pending',
-              documentStatus: apiReg.status === 'approved' ? 'approved' : apiReg.status === 'rejected' ? 'rejected' : 'pending',
+              documentStatus: apiReg.status === 'approved' ? 'approved' : apiReg.status === 'rejected' ? 'rejected' : apiReg.status === 'cancelled' ? 'cancelled' : 'pending',
               rejectionReason: apiReg.rejection_reason || undefined,
+              cancellationReason: apiReg.cancellation_reason || undefined,
               createdAt: apiReg.created_at,
             };
           });
@@ -397,8 +399,8 @@ export const registrationApi = baseApi.injectEndpoints({
                   city: registration.boarding_city,
                   state: registration.boarding_state,
                 },
-                arrivalDate: registration.arrival_date,
-                returnDate: registration.return_date,
+                arrivalDate: formatDate(registration.arrival_date),
+                returnDate: formatDate(registration.return_date),
                 ticketImages: registration.ticket_images || [],
                 yatraId: yatra.id,
                 documentStatus: registration.status === 'approved' ? 'approved' : registration.status === 'rejected' ? 'rejected' : registration.status === 'cancelled' ? 'cancelled' : 'pending',
@@ -480,12 +482,12 @@ export const registrationApi = baseApi.injectEndpoints({
       success: boolean;
       message?: string;
       error?: string;
-    }, { registrationId: string; cancellationReason?: string }>({
-      query: ({ registrationId, cancellationReason }) => ({
+    }, { registrationId: string; reason?: string }>({
+      query: ({ registrationId, reason }) => ({
         url: `/registrations/${registrationId}/cancel`,
-        method: 'PATCH',
+        method: 'POST',
         body: {
-          cancellation_reason: cancellationReason || null,
+          reason: reason || null,
         },
       }),
       invalidatesTags: ['Registration'],

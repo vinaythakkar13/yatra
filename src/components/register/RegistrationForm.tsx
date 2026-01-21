@@ -313,8 +313,8 @@ export default function RegistrationForm({ initialPnr = '', yatraDetails }: Regi
     setTicketImagesError('');
     setSubmissionError('');
 
-    if (ticketImages.length === 0) {
-      setTicketImagesError('At least one ticket image is required');
+    if (ticketImages.length < 2) {
+      setTicketImagesError('Minimum 2 ticket images are required (Both Arrival & Return)');
       setTimeout(() => {
         const ticketImagesCard = document.getElementById('ticket-images-card');
         if (ticketImagesCard) {
@@ -339,28 +339,42 @@ export default function RegistrationForm({ initialPnr = '', yatraDetails }: Regi
       for (let i = 0; i < ticketImages.length; i++) {
         try {
           const file = ticketImages[i];
+
           // Convert file to base64
-          const base64Image = await fileToBase64(file);
+          const fullBase64 = await fileToBase64(file);
+
+          // Strip the prefix (data:image/jpeg;base64,) if necessary
+          // Some backends only want the raw base64 data
+          const base64Image = fullBase64.includes('base64,')
+            ? fullBase64.split('base64,')[1]
+            : fullBase64;
+
 
           // Generate public_id for ticket image
           const sanitizedPnr = data.pnr.replace(/[^a-z0-9]/gi, '_');
           const publicId = `yatra/tickets/${sanitizedPnr}_${Date.now()}_${i + 1}`;
 
-          // Upload to Cloudinary - matches CURL format
+
+          // Upload to Cloudinary - matches new CURL format: /cloudinary/upload-ticket
           const uploadResult = await uploadBase64({
-            base64Image,
-            folder: 'yatra/tickets',
-            public_id: publicId,
-            tags: ['yatra', 'ticket', 'upload'],
+            base64Image: fullBase64,
+            folder: 'yatras/tickets',
           }).unwrap();
+
 
           if (uploadResult.success && uploadResult.data) {
             uploadedImageUrls.push(uploadResult.data.secure_url);
           } else {
+            console.error(`[RegistrationForm] Upload failed for image ${i + 1}:`, uploadResult.error);
             throw new Error(uploadResult.error || 'Failed to upload ticket image');
           }
+
+          // Small delay between uploads to allow backend to breathe
+          if (i < ticketImages.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
         } catch (uploadError: any) {
-          console.error('Ticket upload error:', uploadError);
+          console.error(`[RegistrationForm] Critical error uploading image ${i + 1}:`, uploadError);
           const errorMessage = uploadError?.data?.error || uploadError?.message || `Failed to upload ticket image ${i + 1}`;
           toast.error(errorMessage);
           setIsSubmitting(false);
@@ -452,90 +466,88 @@ export default function RegistrationForm({ initialPnr = '', yatraDetails }: Regi
   if (showSuccess) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-fade-in">
-        <div className="relative max-w-lg w-full bg-white rounded-2xl shadow-2xl overflow-hidden animate-scale-in">
-          {/* Content */}
-          <div className="p-6 sm:p-8">
-            {/* Success Icon */}
-            <div className="flex justify-center mb-5">
-              <AnimatedSuccessIcon size={200} loop={true} />
-            </div>
+        <div className="relative max-w-lg w-full bg-white rounded-2xl shadow-2xl overflow-hidden animate-scale-in flex flex-col max-h-[90vh]">
+          {/* Scrollable Content Container */}
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
+            <div className="p-5 sm:p-7">
+              {/* Success Icon */}
+              <div className="flex justify-center mb-4">
+                <AnimatedSuccessIcon size={160} loop={true} />
+              </div>
 
-            {/* Success Message */}
-            <div className="text-center mb-6">
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-                Registration Successful!
-              </h2>
-              <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                Your registration for Yatra has been submitted successfully. You can track your registration using your PNR number.
-              </p>
-            </div>
-
-            {/* PNR Display Card */}
-            <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-5 mb-5 border border-green-100">
-              <p className="text-xs font-semibold text-gray-600 mb-3 uppercase tracking-wider text-center">
-                Your PNR Number
-              </p>
-              <div className="flex items-center justify-center gap-3 mb-3">
-                <Ticket className="w-5 h-5 text-green-600 flex-shrink-0" />
-                <p className="text-3xl sm:text-4xl font-bold text-gray-900 font-mono tracking-wider">
-                  {successPnr}
+              {/* Success Message */}
+              <div className="text-center mb-5">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                  Registration Successful!
+                </h2>
+                <p className="text-sm text-gray-600 leading-relaxed max-w-sm mx-auto">
+                  Your registration for Yatra has been submitted successfully. You can track your registration using your PNR number.
                 </p>
               </div>
-              <button
-                onClick={handleCopyPnr}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-white border border-green-200 rounded-lg hover:bg-green-50 hover:border-green-300 transition-all duration-200 group"
-              >
-                <Copy className="w-4 h-4 text-green-600 group-hover:scale-110 transition-transform" />
-                <span className="text-sm font-medium text-gray-700">Copy PNR</span>
-              </button>
-            </div>
 
-            {/* Information Box */}
-            <div className="bg-gray-50 rounded-xl p-4 mb-6 border border-gray-100">
-              <div className="flex items-start gap-2.5">
-                <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <p className="text-sm font-semibold text-gray-900 mb-2">
-                    What's Next?
+              {/* PNR Display Card */}
+              <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 mb-4 border border-green-100">
+                <p className="text-[10px] font-bold text-gray-500 mb-2 uppercase tracking-widest text-center">
+                  Your PNR Number
+                </p>
+                <div className="flex items-center justify-center gap-3 mb-3">
+                  <Ticket className="w-5 h-5 text-green-600 flex-shrink-0" />
+                  <p className="text-3xl sm:text-4xl font-bold text-gray-900 font-mono tracking-tighter">
+                    {successPnr}
                   </p>
-                  <ul className="text-xs sm:text-sm text-gray-600 space-y-1.5">
-                    <li className="flex items-start gap-2">
-                      <span className="text-green-600 mt-0.5">•</span>
-                      <span>You'll receive a confirmation message shortly</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-green-600 mt-0.5">•</span>
-                      <span>Keep your PNR number safe for tracking</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-green-600 mt-0.5">•</span>
-                      <span>Check your WhatsApp for updates</span>
-                    </li>
-                  </ul>
+                </div>
+                <button
+                  onClick={handleCopyPnr}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-white border border-green-200 rounded-lg hover:bg-green-50 hover:border-green-300 transition-all duration-200 group shadow-sm active:scale-[0.98]"
+                >
+                  <Copy className="w-3.5 h-3.5 text-green-600 group-hover:scale-110 transition-transform" />
+                  <span className="text-xs font-semibold text-gray-700">Copy PNR</span>
+                </button>
+              </div>
+
+              {/* Information Box */}
+              <div className="bg-gray-50 rounded-xl p-4 mb-5 border border-gray-100">
+                <div className="flex items-start gap-2.5">
+                  <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-xs font-bold text-gray-900 mb-1.5 uppercase tracking-wide">
+                      What's Next?
+                    </p>
+                    <ul className="text-xs text-gray-600 space-y-1.5">
+                      <li className="flex items-start gap-2">
+                        <span className="text-green-600 font-bold">•</span>
+                        <span>Keep your PNR number safe for tracking</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-green-600 font-bold">•</span>
+                        <span>You'll receive a confirmation message shortly</span>
+                      </li>
+                    </ul>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col gap-3">
-              <Button
-                type="button"
-                onClick={() => router.push('/history')}
-                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700 shadow-md hover:shadow-lg transition-all duration-200 py-3 text-base font-semibold rounded-lg"
-              >
-                <span className="flex items-center justify-center gap-2">
-                  View My Bookings
-                  <ChevronRight className="w-5 h-5" />
-                </span>
-              </Button>
-              <Button
-                type="button"
-                onClick={() => router.push('/')}
-                variant="outline"
-                className="w-full border-2 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 py-3 text-base font-medium rounded-lg"
-              >
-                Go to Home
-              </Button>
+              {/* Action Buttons */}
+              <div className="flex flex-col gap-2.5">
+                <Button
+                  type="button"
+                  onClick={() => router.push('/history')}
+                  className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700 shadow-sm hover:shadow-md transition-all duration-200 py-2.5 text-sm font-bold rounded-lg"
+                >
+                  <span className="flex items-center justify-center gap-2 text-white">
+                    View My Bookings
+                    <ChevronRight className="w-4 h-4" />
+                  </span>
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => router.push('/')}
+                  variant="outline"
+                  className="w-full border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 py-2.5 text-sm font-medium rounded-lg"
+                >
+                  Go to Home
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -1022,7 +1034,7 @@ export default function RegistrationForm({ initialPnr = '', yatraDetails }: Regi
                 Upload Railway Tickets
               </h2>
               <p className="text-xs sm:text-sm text-spiritual-textLight leading-relaxed">
-                Upload clear photos of your railway tickets. This helps us verify your booking details.
+                Please upload clear photos of both arrival and return railway tickets for booking verification.
               </p>
             </div>
           </div>

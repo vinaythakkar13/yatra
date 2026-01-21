@@ -1,5 +1,6 @@
 import React from 'react';
 import Modal from '@/components/ui/Modal';
+import { XCircle } from 'lucide-react';
 
 interface UserDetailsModalProps {
     isOpen: boolean;
@@ -18,7 +19,27 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ isOpen, onClose, us
             size="lg"
             variant="admin"
         >
-            <div className="space-y-6">
+            <div className={`space-y-6 ${user.documentStatus === 'cancelled' ? 'bg-red-50/30' : ''}`}>
+                {/* Cancellation Alert */}
+                {user.documentStatus === 'cancelled' && (
+                    <div className="bg-red-600 text-white p-4 rounded-xl shadow-md border-b-4 border-red-800 animate-pulse-slow">
+                        <div className="flex items-start gap-4">
+                            <div className="bg-white/20 p-2 rounded-lg">
+                                <XCircle className="w-6 h-6 text-white" />
+                            </div>
+                            <div>
+                                <h4 className="text-lg font-bold uppercase tracking-wider">Registration Cancelled</h4>
+                                {user.cancellationReason ? (
+                                    <p className="text-sm opacity-90 mt-1 font-medium italic">
+                                        " {user.cancellationReason} "
+                                    </p>
+                                ) : (
+                                    <p className="text-sm opacity-90 mt-1">No reason provided</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                )}
                 {/* Personal Info */}
                 <div>
                     <h3 className="text-lg font-bold text-heritage-textDark mb-3">
@@ -66,13 +87,13 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ isOpen, onClose, us
                         <div>
                             <p className="text-sm text-heritage-text/70">Arrival Date</p>
                             <p className="font-semibold text-heritage-textDark">
-                                {new Date(user.arrivalDate).toLocaleDateString()}
+                                {user.arrivalDate}
                             </p>
                         </div>
                         <div>
                             <p className="text-sm text-heritage-text/70">Return Date</p>
                             <p className="font-semibold text-heritage-textDark">
-                                {new Date(user.returnDate).toLocaleDateString()}
+                                {user.returnDate}
                             </p>
                         </div>
                     </div>
