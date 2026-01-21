@@ -6,8 +6,8 @@
 
 import React from 'react';
 import Link from 'next/link';
-  import Container from '@/spiritual/components/common/Container';
-  import Button from '@/spiritual/components/common/Button';
+import Container from '@/spiritual/components/common/Container';
+import Button from '@/spiritual/components/common/Button';
 import {
     FaFacebookF,
     FaTwitter,
@@ -30,25 +30,24 @@ export default function Footer() {
         { icon: FaFacebookF, href: contactData.socialMedia?.facebook || '#', label: 'Facebook' },
         { icon: FaInstagram, href: contactData.socialMedia?.instagram || '#', label: 'Instagram' },
         { icon: FaYoutube, href: contactData.socialMedia?.youtube || '#', label: 'YouTube' },
-        { icon: FaTwitter, href: '#', label: 'Twitter' },
-        { icon: FaLinkedinIn, href: '#', label: 'LinkedIn' },
+        // { icon: FaTwitter, href: '#', label: 'Twitter' },
+        // { icon: FaLinkedinIn, href: '#', label: 'LinkedIn' },
     ];
 
     const quickLinks = [
-        { name: 'About Us', href: '/spiritual/about' },
-        { name: 'Our Causes', href: '/spiritual/charity' },
-        { name: 'Our Mission', href: '/spiritual/about' },
-        { name: 'Gallery', href: '/spiritual/gallery' },
-        { name: 'Medical', href: '/spiritual/medical' },
-        { name: 'Contact Us', href: '/spiritual/contact' },
+        { name: 'Home', href: '/' },
+        { name: 'Our Causes', href: '/charity' },
+        { name: 'Our Mission', href: '/charity' },
+        { name: 'Medical Seva', href: '/charity' },
+        { name: 'Contact Us', href: '/charity' },
     ];
 
     const services = [
-        { name: 'Free Medical Care', href: '/spiritual/charity' },
-        { name: 'Langar Seva', href: '/spiritual/charity' },
-        { name: 'Education Support', href: '/spiritual/charity' },
-        { name: 'Volunteer Program', href: '/spiritual/volunteer' },
-        { name: 'Disaster Relief', href: '/spiritual/charity' },
+        { name: 'Daily Langar Seva', href: '/charity' },
+        { name: 'Free Medical Care', href: '/charity' },
+        { name: 'Education Support', href: '/charity' },
+        { name: 'Wheat & Rice Sewa', href: '/charity' },
+        { name: 'Disaster Relief', href: '/charity' },
     ];
 
     const legalLinks = [
@@ -69,11 +68,11 @@ export default function Footer() {
                             <Link href="/spiritual" className="flex flex-col gap-2 group">
                                 <div className="flex items-center gap-2">
                                     <span className="text-3xl md:text-4xl font-display font-bold text-white group-hover:text-spiritual-saffron transition-colors duration-300">
-                                        Ollo
+                                        DGNST
                                     </span>
                                 </div>
                                 <span className="text-xs uppercase tracking-widest text-spiritual-saffron font-semibold">
-                                    Fundraising & Charity
+                                    Dhan Guru Nanak Shah Trust
                                 </span>
                             </Link>
                             <p className="text-spiritual-zen-mist leading-relaxed text-sm md:text-base">
@@ -132,7 +131,7 @@ export default function Footer() {
                         <div className="space-y-6">
                             <div>
                                 <h3 className="text-base md:text-lg font-display font-bold mb-6 text-white relative inline-block">
-                                    Our Services
+                                    Our Mission
                                     <span className="absolute -bottom-2 left-0 w-12 h-0.5 bg-spiritual-saffron rounded-full" />
                                 </h3>
                                 <ul className="space-y-3">
@@ -156,7 +155,7 @@ export default function Footer() {
 
                         {/* Contact & Newsletter Section */}
                         <div className="space-y-6">
-                            {/* Contact Info */}
+
                             <div>
                                 <h3 className="text-base md:text-lg font-display font-bold mb-6 text-white relative inline-block">
                                     Contact Us
@@ -168,7 +167,7 @@ export default function Footer() {
                                             <FaMapMarkerAlt className="w-5 h-5 text-spiritual-saffron group-hover:scale-110 transition-transform" />
                                         </div>
                                         <a
-                                            href={`https://maps.google.com/?q=${encodeURIComponent(contactData.address)}`}
+                                            href={contactData.mapLink}
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="text-spiritual-zen-mist hover:text-white transition-colors leading-relaxed"
@@ -187,7 +186,7 @@ export default function Footer() {
                                             {contactData.phone}
                                         </a>
                                     </li>
-                                    <li className="flex items-center gap-4 group">
+                                    {/* <li className="flex items-center gap-4 group">
                                         <div className="w-5 h-5 flex-shrink-0">
                                             <FaEnvelope className="w-5 h-5 text-spiritual-saffron group-hover:scale-110 transition-transform" />
                                         </div>
@@ -197,12 +196,12 @@ export default function Footer() {
                                         >
                                             {contactData.email}
                                         </a>
-                                    </li>
+                                    </li> */}
                                 </ul>
                             </div>
 
                             {/* Newsletter */}
-                            <div className="mt-8">
+                            {/* <div className="mt-8">
                                 <h3 className="text-base md:text-lg font-display font-bold mb-4 text-white relative inline-block">
                                     Newsletter
                                     <span className="absolute -bottom-2 left-0 w-12 h-0.5 bg-spiritual-saffron rounded-full" />
@@ -228,7 +227,7 @@ export default function Footer() {
                                         <FaArrowRight className="w-3 h-3" />
                                     </Button>
                                 </form>
-                            </div>
+                            </div> */}
                         </div>
                     </div>
 
@@ -238,7 +237,7 @@ export default function Footer() {
                             {/* Copyright */}
                             <div className="flex flex-col sm:flex-row items-center gap-2 text-sm md:text-base text-spiritual-zen-mist">
                                 <p>
-                                    © {currentYear} <span className="font-semibold text-white">Ollo Charity Theme</span>. All
+                                    © {currentYear} <span className="font-semibold text-white">Dhan Guru Nanak Shah Trust</span>. All
                                     rights reserved.
                                 </p>
                                 <span className="hidden sm:inline-flex items-center gap-1 text-spiritual-saffron">
@@ -248,7 +247,7 @@ export default function Footer() {
 
                             {/* Legal Links */}
                             <div className="flex flex-wrap items-center justify-center gap-6 text-sm">
-                                {legalLinks.map((link) => (
+                                {/* {legalLinks.map((link) => (
                                     <a
                                         key={link.name}
                                         href={link.href}
@@ -257,7 +256,7 @@ export default function Footer() {
                                         {link.name}
                                         <span className="absolute left-0 -bottom-1 w-0 h-0.5 bg-spiritual-saffron transition-all duration-300 group-hover:w-full" />
                                     </a>
-                                ))}
+                                ))} */}
                             </div>
                         </div>
                     </div>
