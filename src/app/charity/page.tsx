@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import Container from '@/spiritual/components/common/Container';
 import Button from '@/spiritual/components/common/Button';
+import qrCode from '@/assets/images/UPI_QR.jpeg'
 
 export default function CharityPage() {
     const donationLevels = [
@@ -66,6 +67,23 @@ export default function CharityPage() {
         { amount: "₹200", label: "Contribute" },
         { amount: "₹100", label: "Contribute" },
     ];
+
+    const openUPIPayment = (amount: string, note: string) => {
+        // Extract numeric value from "₹26,000 / ₹7,100"
+        const numericAmount = amount
+            .replace(/[₹,\s]/g, '')
+            .split('/')[0];
+
+        const upiId = '7083191919@okbizaxis'; // 🔴 replace with trust UPI ID
+        const payeeName = 'Dhan Guru Nanak Shah Trust';
+
+        const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(
+            payeeName
+        )}&am=${numericAmount}&cu=INR&tn=${encodeURIComponent(note)}`;
+
+        window.location.href = upiUrl;
+    };
+
 
     return (
         <div className="min-h-screen bg-spiritual-zen-surface">
@@ -127,6 +145,7 @@ export default function CharityPage() {
                         {donationLevels.map((level, index) => (
                             <div
                                 key={index}
+                                onClick={() => openUPIPayment(level.price, level.title)}
                                 className={`group relative rounded-3xl overflow-hidden border border-spiritual-zen-highlight bg-white hover:bg-spiritual-zen-highlight/30 transition-all duration-500 hover:shadow-2xl hover:border-spiritual-zen-accent/30 flex flex-col ${level.tag ? 'ring-2 ring-spiritual-zen-accent ring-inset' : ''}`}
                             >
                                 {/* Card Image Area */}
@@ -178,6 +197,7 @@ export default function CharityPage() {
                                     {smallContributions.map((cont, idx) => (
                                         <button
                                             key={idx}
+                                            onClick={() => openUPIPayment(cont.amount, 'Langar Sewa - small contribution')}
                                             className="py-3 px-4 rounded-xl border border-white/30 hover:bg-white hover:text-spiritual-zen-forest font-bold transition-all text-center text-sm shadow-sm"
                                         >
                                             {cont.amount}
@@ -321,7 +341,13 @@ export default function CharityPage() {
 
                             <div className="relative z-10 p-6 bg-white rounded-3xl shadow-2xl group transition-transform hover:scale-105 border-4 border-white/20">
                                 <div className="w-48 h-48 bg-gray-50 rounded-2xl flex items-center justify-center">
-                                    <QrCode className="w-24 h-24 text-spiritual-zen-forest/40" />
+                                    {/* <QrCode className="w-24 h-24 text-spiritual-zen-forest/40"  /> */}
+                                    <Image
+                                        src={qrCode}
+                                        alt="QR Code"
+                                        width={192}
+                                        height={192}
+                                    />
                                 </div>
                                 <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-spiritual-zen-accent text-white px-6 py-2 rounded-full text-xs font-bold tracking-widest uppercase shadow-lg border-2 border-white">
                                     Scan to Pay

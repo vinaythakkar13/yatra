@@ -192,33 +192,64 @@ export default function ImageUpload({
   };
 
   // Detect device type and available cameras on mount
+  // useEffect(() => {
+  //   const detectDeviceAndCameras = async () => {
+  //     // Check if we're on the client side
+  //     if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+  //       return;
+  //     }
+
+  //     // Detect if mobile device
+  //     const userAgent = navigator.userAgent.toLowerCase();
+  //     const mobile = /android|iphone|ipad|ipod/.test(userAgent);
+  //     setIsMobile(mobile);
+
+  //     // Detect available cameras
+  //     try {
+  //       if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+  //         const devices = await navigator.mediaDevices.enumerateDevices();
+  //         const videoDevices = devices.filter(device => device.kind === 'videoinput');
+  //         setAvailableCameras(videoDevices.length);
+
+  //         // Set default camera mode based on device type
+  //         if (mobile && videoDevices.length >= 2) {
+  //           // Mobile with multiple cameras: default to back camera
+  //           setCameraMode('environment');
+  //         } else if (!mobile || videoDevices.length === 1) {
+  //           // Laptop/tablet with only front camera: default to front camera
+  //           setCameraMode('user');
+  //         }
+  //       }
+  //     } catch (error) {
+  //       console.error('Error detecting cameras:', error);
+  //     }
+  //   };
+
+  //   detectDeviceAndCameras();
+  // }, []);
+
   useEffect(() => {
     const detectDeviceAndCameras = async () => {
-      // Check if we're on the client side
       if (typeof window === 'undefined' || typeof navigator === 'undefined') {
         return;
       }
 
-      // Detect if mobile device
+      // Detect mobile device
       const userAgent = navigator.userAgent.toLowerCase();
       const mobile = /android|iphone|ipad|ipod/.test(userAgent);
       setIsMobile(mobile);
 
-      // Detect available cameras
-      try {
-        if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
-          const devices = await navigator.mediaDevices.enumerateDevices();
-          const videoDevices = devices.filter(device => device.kind === 'videoinput');
-          setAvailableCameras(videoDevices.length);
+      // Set camera mode strictly based on device type
+      setCameraMode(mobile ? 'environment' : 'user');
 
-          // Set default camera mode based on device type
-          if (mobile && videoDevices.length >= 2) {
-            // Mobile with multiple cameras: default to back camera
-            setCameraMode('environment');
-          } else if (!mobile || videoDevices.length === 1) {
-            // Laptop/tablet with only front camera: default to front camera
-            setCameraMode('user');
-          }
+      // (Optional) Detect available cameras count
+      try {
+        if (navigator.mediaDevices?.enumerateDevices) {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const videoDevices = devices.filter(
+            device => device.kind === 'videoinput'
+          );
+          setAvailableCameras(videoDevices.length);
         }
       } catch (error) {
         console.error('Error detecting cameras:', error);
@@ -227,6 +258,7 @@ export default function ImageUpload({
 
     detectDeviceAndCameras();
   }, []);
+
 
   // Attach stream to video element when stream changes
   useEffect(() => {
