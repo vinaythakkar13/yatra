@@ -33,7 +33,7 @@ export const revalidate = 60;
 async function getActiveYatras(): Promise<Yatra[]> {
   try {
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-    
+
     const response = await fetch(`${API_BASE_URL}/yatra/active-yatras`, {
       method: 'GET',
       headers: {
@@ -54,17 +54,17 @@ async function getActiveYatras(): Promise<Yatra[]> {
     }
 
     const data = await response.json();
-    
+
     // Handle array response - API returns array of yatras
-    const yatrasArray: Yatra[] = Array.isArray(data?.data) 
-      ? data.data 
+    const yatrasArray: Yatra[] = Array.isArray(data?.data)
+      ? data.data
       : (Array.isArray(data) ? data : []);
-    
+
     // Remove duplicates based on id
     const uniqueYatras = Array.from(
       new Map(yatrasArray.map(yatra => [yatra.id, yatra])).values()
     );
-    
+
     return uniqueYatras;
   } catch (error) {
     console.error('Error fetching active yatras:', error);

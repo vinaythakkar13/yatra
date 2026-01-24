@@ -21,6 +21,7 @@ export interface GetAllYatrasResponse {
 export interface CreateYatraRequest {
   name: string;
   banner_image?: string; // URL string after Cloudinary upload
+  mobile_banner_image?: string; // Optional mobile banner URL
   start_date: string;
   end_date: string;
   registration_start_date: string;
@@ -36,6 +37,7 @@ export interface CreateYatraResponse {
 export interface UpdateYatraRequest {
   name?: string;
   banner_image?: string | null; // URL string after Cloudinary upload
+  mobile_banner_image?: string | null; // Optional mobile banner URL, send null to remove
   start_date?: string;
   end_date?: string;
   registration_start_date?: string;

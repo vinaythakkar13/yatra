@@ -12,6 +12,7 @@ import { formatDate } from '@/utils/common';
 interface YatraFormData {
     title: string;
     bannerImage?: File | string | null;
+    mobileBannerImage?: File | string | null;
     startDate: string;
     endDate: string;
     registerStartDate: string;
@@ -28,7 +29,9 @@ interface YatraModalProps {
 
 const YatraModal: React.FC<YatraModalProps> = ({ isOpen, onClose, onSubmit, editingYatra, isLoading = false }) => {
     const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+    const [mobileBannerPreview, setMobileBannerPreview] = useState<string | null>(null);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const mobileFileInputRef = React.useRef<HTMLInputElement>(null);
 
     const {
         control,
@@ -41,6 +44,7 @@ const YatraModal: React.FC<YatraModalProps> = ({ isOpen, onClose, onSubmit, edit
         defaultValues: editingYatra ? {
             title: editingYatra.name,
             bannerImage: editingYatra.banner_image || null,
+            mobileBannerImage: editingYatra.mobile_banner_image || null,
             startDate: formatDate(editingYatra.start_date),
             endDate: formatDate(editingYatra.end_date),
             registerStartDate: formatDate(editingYatra.registration_start_date),
@@ -48,6 +52,7 @@ const YatraModal: React.FC<YatraModalProps> = ({ isOpen, onClose, onSubmit, edit
         } : {
             title: '',
             bannerImage: null,
+            mobileBannerImage: null,
             startDate: '',
             endDate: '',
             registerStartDate: '',
@@ -58,6 +63,7 @@ const YatraModal: React.FC<YatraModalProps> = ({ isOpen, onClose, onSubmit, edit
     const startDateValue = watch('startDate');
     const registerStartDateValue = watch('registerStartDate');
     const bannerImageValue = watch('bannerImage');
+    const mobileBannerImageValue = watch('mobileBannerImage');
 
     // Handle banner image preview
     useEffect(() => {
@@ -73,6 +79,21 @@ const YatraModal: React.FC<YatraModalProps> = ({ isOpen, onClose, onSubmit, edit
             setBannerPreview(null);
         }
     }, [bannerImageValue]);
+
+    // Handle mobile banner image preview
+    useEffect(() => {
+        if (mobileBannerImageValue instanceof File) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setMobileBannerPreview(reader.result as string);
+            };
+            reader.readAsDataURL(mobileBannerImageValue);
+        } else if (typeof mobileBannerImageValue === 'string' && mobileBannerImageValue) {
+            setMobileBannerPreview(mobileBannerImageValue);
+        } else {
+            setMobileBannerPreview(null);
+        }
+    }, [mobileBannerImageValue]);
 
     // Helper function to safely format dates
     const safeFormatDate = (date: string | null | undefined): string => {
@@ -109,29 +130,37 @@ const YatraModal: React.FC<YatraModalProps> = ({ isOpen, onClose, onSubmit, edit
         if (isOpen) {
             if (editingYatra) {
                 const bannerUrl = editingYatra.banner_image || null;
+                const mobileBannerUrl = editingYatra.mobile_banner_image || null;
                 reset({
                     title: editingYatra.name,
                     bannerImage: bannerUrl,
+                    mobileBannerImage: mobileBannerUrl,
                     startDate: safeFormatDate(editingYatra.start_date),
                     endDate: safeFormatDate(editingYatra.end_date),
                     registerStartDate: safeFormatDate(editingYatra.registration_start_date),
                     registerEndDate: safeFormatDate(editingYatra.registration_end_date),
                 });
                 setBannerPreview(bannerUrl);
+                setMobileBannerPreview(mobileBannerUrl);
             } else {
                 reset({
                     title: '',
                     bannerImage: null,
+                    mobileBannerImage: null,
                     startDate: '',
                     endDate: '',
                     registerStartDate: '',
-                    registerEndDate: '',        
+                    registerEndDate: '',
                 });
                 setBannerPreview(null);
+                setMobileBannerPreview(null);
             }
             // Reset file input
             if (fileInputRef.current) {
                 fileInputRef.current.value = '';
+            }
+            if (mobileFileInputRef.current) {
+                mobileFileInputRef.current.value = '';
             }
         }
     }, [isOpen, editingYatra, reset]);
@@ -153,11 +182,36 @@ const YatraModal: React.FC<YatraModalProps> = ({ isOpen, onClose, onSubmit, edit
         }
     };
 
+    const handleMobileBannerUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                setValue('mobileBannerImage', null);
+                return;
+            }
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                setValue('mobileBannerImage', null);
+                return;
+            }
+            setValue('mobileBannerImage', file, { shouldValidate: true });
+        }
+    };
+
     const handleBannerRemove = () => {
         setValue('bannerImage', null, { shouldValidate: true });
         setBannerPreview(null);
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
+        }
+    };
+
+    const handleMobileBannerRemove = () => {
+        setValue('mobileBannerImage', null, { shouldValidate: true });
+        setMobileBannerPreview(null);
+        if (mobileFileInputRef.current) {
+            mobileFileInputRef.current.value = '';
         }
     };
 
@@ -229,8 +283,8 @@ const YatraModal: React.FC<YatraModalProps> = ({ isOpen, onClose, onSubmit, edit
                                         const month = String(date.getMonth() + 1).padStart(2, '0');
                                         const day = String(date.getDate()).padStart(2, '0');
                                         const dateStr = `${year}-${month}-${day}`;
-                                    field.onChange(dateStr);
-                                    setValue('startDate', dateStr, { shouldValidate: true });
+                                        field.onChange(dateStr);
+                                        setValue('startDate', dateStr, { shouldValidate: true });
                                     } else {
                                         field.onChange('');
                                         setValue('startDate', '', { shouldValidate: true });
@@ -281,8 +335,8 @@ const YatraModal: React.FC<YatraModalProps> = ({ isOpen, onClose, onSubmit, edit
                                         const month = String(date.getMonth() + 1).padStart(2, '0');
                                         const day = String(date.getDate()).padStart(2, '0');
                                         const dateStr = `${year}-${month}-${day}`;
-                                    field.onChange(dateStr);
-                                    setValue('endDate', dateStr, { shouldValidate: true });
+                                        field.onChange(dateStr);
+                                        setValue('endDate', dateStr, { shouldValidate: true });
                                     } else {
                                         field.onChange('');
                                         setValue('endDate', '', { shouldValidate: true });
@@ -301,54 +355,54 @@ const YatraModal: React.FC<YatraModalProps> = ({ isOpen, onClose, onSubmit, edit
                 <div className="space-y-3">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         {/* Register Start Date */}
-                <Controller
+                        <Controller
                             name="registerStartDate"
-                    control={control}
-                    rules={{
+                            control={control}
+                            rules={{
                                 required: 'Registration start date is required',
-                        validate: (value) => {
+                                validate: (value) => {
                                     if (!value) return 'Registration start date is required';
                                     const selectedDate = safeParseDate(value);
                                     if (!selectedDate) return 'Invalid registration start date';
-                            const today = new Date();
-                            today.setHours(0, 0, 0, 0);
-                            if (selectedDate < today) {
+                                    const today = new Date();
+                                    today.setHours(0, 0, 0, 0);
+                                    if (selectedDate < today) {
                                         return 'Registration start date cannot be in the past';
-                            }
-                            return true;
-                        }
-                    }}
-                    render={({ field }) => (
-                        <DatePicker
+                                    }
+                                    return true;
+                                }
+                            }}
+                            render={({ field }) => (
+                                <DatePicker
                                     label="Registration Start Date"
                                     value={safeParseDate(field.value)}
-                            onChange={(date) => {
+                                    onChange={(date) => {
                                         if (date) {
                                             // Format date as YYYY-MM-DD in local timezone (no timezone conversion)
                                             const year = date.getFullYear();
                                             const month = String(date.getMonth() + 1).padStart(2, '0');
                                             const day = String(date.getDate()).padStart(2, '0');
                                             const dateStr = `${year}-${month}-${day}`;
-                                field.onChange(dateStr);
+                                            field.onChange(dateStr);
                                             setValue('registerStartDate', dateStr, { shouldValidate: true });
                                         } else {
                                             field.onChange('');
                                             setValue('registerStartDate', '', { shouldValidate: true });
                                         }
-                            }}
-                            minDate={new Date()}
+                                    }}
+                                    minDate={new Date()}
                                     maxDate={startDateValue ? (() => {
                                         const maxDate = safeParseDate(startDateValue);
                                         if (!maxDate) return undefined;
                                         maxDate.setDate(maxDate.getDate() - 1);
                                         return maxDate;
                                     })() : undefined}
-                            required
+                                    required
                                     error={errors.registerStartDate?.message}
-                            variant="admin"
+                                    variant="admin"
+                                />
+                            )}
                         />
-                    )}
-                />
 
                         {/* Register End Date */}
                         <Controller
@@ -501,6 +555,91 @@ const YatraModal: React.FC<YatraModalProps> = ({ isOpen, onClose, onSubmit, edit
                     />
                 </div>
 
+                {/* Mobile Banner Image Upload */}
+                <div className="w-full">
+                    <label className="block text-sm font-semibold mb-2 text-heritage-textDark">
+                        Mobile Banner Image <span className="text-heritage-text/60 font-normal">(Optional)</span>
+                    </label>
+                    <Controller
+                        name="mobileBannerImage"
+                        control={control}
+                        render={({ field }) => (
+                            <div className="w-full">
+                                {mobileBannerPreview ? (
+                                    <div className="relative w-full h-48 rounded-xl overflow-hidden border-2 border-heritage-gold/40 group">
+                                        <img
+                                            src={mobileBannerPreview}
+                                            alt="Mobile banner preview"
+                                            className="w-full h-full object-cover"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={handleMobileBannerRemove}
+                                            className="absolute top-2 right-2 p-2 rounded-full bg-red-500 text-white hover:bg-red-600 transition-all duration-200 shadow-lg opacity-0 group-hover:opacity-100 z-10"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                                            <label className="cursor-pointer px-4 py-2 bg-white/90 rounded-lg text-heritage-textDark font-medium hover:bg-white transition-colors">
+                                                <Upload className="w-4 h-4 inline-block mr-2" />
+                                                Change Image
+                                                <input
+                                                    ref={mobileFileInputRef}
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={(e) => {
+                                                        handleMobileBannerUpload(e);
+                                                        field.onChange(e.target.files?.[0] || null);
+                                                    }}
+                                                    className="hidden"
+                                                />
+                                            </label>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <label className="cursor-pointer border-2 border-dashed border-heritage-gold/40 rounded-xl p-8 text-center flex flex-col items-center justify-center bg-heritage-highlight/10 hover:bg-heritage-highlight/20 transition-all duration-200 group">
+                                        <div className="bg-heritage-primary/10 p-4 rounded-full mb-3 group-hover:bg-heritage-primary/20 transition-colors">
+                                            <ImageIcon className="w-8 h-8 text-heritage-primary" />
+                                        </div>
+                                        <p className="text-sm font-medium text-heritage-textDark mb-1">
+                                            Upload Mobile Banner Image
+                                        </p>
+                                        <p className="text-xs text-heritage-text/60">
+                                            PNG, JPG up to 5MB • Recommended: 600x800px
+                                        </p>
+                                        <input
+                                            ref={mobileFileInputRef}
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => {
+                                                handleMobileBannerUpload(e);
+                                                field.onChange(e.target.files?.[0] || null);
+                                            }}
+                                            className="hidden"
+                                        />
+                                    </label>
+                                )}
+                                {errors.mobileBannerImage && (
+                                    <p className="mt-1.5 text-sm text-red-600 flex items-center animate-slide-down">
+                                        <svg
+                                            className="w-4 h-4 mr-1"
+                                            fill="currentColor"
+                                            viewBox="0 0 20 20"
+                                        >
+                                            <path
+                                                fillRule="evenodd"
+                                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                                clipRule="evenodd"
+                                            />
+                                        </svg>
+                                        {errors.mobileBannerImage.message}
+                                    </p>
+                                )}
+                            </div>
+                        )}
+                    />
+                </div>
+
                 {/* Loading Overlay */}
                 {isLoading && (
                     <div className="absolute inset-0 bg-white/90 backdrop-blur-sm rounded-xl flex flex-col items-center justify-center z-50">
@@ -518,8 +657,8 @@ const YatraModal: React.FC<YatraModalProps> = ({ isOpen, onClose, onSubmit, edit
                     >
                         Cancel
                     </Button>
-                    <Button 
-                        type="submit" 
+                    <Button
+                        type="submit"
                         variant="admin"
                         disabled={isLoading}
                         isLoading={isLoading}

@@ -27,7 +27,7 @@ export interface YatraRegistration {
   id: string;
   pnr: string;
   name: string;
-    contactNumber: string;
+  contactNumber: string;
   numberOfPersons: number;
   persons: Person[];
   boardingPoint: {
@@ -106,6 +106,7 @@ export interface Yatra {
   id: string;
   name: string;
   banner_image: string;
+  mobile_banner_image?: string; // Optional mobile banner
   start_date: string;
   end_date: string;
   description?: string;

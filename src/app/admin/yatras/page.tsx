@@ -31,6 +31,7 @@ import { useUploadBase64Mutation } from '@/services/cloudinaryApi';
 interface YatraFormData {
   title: string;
   bannerImage?: File | string | null;
+  mobileBannerImage?: File | string | null;
   startDate: string;
   endDate: string;
   registerStartDate: string;
@@ -83,6 +84,7 @@ export default function YatrasPage() {
   const onSubmit = async (data: YatraFormData) => {
     try {
       let bannerImageUrl: string | undefined = undefined;
+      let mobileBannerImageUrl: string | null | undefined = undefined;
 
       // If banner image is a File, convert to base64 and upload to Cloudinary
       if (data.bannerImage instanceof File) {
@@ -111,7 +113,6 @@ export default function YatrasPage() {
             toast.success('Banner image uploaded successfully!');
           } else {
             throw new Error(uploadResult.error || 'Failed to upload banner image');
-            toast.error('Failed to upload banner image');
           }
         } catch (uploadError: any) {
           console.error('Banner upload error:', uploadError);
@@ -123,30 +124,92 @@ export default function YatrasPage() {
         bannerImageUrl = data.bannerImage;
       }
 
+      // Handle mobile banner image upload
+      if (data.mobileBannerImage instanceof File) {
+        try {
+          // Convert file to base64
+          const base64Image = await fileToBase64(data.mobileBannerImage);
+
+          // Generate public_id from yatra title (sanitized)
+          const sanitizedTitle = data.title
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '_')
+            .replace(/^_+|_+$/g, '');
+          const publicId = `yatra_mobile_banner_${sanitizedTitle}_${Date.now()}`;
+
+          // Upload to Cloudinary
+          const uploadResult = await uploadBase64({
+            base64Image,
+            folder: 'yatra/mobile-banners',
+            public_id: publicId,
+            tags: ['yatra', 'mobile-banner', 'upload'],
+          }).unwrap();
+
+          if (uploadResult.success && uploadResult.data) {
+            mobileBannerImageUrl = uploadResult.data.secure_url;
+            toast.success('Mobile banner image uploaded successfully!');
+          } else {
+            throw new Error(uploadResult.error || 'Failed to upload mobile banner image');
+          }
+        } catch (uploadError: any) {
+          console.error('Mobile banner upload error:', uploadError);
+          toast.error(uploadError?.data?.error || uploadError?.message || 'Failed to upload mobile banner image');
+          return; // Stop submission if upload fails
+        }
+      } else if (typeof data.mobileBannerImage === 'string' && data.mobileBannerImage) {
+        // If it's already a URL string, use it directly
+        mobileBannerImageUrl = data.mobileBannerImage;
+      } else if (editingYatra && data.mobileBannerImage === null) {
+        // If mobile banner was removed (null), send null to API
+        mobileBannerImageUrl = null;
+      }
+
       if (editingYatra) {
         // Update existing yatra - transform to snake_case for API
-        await updateYatra({
-          id: editingYatra.id,
-          data: {
-            name: data.title,
-            banner_image: bannerImageUrl,
-            start_date: data.startDate,
-            end_date: data.endDate,
-            registration_start_date: data.registerStartDate,
-            registration_end_date: data.registerEndDate,
-          },
-        }).unwrap();
-        toast.success(`Yatra "${data.title}" updated successfully!`);
-      } else {
-        // Create new yatra - transform to snake_case for API
-        await createYatra({
+        const updateData: any = {
           name: data.title,
-          banner_image: bannerImageUrl,
           start_date: data.startDate,
           end_date: data.endDate,
           registration_start_date: data.registerStartDate,
           registration_end_date: data.registerEndDate,
+        };
+
+        // Only include banner_image if it was changed
+        if (bannerImageUrl !== undefined) {
+          updateData.banner_image = bannerImageUrl;
+        }
+
+        // Include mobile_banner_image (can be URL, or null if removed)
+        if (mobileBannerImageUrl !== undefined) {
+          updateData.mobile_banner_image = mobileBannerImageUrl;
+        }
+
+        await updateYatra({
+          id: editingYatra.id,
+          data: updateData,
         }).unwrap();
+        toast.success(`Yatra "${data.title}" updated successfully!`);
+      } else {
+        // Create new yatra - transform to snake_case for API
+        const createData: any = {
+          name: data.title,
+          start_date: data.startDate,
+          end_date: data.endDate,
+          registration_start_date: data.registerStartDate,
+          registration_end_date: data.registerEndDate,
+        };
+
+        // Include banner_image if provided
+        if (bannerImageUrl) {
+          createData.banner_image = bannerImageUrl;
+        }
+
+        // Include mobile_banner_image if provided
+        if (mobileBannerImageUrl) {
+          createData.mobile_banner_image = mobileBannerImageUrl;
+        }
+
+        await createYatra(createData).unwrap();
         toast.success(`Yatra "${data.title}" created successfully!`);
       }
       setShowModal(false);

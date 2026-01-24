@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Calendar, Clock, ChevronLeft, ChevronRight, Ticket, MapPin } from 'lucide-react';
 import { Yatra } from '@/types';
+import { useWindowSize } from '@/utils/useViewPort';
 
 interface YatraCarouselProps {
   yatras: Yatra[];
@@ -14,15 +15,18 @@ interface YatraCarouselProps {
  * Yatra Carousel Component
  * Beautiful hero banner carousel with GSAP animations
  * Features: Navigation buttons, Register & Track buttons for each yatra
+ * Mobile banner support for optimized mobile view
  */
 export default function YatraCarousel({ yatras }: YatraCarouselProps) {
   const router = useRouter();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [imageFallbacks, setImageFallbacks] = useState<Record<string, string>>({});
+  const [isMobileView, setIsMobileView] = useState(false);
   const slideRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
   const buttonsRef = useRef<HTMLDivElement>(null);
-  
+  const { width } = useWindowSize();
+
   // Dynamically import GSAP
   const [gsap, setGsap] = useState<any>(null);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -30,7 +34,7 @@ export default function YatraCarousel({ yatras }: YatraCarouselProps) {
   useEffect(() => {
     // Check for reduced motion preference
     const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    
+
     if (prefersReducedMotion) {
       setIsLoaded(false);
       return;
@@ -46,11 +50,11 @@ export default function YatraCarousel({ yatras }: YatraCarouselProps) {
   // Auto-slide functionality
   useEffect(() => {
     if (yatras.length <= 1) return;
-    
+
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % yatras.length);
     }, 10000);
-    
+
     return () => clearInterval(timer);
   }, [yatras.length]);
 
@@ -180,15 +184,14 @@ export default function YatraCarousel({ yatras }: YatraCarouselProps) {
       {yatras.map((yatra, index) => (
         <div
           key={yatra.id}
-          className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-            index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
-          }`}
+          className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0 pointer-events-none'
+            }`}
         >
           {/* Background Image */}
           <div className="yatra-slide-image absolute inset-0">
             {yatra.banner_image ? (
               <Image
-                src={imageFallbacks[yatra.id] || yatra.banner_image}
+                src={width < 768 ? yatra.mobile_banner_image || yatra.banner_image : yatra.banner_image}
                 alt={yatra.name}
                 fill
                 className="object-cover"
@@ -218,10 +221,10 @@ export default function YatraCarousel({ yatras }: YatraCarouselProps) {
       <div className="absolute inset-0 z-20 flex items-center justify-center pt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
           <div ref={textRef} className="text-center max-w-5xl mx-auto">
-            
+
             {/* Main Heading */}
             <h1 className="hero-text text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white mb-4 md:mb-6 leading-tight drop-shadow-2xl">
-                {currentYatra.name}
+              {currentYatra.name}
             </h1>
 
             {/* Dates Info */}
@@ -261,7 +264,7 @@ export default function YatraCarousel({ yatras }: YatraCarouselProps) {
                 </span>
                 <span className="absolute inset-0 bg-gradient-to-r from-spiritual-zen-forest to-spiritual-zen-charcoal opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </button>
-              
+
               <button
                 onClick={() => router.push('/history')}
                 className="group border-2 border-white/90 text-white hover:bg-white rounded-full px-6 md:px-10 lg:px-12 py-3 md:py-4 uppercase tracking-wider text-xs md:text-sm lg:text-base font-semibold backdrop-blur-sm hover:backdrop-blur-md transition-all duration-300 transform hover:scale-105 shadow-lg hover:text-spiritual-zen-charcoal whitespace-nowrap"
@@ -301,7 +304,7 @@ export default function YatraCarousel({ yatras }: YatraCarouselProps) {
           >
             <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 group-hover:-translate-x-1 transition-transform" />
           </button>
-          
+
           <button
             onClick={nextSlide}
             className="absolute right-2 sm:right-4 md:right-8 top-1/2 -translate-y-1/2 z-30 w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full bg-white/10 backdrop-blur-md hover:bg-white/20 border border-white/20 flex items-center justify-center text-white transition-all duration-300 hover:scale-110 group"
@@ -319,19 +322,17 @@ export default function YatraCarousel({ yatras }: YatraCarouselProps) {
             <button
               key={index}
               onClick={() => goToSlide(index)}
-              className={`relative transition-all duration-500 ease-out ${
-                index === currentSlide
-                  ? 'w-8 sm:w-10 md:w-12 h-2 sm:h-3 md:h-4'
-                  : 'w-2 sm:w-3 md:w-4 h-2 sm:h-3 md:h-4 opacity-60 hover:opacity-100'
-              }`}
+              className={`relative transition-all duration-500 ease-out ${index === currentSlide
+                ? 'w-8 sm:w-10 md:w-12 h-2 sm:h-3 md:h-4'
+                : 'w-2 sm:w-3 md:w-4 h-2 sm:h-3 md:h-4 opacity-60 hover:opacity-100'
+                }`}
               aria-label={`Go to slide ${index + 1}`}
             >
               <div
-                className={`absolute inset-0 rounded-full transition-all duration-500 ${
-                  index === currentSlide
-                    ? 'bg-spiritual-zen-forest shadow-lg shadow-spiritual-zen-forest/50'
-                    : 'bg-white/50 hover:bg-white/80'
-                }`}
+                className={`absolute inset-0 rounded-full transition-all duration-500 ${index === currentSlide
+                  ? 'bg-spiritual-zen-forest shadow-lg shadow-spiritual-zen-forest/50'
+                  : 'bg-white/50 hover:bg-white/80'
+                  }`}
               />
             </button>
           ))}

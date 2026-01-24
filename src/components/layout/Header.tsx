@@ -1,11 +1,3 @@
-/**
- * Enhanced Navbar Component for Spiritual Module
- * Professional navigation with smooth transitions, GSAP animations, and modern mobile menu
- * Based on Header component structure with spiritual module adaptations
- */
-
-'use client';
-
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
