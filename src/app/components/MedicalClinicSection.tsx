@@ -58,7 +58,7 @@ export default function MedicalClinicSection() {
         <section className="relative py-16 md:py-24 lg:py-32 bg-gradient-to-br from-white via-spiritual-saffron/5 to-spiritual-zen-forest/5 overflow-hidden">
             {/* Decorative Background Elements */}
             <div className="absolute top-0 left-0 w-80 h-80 md:w-96 md:h-96 bg-spiritual-saffron/8 rounded-full blur-3xl -z-10 animate-pulse" />
-            <div className="absolute bottom-0 right-0 w-72 h-72 md:w-80 md:h-80 bg-spiritual-zen-forest/8 rounded-full blur-3xl -z-10 animate-pulse" style={{animationDelay: "1s"}} />
+            <div className="absolute bottom-0 right-0 w-72 h-72 md:w-80 md:h-80 bg-spiritual-zen-forest/8 rounded-full blur-3xl -z-10 animate-pulse" style={{ animationDelay: "1s" }} />
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header */}
@@ -144,12 +144,12 @@ export default function MedicalClinicSection() {
                                 Advanced Medical Care
                             </h3>
                             <p className="text-spiritual-textLight leading-relaxed text-sm md:text-base lg:text-lg">
-                                Sant Seva Hospital is a beacon of hope with cutting-edge medical facilities, experienced specialists, and a commitment to serve every soul. From emergency care to specialized surgeries, no one is left behind.
+                                Hospital is a beacon of hope with cutting-edge medical facilities, experienced specialists, and a commitment to serve every soul. From emergency care to specialized surgeries, no one is left behind.
                             </p>
                         </div>
 
                         <div className="grid grid-cols-3 gap-3 md:gap-4">
-                            {medicalStats.map((stat, idx) => (
+                            {medicalStats?.map((stat, idx) => (
                                 <div
                                     key={idx}
                                     className="bg-gradient-to-br from-white to-spiritual-zen-surface rounded-xl md:rounded-2xl p-3 md:p-5 lg:p-6 text-center border border-spiritual-zen-highlight/40 hover:border-spiritual-saffron/60 hover:shadow-lg transition-all duration-300 hover:-translate-y-2 group"
