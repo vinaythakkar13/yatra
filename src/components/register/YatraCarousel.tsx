@@ -212,53 +212,57 @@ export default function YatraCarousel({ yatras }: YatraCarouselProps) {
             )}
           </div>
 
-          {/* Gradient Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-b from-spiritual-zen-charcoal/85 via-spiritual-zen-charcoal/60 to-spiritual-zen-charcoal/80 z-10" />
+          {/* Gradient Overlay - Mobile: bottom only, Desktop: full */}
+          {/* Mobile: Bottom gradient with theme colors */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-spiritual-zen-charcoal md:hidden z-10" />
+
+          {/* Desktop: Full overlay gradient */}
+          <div className="hidden md:block absolute inset-0 bg-gradient-to-b from-spiritual-zen-charcoal/85 via-spiritual-zen-charcoal/60 to-spiritual-zen-charcoal/80 z-10" />
         </div>
       ))}
 
       {/* Content Overlay */}
-      <div className="absolute inset-0 z-20 flex items-center justify-center pt-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-          <div ref={textRef} className="text-center max-w-5xl mx-auto">
+      <div className="absolute inset-0 z-20 flex md:items-center md:justify-center md:pt-20 flex-col justify-end">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full md:flex md:items-center md:justify-center">
+          <div ref={textRef} className="text-center md:text-center max-w-5xl mx-auto pb-6 md:pb-0 md:pt-0">
 
             {/* Main Heading */}
-            <h1 className="hero-text text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white mb-4 md:mb-6 leading-tight drop-shadow-2xl">
+            <h1 className="hero-text text-2xl sm:text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-white mb-2 md:mb-6 leading-tight drop-shadow-2xl">
               {currentYatra.name}
             </h1>
 
             {/* Dates Info */}
-            <div className="hero-text flex flex-wrap items-center justify-center gap-4 md:gap-6 mb-6 md:mb-8 text-white/95">
-              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
-                <Calendar className="w-4 h-4 md:w-5 md:h-5" />
-                <span className="text-sm md:text-base font-medium">
+            <div className="hero-text flex flex-col sm:flex-row sm:flex-wrap items-center justify-center gap-2 md:gap-6 mb-3 md:mb-8 text-white/95">
+              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-full">
+                <Calendar className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
+                <span className="text-xs sm:text-sm md:text-base font-medium">
                   {formatDate(currentYatra.start_date)} - {formatDate(currentYatra.end_date)}
                 </span>
               </div>
-              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">
-                <Clock className="w-4 h-4 md:w-5 md:h-5" />
-                <span className="text-sm md:text-base font-medium">
-                  Registration: {formatDate(currentYatra.registration_start_date)} - {formatDate(currentYatra.registration_end_date)}
+              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-full">
+                <Clock className="w-4 h-4 md:w-5 md:h-5 flex-shrink-0" />
+                <span className="text-xs sm:text-sm md:text-base font-medium">
+                  Reg: {formatDate(currentYatra.registration_start_date)} - {formatDate(currentYatra.registration_end_date)}
                 </span>
               </div>
             </div>
 
             {/* Description */}
             {currentYatra.description && (
-              <p className="hero-text text-sm sm:text-base md:text-lg lg:text-xl text-white/95 mb-6 md:mb-10 max-w-3xl mx-auto leading-relaxed font-normal px-2 drop-shadow-lg">
+              <p className="hero-text text-xs sm:text-sm md:text-lg lg:text-xl text-white/95 mb-3 md:mb-10 max-w-3xl mx-auto leading-relaxed font-normal px-2 drop-shadow-lg hidden sm:block">
                 {currentYatra.description}
               </p>
             )}
 
             {/* Action Buttons */}
-            <div ref={buttonsRef} className="hero-button flex flex-col sm:flex-row gap-3 sm:gap-4 md:gap-6 justify-center items-center">
+            <div ref={buttonsRef} className="hero-button flex flex-col sm:flex-row gap-2 sm:gap-4 md:gap-6 justify-center items-center">
               <button
                 onClick={() => {
                   router.push(`/register?yatraId=${currentYatra.id}`);
                 }}
-                className="group relative bg-spiritual-zen-forest hover:bg-spiritual-zen-charcoal text-white rounded-full px-6 md:px-10 lg:px-12 py-3 md:py-4 uppercase tracking-wider text-xs md:text-sm lg:text-base font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden whitespace-nowrap border-2 border-spiritual-zen-forest"
+                className="group relative bg-spiritual-zen-forest hover:bg-spiritual-zen-charcoal text-white rounded-full px-5 sm:px-6 md:px-10 lg:px-12 py-2 sm:py-3 md:py-4 uppercase tracking-wider text-xs md:text-sm lg:text-base font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden whitespace-nowrap border-2 border-spiritual-zen-forest w-full sm:w-auto"
               >
-                <span className="relative z-10 flex items-center gap-2">
+                <span className="relative z-10 flex items-center justify-center gap-2">
                   <Ticket className="w-4 h-4 md:w-5 md:h-5" />
                   Register Now
                 </span>
@@ -267,9 +271,9 @@ export default function YatraCarousel({ yatras }: YatraCarouselProps) {
 
               <button
                 onClick={() => router.push('/history')}
-                className="group border-2 border-white/90 text-white hover:bg-white rounded-full px-6 md:px-10 lg:px-12 py-3 md:py-4 uppercase tracking-wider text-xs md:text-sm lg:text-base font-semibold backdrop-blur-sm hover:backdrop-blur-md transition-all duration-300 transform hover:scale-105 shadow-lg hover:text-spiritual-zen-charcoal whitespace-nowrap"
+                className="group border-2 border-white/90 text-white hover:bg-white rounded-full px-5 sm:px-6 md:px-10 lg:px-12 py-2 sm:py-3 md:py-4 uppercase tracking-wider text-xs md:text-sm lg:text-base font-semibold backdrop-blur-sm hover:backdrop-blur-md transition-all duration-300 transform hover:scale-105 shadow-lg hover:text-spiritual-zen-charcoal whitespace-nowrap w-full sm:w-auto"
               >
-                <span className="group-hover:text-spiritual-zen-charcoal transition-colors duration-300 flex items-center gap-2">
+                <span className="group-hover:text-spiritual-zen-charcoal transition-colors duration-300 flex items-center justify-center gap-2">
                   <MapPin className="w-4 h-4 md:w-5 md:h-5" />
                   Track Booking
                 </span>

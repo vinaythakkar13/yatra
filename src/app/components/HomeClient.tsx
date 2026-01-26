@@ -1,4 +1,6 @@
 import YatraCarousel from '@/components/register/YatraCarousel';
+import CharityLangarSewaSection from './CharityLangarSewaSection';
+import MedicalClinicSection from './MedicalClinicSection';
 import { Yatra } from '@/types';
 
 interface HomeClientProps {
@@ -6,7 +8,7 @@ interface HomeClientProps {
 }
 
 export default function HomeClient({ yatras }: HomeClientProps) {
- 
+
   return (
     <div className="animate-fade-in">
       {/* Hero Banner with Yatra Carousel */}
@@ -15,6 +17,12 @@ export default function HomeClient({ yatras }: HomeClientProps) {
           <YatraCarousel yatras={yatras} />
         </div>
       )}
+
+      {/* Charity Langar Sewa Section */}
+      <CharityLangarSewaSection />
+
+      {/* Medical & Clinic Section */}
+      <MedicalClinicSection />
     </div>
   );
 }
