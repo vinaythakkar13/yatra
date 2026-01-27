@@ -25,13 +25,26 @@ import contactData from '@/spiritual/data/contact.json';
 export default function Footer() {
     const currentYear = new Date().getFullYear();
 
-    // Social media links with spiritual theme colors
+    // Social media links with original brand colors
     const socialLinks = [
-        { icon: FaFacebookF, href: contactData.socialMedia?.facebook || '#', label: 'Facebook' },
-        { icon: FaInstagram, href: contactData.socialMedia?.instagram || '#', label: 'Instagram' },
-        { icon: FaYoutube, href: contactData.socialMedia?.youtube || '#', label: 'YouTube' },
-        // { icon: FaTwitter, href: '#', label: 'Twitter' },
-        // { icon: FaLinkedinIn, href: '#', label: 'LinkedIn' },
+        {
+            icon: FaFacebookF,
+            href: contactData.socialMedia?.facebook || '#',
+            label: 'Facebook',
+            brandColor: 'bg-[#1877F2]'
+        },
+        {
+            icon: FaInstagram,
+            href: contactData.socialMedia?.instagram || '#',
+            label: 'Instagram',
+            brandColor: 'bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7]'
+        },
+        {
+            icon: FaYoutube,
+            href: contactData.socialMedia?.youtube || '#',
+            label: 'YouTube',
+            brandColor: 'bg-[#FF0000]'
+        },
     ];
 
     const quickLinks = [
@@ -76,7 +89,7 @@ export default function Footer() {
                                 </span>
                             </Link>
                             <p className="text-spiritual-zen-mist leading-relaxed text-sm md:text-base">
-                                For over 150 years, Sant Seva Charitable Trust has been dedicated to serving humanity through
+                                Dhan Guru Nanak Shah Trust has been dedicated to serving humanity through
                                 free medical care, langar seva, education, and community support. Join us in our mission to make
                                 a difference.
                             </p>
@@ -89,7 +102,7 @@ export default function Footer() {
                                         <a
                                             key={social.label}
                                             href={social.href}
-                                            className="group w-10 h-10 md:w-11 md:h-11 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white transition-all duration-300 hover:bg-spiritual-saffron hover:scale-110 hover:shadow-lg border border-white/20 hover:border-spiritual-saffron"
+                                            className={`group w-10 h-10 md:w-11 md:h-11 rounded-full flex items-center justify-center text-white transition-all duration-300 ${social.brandColor} hover:scale-110 hover:shadow-lg hover:brightness-110 shadow-md`}
                                             aria-label={social.label}
                                             target="_blank"
                                             rel="noopener noreferrer"

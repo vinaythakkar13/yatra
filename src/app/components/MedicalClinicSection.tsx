@@ -165,7 +165,7 @@ export default function MedicalClinicSection() {
 
                         {/* CTA Button with Animation */}
                         <button
-                            onClick={() => router.push('/spiritual/about')}
+                            onClick={() => router.push('/charity')}
                             className="group relative w-full md:w-auto mt-6 lg:mt-8 inline-flex items-center justify-center gap-2 md:gap-3 bg-gradient-to-r from-spiritual-saffron to-spiritual-zen-accent hover:from-spiritual-zen-accent hover:to-spiritual-saffron text-white rounded-full px-6 md:px-8 lg:px-10 py-3 md:py-4 font-semibold uppercase tracking-widest text-xs md:text-sm shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden transform hover:scale-105"
                         >
                             <span className="relative z-10 flex items-center gap-2">

@@ -91,15 +91,15 @@ export default function HeroSlider() {
             // After fade out, reset and animate new content
             gsap.delayedCall(0.4, () => {
                 // Reset text positions
-                gsap.set(heroTexts, { 
-                    y: 40, 
+                gsap.set(heroTexts, {
+                    y: 40,
                     opacity: 0,
                     clearProps: 'scale'
                 });
-                
+
                 // Reset button positions
-                gsap.set(heroButtons, { 
-                    scale: 0.8, 
+                gsap.set(heroButtons, {
+                    scale: 0.8,
                     opacity: 0,
                     y: 20,
                     clearProps: 'x'
@@ -193,9 +193,8 @@ export default function HeroSlider() {
             {slides.map((slide, index) => (
                 <div
                     key={slide.id}
-                    className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-                        index === currentSlide ? 'opacity-100 z-10 active-slide' : 'opacity-0 z-0 pointer-events-none'
-                    }`}
+                    className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentSlide ? 'opacity-100 z-10 active-slide' : 'opacity-0 z-0 pointer-events-none'
+                        }`}
                 >
                     {/* Background Image */}
                     <div className="hero-slide-image absolute inset-0">
@@ -252,7 +251,7 @@ export default function HeroSlider() {
                                     <span className="absolute inset-0 bg-gradient-to-r from-spiritual-zen-forest to-spiritual-zen-charcoal opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                                 </Button>
                             </Link>
-                            <Link href="/spiritual/about" className="hero-button inline-flex">
+                            <Link href="/charity" className="hero-button inline-flex">
                                 <Button
                                     variant="outline"
                                     className="group border-2 border-white/90 text-white hover:bg-white rounded-full px-6 md:px-10 lg:px-12 py-3 md:py-4 uppercase tracking-wider text-xs md:text-sm lg:text-base font-semibold backdrop-blur-sm hover:backdrop-blur-md transition-all duration-300 transform hover:scale-105 shadow-lg hover:text-spiritual-zen-charcoal whitespace-nowrap"
@@ -301,19 +300,17 @@ export default function HeroSlider() {
                     <button
                         key={index}
                         onClick={() => goToSlide(index)}
-                        className={`relative transition-all duration-500 ease-out ${
-                            index === currentSlide
-                                ? 'w-8 sm:w-10 md:w-12 h-2 sm:h-3 md:h-4'
-                                : 'w-2 sm:w-3 md:w-4 h-2 sm:h-3 md:h-4 opacity-60 hover:opacity-100'
-                        }`}
+                        className={`relative transition-all duration-500 ease-out ${index === currentSlide
+                            ? 'w-8 sm:w-10 md:w-12 h-2 sm:h-3 md:h-4'
+                            : 'w-2 sm:w-3 md:w-4 h-2 sm:h-3 md:h-4 opacity-60 hover:opacity-100'
+                            }`}
                         aria-label={`Go to slide ${index + 1}`}
                     >
                         <div
-                            className={`absolute inset-0 rounded-full transition-all duration-500 ${
-                                index === currentSlide
-                                    ? 'bg-spiritual-zen-forest shadow-lg shadow-spiritual-zen-forest/50'
-                                    : 'bg-white/50 hover:bg-white/80'
-                            }`}
+                            className={`absolute inset-0 rounded-full transition-all duration-500 ${index === currentSlide
+                                ? 'bg-spiritual-zen-forest shadow-lg shadow-spiritual-zen-forest/50'
+                                : 'bg-white/50 hover:bg-white/80'
+                                }`}
                         />
                     </button>
                 ))}
