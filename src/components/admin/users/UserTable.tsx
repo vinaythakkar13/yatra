@@ -1,5 +1,5 @@
 import React from 'react';
-import { Eye, RefreshCw, UserX, Home, FileText, CheckCircle, XCircle } from 'lucide-react';
+import { Eye, RefreshCw, UserX, Home, FileText, CheckCircle, XCircle, ArrowRight, ArrowLeft } from 'lucide-react';
 import Table from '@/components/ui/Table';
 
 interface UserTableProps {
@@ -63,9 +63,20 @@ const UserTable: React.FC<UserTableProps> = ({
             key: 'arrivalDate',
             header: 'Arrival',
             render: (row: any) => (
-                <span className="text-heritage-text">
-                    {row.arrivalDate}
-                </span>
+                <div className="flex flex-col gap-1">
+                    <span className="text-heritage-text bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-semibold">
+                        {/* arrival icon */}
+                        <ArrowRight className="w-4 h-4 inline-block" />
+                        <span className="ml-1">{row.arrivalDate}</span>
+                    </span>
+
+                    {/* make it badge red for departure with exit icon */}
+                    {/* <span className="text-heritage-text bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-semibold">
+
+                        <ArrowLeft className="w-4 h-4 inline-block" />
+                        <span className="ml-1">{row.}</span>
+                    </span> */}
+                </div>
             ),
         },
         {

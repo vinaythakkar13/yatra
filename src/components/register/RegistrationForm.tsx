@@ -99,14 +99,28 @@ export const EXAMPLE_REGISTRATION_PAYLOAD: RegistrationPayload = {
     city: "Mumbai",
     state: "Maharashtra",
   },
-  arrivalDate: "2025-03-24T00:00:00.000Z",
-  returnDate: "2025-03-26T00:00:00.000Z",
+  arrivalDate: "2026-03-24",
+  returnDate: "2026-03-26",
   ticketImages: [
     "https://res.cloudinary.com/example/image/upload/ticket1.jpg",
     "https://res.cloudinary.com/example/image/upload/ticket2.jpg",
   ],
   yatraId: "yatra-123",
 };
+
+/**
+ * Format date to YYYY-MM-DD without timezone conversion
+ * Prevents timezone shifts when sending dates to API
+ * 
+ * @param date - Date object to format
+ * @returns Date string in YYYY-MM-DD format (local timezone)
+ */
+function formatDateForAPI(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
 
 /**
  * Build Registration Payload
@@ -142,8 +156,8 @@ export const EXAMPLE_REGISTRATION_PAYLOAD: RegistrationPayload = {
  *     city: "Mumbai",                      // string: City name
  *     state: "Maharashtra"                 // string: Indian state name
  *   },
- *   arrivalDate: "2025-03-24T00:00:00.000Z",  // string: ISO 8601 date format
- *   returnDate: "2025-03-26T00:00:00.000Z",    // string: ISO 8601 date format
+ *   arrivalDate: "2026-03-24",            // string: YYYY-MM-DD format (local date)
+ *   returnDate: "2026-03-26",             // string: YYYY-MM-DD format (local date)
  *   ticketImages: [                       // array: Ticket image URLs or base64
  *     "https://cloudinary.com/image1.jpg",
  *     "https://cloudinary.com/image2.jpg"
@@ -191,8 +205,8 @@ export function buildRegistrationPayload(
       city: formData.boardingCity,
       state: formData.boardingState,
     },
-    arrivalDate: formData.arrivalDate ? formData.arrivalDate.toISOString() : '',
-    returnDate: formData.returnDate ? formData.returnDate.toISOString() : '',
+    arrivalDate: formData.arrivalDate ? formatDateForAPI(formData.arrivalDate) : '',
+    returnDate: formData.returnDate ? formatDateForAPI(formData.returnDate) : '',
     ticketImages: ticketImageUrls,
     ...(yatraId && { yatraId }),
   };

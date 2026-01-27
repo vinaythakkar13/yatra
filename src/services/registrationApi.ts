@@ -214,7 +214,7 @@ export interface ApiRegistration {
 
 export interface GetRegistrationsResponse {
   success: boolean;
-  data?: ApiRegistration[]; // API returns array directly
+  data?: Registration[]; // Transformed to frontend format (camelCase)
   pagination?: {
     total: number;
     page: number;
@@ -246,11 +246,11 @@ export const registrationApi = baseApi.injectEndpoints({
 
     /**
      * Get Registrations Endpoint
-     * GET /registrations?yatraId={yatraId}&pnr={pnr}
+     * GET /registrations?yatraId={yatraId}&pnr={pnr}&page={page}&limit={limit}
      * 
-     * Fetches all registrations for a specific yatra or by PNR
+     * Fetches all registrations for a specific yatra or by PNR with pagination
      */
-    getRegistrations: builder.query<{ success: boolean; data: { registrations: Registration[]; total: number; page?: number; limit?: number; totalPages?: number }; message?: string; error?: string }, { yatraId?: string; pnr?: string; page?: number; limit?: number }>({
+    getRegistrations: builder.query<GetRegistrationsResponse, { yatraId?: string; pnr?: string; page?: number; limit?: number }>({
       query: ({ yatraId, pnr, page, limit }) => {
         const params: Record<string, string | number> = {};
         if (yatraId) params.yatraId = yatraId;
@@ -264,7 +264,7 @@ export const registrationApi = baseApi.injectEndpoints({
           params,
         };
       },
-      transformResponse: (response: any): { success: boolean; data: { registrations: Registration[]; total: number; page?: number; limit?: number; totalPages?: number }; message?: string; error?: string } => {
+      transformResponse: (response: any): GetRegistrationsResponse => {
         // Transform API response (snake_case) to frontend format (camelCase)
         // API returns: { success: true, data: [...], pagination: {...} }
         if (response.success && response.data && Array.isArray(response.data)) {
@@ -308,13 +308,8 @@ export const registrationApi = baseApi.injectEndpoints({
 
           return {
             success: true,
-            data: {
-              registrations,
-              total: response.pagination?.total || registrations.length,
-              page: response.pagination?.page,
-              limit: response.pagination?.limit,
-              totalPages: response.pagination?.totalPages,
-            },
+            data: registrations, // Return array directly, not wrapped
+            pagination: response.pagination,
             message: response.message,
           };
         }
@@ -322,10 +317,7 @@ export const registrationApi = baseApi.injectEndpoints({
         // Return error format if response is not successful
         return {
           success: false,
-          data: {
-            registrations: [],
-            total: 0,
-          },
+          data: [],
           error: response.error || response.message || 'Failed to fetch registrations',
         };
       },

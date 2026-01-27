@@ -60,7 +60,11 @@ function UserManagement() {
     };
   }, []);
 
-  // Fetch registrations from API
+  // Pagination State (must be before API query)
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // Fetch registrations from API with pagination
   const {
     data: registrationsResponse,
     isLoading: isLoadingRegistrations,
@@ -68,7 +72,11 @@ function UserManagement() {
     error: registrationsError,
     refetch: refetchRegistrations,
   } = useGetRegistrationsQuery(
-    { yatraId: selectedYatraId! },
+    {
+      yatraId: selectedYatraId!,
+      page: currentPage,
+      limit: itemsPerPage
+    },
     { skip: !selectedYatraId } // Skip query if no yatraId
   );
 
@@ -77,8 +85,21 @@ function UserManagement() {
     if (!registrationsResponse?.success || !registrationsResponse?.data) {
       return [];
     }
-    return registrationsResponse.data.registrations || [];
+    return registrationsResponse.data || [];
   }, [registrationsResponse]);
+
+  // Extract pagination metadata from API response
+  const paginationData = useMemo(() => {
+    if (!registrationsResponse?.success || !registrationsResponse?.pagination) {
+      return {
+        total: 0,
+        page: 1,
+        limit: itemsPerPage,
+        totalPages: 0
+      };
+    }
+    return registrationsResponse.pagination;
+  }, [registrationsResponse, itemsPerPage]);
 
   // Filter States
   const [searchTerm, setSearchTerm] = useState('');
@@ -89,9 +110,7 @@ function UserManagement() {
   // Fetch Indian states from API
   const { data: statesData, isLoading: isLoadingStates } = useGetIndianStatesQuery();
 
-  // Pagination State
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+
 
   // Selection States
   const [selectedUser, setSelectedUser] = useState<any>(null);
@@ -157,28 +176,8 @@ function UserManagement() {
     (person: any) => !assignedPassengers.some(ap => ap.name === person.name)
   ) || [];
 
-  // Filter Logic
-  const filteredRegistrations = registrations.filter((reg) => {
-    const contactNumber = reg.contactNumber || reg.whatsappNumber || '';
-    const matchesSearch =
-      reg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      reg.pnr.includes(searchTerm) ||
-      contactNumber.includes(searchTerm);
-
-    const matchesState = !filterState || reg.boardingPoint.state === filterState;
-    const matchesRoomStatus = !filterRoomStatus || reg.roomStatus === filterRoomStatus;
-    const matchesDate = !filterDate || new Date(reg.arrivalDate).toDateString() === filterDate.toDateString();
-
-    return matchesSearch && matchesState && matchesRoomStatus && matchesDate;
-  });
-
-  // Pagination Logic
-  const totalItems = filteredRegistrations.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  const paginatedRegistrations = filteredRegistrations.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  // Note: Filtering is now handled server-side via API query parameters
+  // Client-side filtering removed to use server-side pagination
 
   // Reset pagination when filters change
   React.useEffect(() => {
@@ -457,14 +456,14 @@ function UserManagement() {
         setFilterDate={setFilterDate}
         stateOptions={stateOptions}
         roomStatusOptions={roomStatusOptions}
-        totalCount={registrations.length}
-        filteredCount={filteredRegistrations.length}
+        totalCount={paginationData.total}
+        filteredCount={paginationData.total}
         isLoadingStates={isLoadingStates}
       />
 
       {/* Users Table */}
       <UserTable
-        data={paginatedRegistrations}
+        data={registrations}
         onViewDetails={handleViewDetails}
         onAssignRoom={handleAssignRoom}
         onReassignRoom={handleReassignRoom}
@@ -474,11 +473,11 @@ function UserManagement() {
 
       {/* Pagination */}
       <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
+        currentPage={paginationData.page}
+        totalPages={paginationData.totalPages}
         onPageChange={setCurrentPage}
-        totalItems={totalItems}
-        itemsPerPage={itemsPerPage}
+        totalItems={paginationData.total}
+        itemsPerPage={paginationData.limit}
       />
 
       {/* Modals */}
