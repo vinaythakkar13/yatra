@@ -36,7 +36,7 @@ export default function ImageUpload({
   label = 'Upload Images',
   error,
   helperText,
-  maxFiles = 5,
+  maxFiles = 10,
   onChange,
   value = [],
 }: ImageUploadProps) {

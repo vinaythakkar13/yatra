@@ -1046,7 +1046,7 @@ export default function RegistrationForm({ initialPnr = '', yatraDetails }: Regi
             <ImageUpload
               label=""
               helperText=""
-              maxFiles={5}
+              maxFiles={10}
               value={ticketImages}
               onChange={handleTicketImagesChange}
               error={ticketImagesError}
