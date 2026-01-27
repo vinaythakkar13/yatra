@@ -19,6 +19,9 @@ const UserTable: React.FC<UserTableProps> = ({
     onUnassignRoom,
     onViewDocuments,
 }) => {
+
+    console.log(data);
+
     const columns = [
         {
             key: 'pnr',
@@ -61,21 +64,20 @@ const UserTable: React.FC<UserTableProps> = ({
         },
         {
             key: 'arrivalDate',
-            header: 'Arrival',
+            header: 'Journey Dates',
             render: (row: any) => (
                 <div className="flex flex-col gap-1">
-                    <span className="text-heritage-text bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-semibold">
+                    <span className="text-heritage-text whitespace-nowrap bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-semibold">
                         {/* arrival icon */}
                         <ArrowRight className="w-4 h-4 inline-block" />
                         <span className="ml-1">{row.arrivalDate}</span>
                     </span>
 
                     {/* make it badge red for departure with exit icon */}
-                    {/* <span className="text-heritage-text bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-semibold">
-
+                    <span className="text-heritage-text whitespace-nowrap bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-semibold">
                         <ArrowLeft className="w-4 h-4 inline-block" />
-                        <span className="ml-1">{row.}</span>
-                    </span> */}
+                        <span className="ml-1">{row.returnDate}</span>
+                    </span>
                 </div>
             ),
         },
