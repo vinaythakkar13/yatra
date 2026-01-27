@@ -1,6 +1,7 @@
 import React from 'react';
 import { Eye, RefreshCw, UserX, Home, FileText, CheckCircle, XCircle, ArrowRight, ArrowLeft } from 'lucide-react';
 import Table from '@/components/ui/Table';
+import moment from 'moment';
 
 interface UserTableProps {
     data: any[];
@@ -19,8 +20,6 @@ const UserTable: React.FC<UserTableProps> = ({
     onUnassignRoom,
     onViewDocuments,
 }) => {
-
-    console.log(data);
 
     const columns = [
         {
@@ -79,6 +78,16 @@ const UserTable: React.FC<UserTableProps> = ({
                         <span className="ml-1">{row.returnDate}</span>
                     </span>
                 </div>
+            ),
+        },
+        // created at based on IST
+        {
+            key: 'createdAt',
+            header: 'Created At',
+            render: (row: any) => (
+                <span className="text-heritage-text">
+                    {moment.utc(row.createdAt).format('DD-MM-YYYY')}
+                </span>
             ),
         },
         {

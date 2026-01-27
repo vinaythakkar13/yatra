@@ -11,12 +11,11 @@ interface UserFiltersProps {
     setSearchTerm: (value: string) => void;
     filterState: string;
     setFilterState: (value: string) => void;
-    filterRoomStatus: string;
-    setFilterRoomStatus: (value: string) => void;
+    filterMode: 'all' | 'general' | 'cancelled';
+    setFilterMode: (value: 'all' | 'general' | 'cancelled') => void;
     filterDate: Date | null;
     setFilterDate: (date: Date | null) => void;
     stateOptions: { value: string; label: string }[];
-    roomStatusOptions: { value: string; label: string }[];
     totalCount: number;
     filteredCount: number;
     isLoadingStates?: boolean;
@@ -27,17 +26,22 @@ const UserFilters: React.FC<UserFiltersProps> = ({
     setSearchTerm,
     filterState,
     setFilterState,
-    filterRoomStatus,
-    setFilterRoomStatus,
+    filterMode,
+    setFilterMode,
     filterDate,
     setFilterDate,
     stateOptions,
-    roomStatusOptions,
     totalCount,
     filteredCount,
     isLoadingStates = false,
 }) => {
-    const hasActiveFilters = searchTerm || filterState || filterRoomStatus || filterDate;
+    const hasActiveFilters = searchTerm || filterState || filterMode !== 'general' || filterDate;
+
+    const filterModeOptions = [
+        { value: 'all', label: 'All Registrations' },
+        { value: 'general', label: 'Active (Non-Cancelled)' },
+        { value: 'cancelled', label: 'Cancelled Only' },
+    ];
 
     return (
         <Card className="mb-6 bg-white/70 backdrop-blur-md border-white/40 shadow-glass font-inter">
@@ -50,6 +54,19 @@ const UserFilters: React.FC<UserFiltersProps> = ({
                         onChange={(e) => setSearchTerm(e.target.value)}
                         leftIcon={<Search className="w-5 h-5 text-gray-400" />}
                         className="h-11 bg-white/50 border-white/40 focus:bg-white transition-all"
+                    />
+                </div>
+
+                {/* Registration Type Filter */}
+                <div className="flex-1 lg:max-w-[220px]">
+                    <SelectDropdown
+                        options={filterModeOptions}
+                        value={filterMode}
+                        onChange={(val: any) => setFilterMode(val)}
+                        placeholder="Registration Type"
+                        searchable={false}
+                        clearable={false}
+                        className="h-11 border-heritage-gold/30 focus:border-heritage-primary focus:ring-2 focus:ring-heritage-primary/20 hover:border-heritage-gold/50"
                     />
                 </div>
 
@@ -67,29 +84,6 @@ const UserFilters: React.FC<UserFiltersProps> = ({
                     />
                 </div>
 
-                {/* Status Filter */}
-                <div className="flex-1 lg:max-w-[180px]">
-                    <SelectDropdown
-                        options={roomStatusOptions}
-                        value={filterRoomStatus}
-                        onChange={setFilterRoomStatus}
-                        placeholder="Status"
-                        searchable={false}
-                        clearable
-                        className="h-11"
-                    />
-                </div>
-
-                {/* Date Filter */}
-                {/* <div className="flex-1 lg:max-w-[200px]">
-                    <DatePicker
-                        value={filterDate}
-                        onChange={setFilterDate}
-                        placeholder="Arrival Date"
-                        className="h-11"
-                    />
-                </div> */}
-
                 {/* Clear Filters Button */}
                 {hasActiveFilters && (
                     <Button
@@ -97,7 +91,7 @@ const UserFilters: React.FC<UserFiltersProps> = ({
                         onClick={() => {
                             setSearchTerm('');
                             setFilterState('');
-                            setFilterRoomStatus('');
+                            setFilterMode('general');
                             setFilterDate(null);
                         }}
                         className="lg:min-w-[120px] h-11 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"

@@ -19,6 +19,8 @@ import AssignRoomModal from '@/components/admin/users/modals/AssignRoomModal';
 import DocumentViewerModal from '@/components/admin/users/modals/DocumentViewerModal';
 import RejectDocumentModal from '@/components/admin/users/modals/RejectDocumentModal';
 
+import { useDebounce } from '@/hooks/useDebounce';
+
 /**
  * User Management Page (Admin)
  * 
@@ -60,11 +62,23 @@ function UserManagement() {
     };
   }, []);
 
+  // Filter States
+  const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+  const [filterState, setFilterState] = useState('');
+  const [filterMode, setFilterMode] = useState<'all' | 'general' | 'cancelled'>('general');
+  const [filterDate, setFilterDate] = useState<Date | null>(null);
+
   // Pagination State (must be before API query)
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Fetch registrations from API with pagination
+  // Reset pagination when searching, yatra changes, or filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedYatraId, debouncedSearchTerm, filterMode, filterState, filterDate]);
+
+  // Fetch registrations from API with pagination, search, and filters
   const {
     data: registrationsResponse,
     isLoading: isLoadingRegistrations,
@@ -75,7 +89,9 @@ function UserManagement() {
     {
       yatraId: selectedYatraId!,
       page: currentPage,
-      limit: itemsPerPage
+      limit: itemsPerPage,
+      search: debouncedSearchTerm,
+      filterMode: filterMode
     },
     { skip: !selectedYatraId } // Skip query if no yatraId
   );
@@ -101,16 +117,8 @@ function UserManagement() {
     return registrationsResponse.pagination;
   }, [registrationsResponse, itemsPerPage]);
 
-  // Filter States
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterState, setFilterState] = useState('');
-  const [filterRoomStatus, setFilterRoomStatus] = useState('');
-  const [filterDate, setFilterDate] = useState<Date | null>(null);
-
   // Fetch Indian states from API
   const { data: statesData, isLoading: isLoadingStates } = useGetIndianStatesQuery();
-
-
 
   // Selection States
   const [selectedUser, setSelectedUser] = useState<any>(null);
@@ -149,12 +157,6 @@ function UserManagement() {
     ];
   }, [statesData]);
 
-  const roomStatusOptions = [
-    { value: '', label: 'All Status' },
-    { value: 'Assigned', label: 'Assigned' },
-    { value: 'Pending', label: 'Pending' },
-  ];
-
   const hotelOptions = [
     { value: '', label: 'Select a hotel' },
     ...hotels.map((hotel) => ({
@@ -175,14 +177,6 @@ function UserManagement() {
   const availablePassengers = selectedUser?.persons?.filter(
     (person: any) => !assignedPassengers.some(ap => ap.name === person.name)
   ) || [];
-
-  // Note: Filtering is now handled server-side via API query parameters
-  // Client-side filtering removed to use server-side pagination
-
-  // Reset pagination when filters change
-  React.useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, filterState, filterRoomStatus, filterDate]);
 
   // Handlers
   const handleViewDetails = (registration: any) => {
@@ -207,6 +201,7 @@ function UserManagement() {
     setBedAssignments({});
     setShowAssignModal(true);
   };
+
 
   const handleRoomToggle = (roomNumber: string) => {
     setSelectedRooms(prev => {
@@ -450,12 +445,11 @@ function UserManagement() {
         setSearchTerm={setSearchTerm}
         filterState={filterState}
         setFilterState={setFilterState}
-        filterRoomStatus={filterRoomStatus}
-        setFilterRoomStatus={setFilterRoomStatus}
+        filterMode={filterMode}
+        setFilterMode={setFilterMode}
         filterDate={filterDate}
         setFilterDate={setFilterDate}
         stateOptions={stateOptions}
-        roomStatusOptions={roomStatusOptions}
         totalCount={paginationData.total}
         filteredCount={paginationData.total}
         isLoadingStates={isLoadingStates}

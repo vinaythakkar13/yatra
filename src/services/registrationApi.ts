@@ -246,17 +246,26 @@ export const registrationApi = baseApi.injectEndpoints({
 
     /**
      * Get Registrations Endpoint
-     * GET /registrations?yatraId={yatraId}&pnr={pnr}&page={page}&limit={limit}
+     * GET /registrations?yatraId={yatraId}&pnr={pnr}&page={page}&limit={limit}&search={search}&filterMode={filterMode}
      * 
-     * Fetches all registrations for a specific yatra or by PNR with pagination
+     * Fetches all registrations for a specific yatra or by PNR with pagination, search and filtering
      */
-    getRegistrations: builder.query<GetRegistrationsResponse, { yatraId?: string; pnr?: string; page?: number; limit?: number }>({
-      query: ({ yatraId, pnr, page, limit }) => {
+    getRegistrations: builder.query<GetRegistrationsResponse, {
+      yatraId?: string;
+      pnr?: string;
+      page?: number;
+      limit?: number;
+      search?: string;
+      filterMode?: 'all' | 'general' | 'cancelled';
+    }>({
+      query: ({ yatraId, pnr, page, limit, search, filterMode }) => {
         const params: Record<string, string | number> = {};
         if (yatraId) params.yatraId = yatraId;
         if (pnr) params.pnr = pnr;
         if (page) params.page = page;
         if (limit) params.limit = limit;
+        if (search) params.search = search;
+        if (filterMode) params.filterMode = filterMode;
 
         return {
           url: '/registrations',
