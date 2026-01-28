@@ -164,13 +164,13 @@ const AddHotelModal: React.FC<AddHotelModalProps> = ({
             initialData.totalFloors || initialData.floors?.length || 1,
           floors:
             initialData.floors && Array.isArray(initialData.floors)
-              ? initialData.floors.map((f: any) => ({
+              ? initialData?.floors?.map((f: any) => ({
                 floorNumber: f.floorNumber.toString(),
                 numberOfRooms: f.numberOfRooms,
                 roomNumbers: [...f.roomNumbers],
                 rooms:
                   f.rooms && Array.isArray(f.rooms)
-                    ? f.rooms.map((r: any) => ({
+                    ? f?.rooms?.map((r: any) => ({
                       roomNumber: r.roomNumber || "",
                       toiletType: r.toiletType || "western",
                       numberOfBeds: r.numberOfBeds || 1,
@@ -388,16 +388,16 @@ const AddHotelModal: React.FC<AddHotelModalProps> = ({
                 <div className="hidden sm:block text-center">
                   <p
                     className={`text-xs font-semibold transition-colors ${currentStep >= step.id
-                        ? "text-heritage-textDark"
-                        : "text-heritage-text/60"
+                      ? "text-heritage-textDark"
+                      : "text-heritage-text/60"
                       }`}
                   >
                     {step.title}
                   </p>
                   <p
                     className={`text-[10px] mt-0.5 transition-colors ${currentStep >= step.id
-                        ? "text-heritage-text/70"
-                        : "text-heritage-text/50"
+                      ? "text-heritage-text/70"
+                      : "text-heritage-text/50"
                       }`}
                   >
                     {step.description}
@@ -544,7 +544,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
     });
   };
 
-  const totalRooms = hotelData.floors.reduce(
+  const totalRooms = hotelData?.floors?.reduce(
     (sum, floor) => sum + floor.numberOfRooms,
     0
   );

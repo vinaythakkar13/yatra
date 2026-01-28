@@ -11,14 +11,14 @@ const HotelStats: React.FC<HotelStatsProps> = ({ hotels }) => {
         return room[camelCase] ?? room[snakeCase] ?? 0;
     };
 
-    const numberOfHotels = hotels.length;
-    const totalRooms = hotels.reduce((sum, hotel) => sum + (hotel.rooms?.length ?? 0), 0);
-    const occupiedRooms = hotels.reduce(
+    const numberOfHotels = hotels?.length ?? 0;
+    const totalRooms = hotels?.reduce((sum, hotel) => sum + (hotel.rooms?.length ?? 0), 0) ?? 0;
+    const occupiedRooms = hotels?.reduce(
         (sum, hotel) => sum + (hotel.rooms?.filter((room: any) => room.isOccupied || room.is_occupied).length ?? 0),
         0
-    );
+    ) ?? 0;
     const availableRoomsCount = Math.max(totalRooms - occupiedRooms, 0);
-    
+
     // Calculate total beds (handles both camelCase and snake_case)
     const totalBeds = hotels.reduce(
         (sum, hotel) =>
@@ -28,9 +28,9 @@ const HotelStats: React.FC<HotelStatsProps> = ({ hotels }) => {
             }, 0) ?? 0),
         0
     );
-    
+
     // Calculate available beds (only from non-occupied rooms)
-    const availableBeds = hotels.reduce(
+    const availableBeds = hotels?.reduce(
         (sum, hotel) =>
             sum +
             (hotel.rooms?.reduce(
@@ -53,28 +53,28 @@ const HotelStats: React.FC<HotelStatsProps> = ({ hotels }) => {
         if (!hotel || !hotel.rooms || !Array.isArray(hotel.rooms) || hotel.rooms.length === 0) {
             return 0;
         }
-        
+
         // Sum all charge_per_day values from rooms array
-        const totalChargePerDay = hotel.rooms.reduce((sum: number, room: any) => {
+        const totalChargePerDay = hotel?.rooms?.reduce((sum: number, room: any) => {
             if (!room) return sum;
             // Handle both camelCase and snake_case
-            const chargePerDay = room.charge_per_day ?? room.chargePerDay ?? 0;
+            const chargePerDay = room?.charge_per_day ?? room.chargePerDay ?? 0;
             // Convert to number and validate
             const chargeValue = Number(chargePerDay);
             return sum + (isNaN(chargeValue) ? 0 : chargeValue);
         }, 0);
-        
+
         // Get number of days (handle both camelCase and snake_case)
         const numberOfDays = hotel.number_of_days ?? hotel.numberOfDays ?? 1;
         const daysValue = Number(numberOfDays);
         const validDays = isNaN(daysValue) || daysValue <= 0 ? 1 : daysValue;
-        
+
         // Calculate total expense: sum of charge_per_day × number of days
         const total = totalChargePerDay * validDays;
         return isNaN(total) ? 0 : total;
     };
 
-    const totalExpenseAllHotels = hotels.reduce(
+    const totalExpenseAllHotels = hotels?.reduce(
         (sum, hotel) => {
             const expense = getTotalExpense(hotel);
             return sum + (typeof expense === 'number' && !isNaN(expense) ? expense : 0);
@@ -115,7 +115,7 @@ const HotelStats: React.FC<HotelStatsProps> = ({ hotels }) => {
 
     return (
         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8 font-inter">
-            {summaryCards.map((card) => (
+            {summaryCards?.map((card) => (
                 <div
                     key={card.label}
                     className="relative overflow-hidden rounded-2xl bg-white/70 backdrop-blur-xl border border-white/50 p-3 md:p-5 shadow-glass group hover:shadow-glass-lg transition-all duration-300"

@@ -88,7 +88,7 @@ export default function AdminLogin() {
             const now = new Date();
 
             // Find the nearest yatra (prioritize: active > upcoming > most recent past)
-            const nearestYatra = yatrasResult.reduce((nearest, current) => {
+            const nearestYatra = yatrasResult?.reduce((nearest, current) => {
               const nearestStartDate = new Date(nearest.start_date);
               const nearestEndDate = new Date(nearest.end_date);
               const currentStartDate = new Date(current.start_date);
