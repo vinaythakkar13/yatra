@@ -40,6 +40,8 @@ interface RegistrationFormData {
   arrivalDate: Date | null;
   returnDate: Date | null;
   ticketImages: File[];
+  isFlight: boolean;
+  flightPnr?: string;
 }
 
 interface RegistrationFormProps {
@@ -70,6 +72,7 @@ export interface RegistrationPayload {
   returnDate: string; // ISO 8601 format
   ticketImages: string[]; // Array of image URLs or base64 strings
   yatraId?: string; // Optional: Yatra ID if registering for specific yatra
+  ticketType?: string;
 }
 
 /**
@@ -191,7 +194,8 @@ export function buildRegistrationPayload(
   });
 
   return {
-    pnr: formData.pnr,
+    pnr: formData.isFlight ? (formData.flightPnr || '').toUpperCase() : formData.pnr,
+    ticketType: formData.isFlight ? 'FLIGHT' : undefined,
     name: formData.name,
     whatsappNumber: formData.whatsappNumber,
     numberOfPersons: formData.numberOfPersons,
@@ -255,6 +259,8 @@ export default function RegistrationForm({ initialPnr = '', yatraDetails }: Regi
       persons: [{ name: '', age: 0, gender: 'male', isHandicapped: false }],
       arrivalDate: null,
       returnDate: null,
+      isFlight: false,
+      flightPnr: '',
     },
   });
 
@@ -268,6 +274,7 @@ export default function RegistrationForm({ initialPnr = '', yatraDetails }: Regi
 
   const numberOfPersons = watch('numberOfPersons');
   const arrivalDate = watch('arrivalDate');
+  const isFlight = watch('isFlight');
 
   // Ref to track if user is currently typing in numberOfPersons field
   const isTypingRef = React.useRef(false);
@@ -364,8 +371,9 @@ export default function RegistrationForm({ initialPnr = '', yatraDetails }: Regi
             : fullBase64;
 
 
-          // Generate public_id for ticket image
-          const sanitizedPnr = data.pnr.replace(/[^a-z0-9]/gi, '_');
+          // Generate public_id for ticket image (Resolve PNR value safely)
+          const pnrValue = data.isFlight ? data.flightPnr : data.pnr;
+          const sanitizedPnr = (pnrValue || 'unknown').replace(/[^a-z0-9]/gi, '_');
           const publicId = `yatra/tickets/${sanitizedPnr}_${Date.now()}_${i + 1}`;
 
 
@@ -435,7 +443,7 @@ export default function RegistrationForm({ initialPnr = '', yatraDetails }: Regi
         addRegistration(newRegistration);
 
         // Show success modal
-        setSuccessPnr(registrationPayload.pnr);
+        setSuccessPnr(apiPayload.pnr);
         setShowSuccess(true);
         toast.success('Registration submitted successfully!');
       } else {
@@ -573,44 +581,107 @@ export default function RegistrationForm({ initialPnr = '', yatraDetails }: Regi
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-5">
       {/* Personal Details */}
       <div className="bg-spiritual-zen-mist/30 rounded-xl border border-spiritual-zen-accent/20 p-4 sm:p-5 md:p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="p-1.5 bg-gradient-to-br from-spiritual-zen-forest to-spiritual-zen-accent rounded-lg flex-shrink-0">
-            <User className="w-4 h-4 text-white" />
+        <div className="flex items-center justify-between gap-2 mb-4">
+          <div className='flex items-center gap-2'>
+            <div className="p-1.5 bg-gradient-to-br from-spiritual-zen-forest to-spiritual-zen-accent rounded-lg flex-shrink-0">
+              <User className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <h2 className="text-base sm:text-lg font-bold text-spiritual-zen-charcoal">Personal Details</h2>
+              <p className="text-xs text-spiritual-textLight hidden sm:block">Your contact information</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-base sm:text-lg font-bold text-spiritual-zen-charcoal">Personal Details</h2>
-            <p className="text-xs text-spiritual-textLight hidden sm:block">Your contact information</p>
-          </div>
+
+          <Controller
+            name="isFlight"
+            control={control}
+            render={({ field }) => (
+              <label className="flex items-center gap-3 cursor-pointer group bg-white p-3 rounded-lg border border-spiritual-zen-accent/20 hover:border-spiritual-zen-forest/40 transition-all">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    checked={field.value}
+                    onChange={(e) => field.onChange(e.target.checked)}
+                    className="sr-only"
+                  />
+                  <div className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center ${field.value
+                    ? 'bg-gradient-to-br from-spiritual-zen-forest to-spiritual-zen-accent border-spiritual-zen-forest'
+                    : 'border-spiritual-zen-accent/30 bg-white group-hover:border-spiritual-zen-forest/50'
+                    }`}>
+                    {field.value && (
+                      <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-spiritual-zen-charcoal">Flight Ticket</span>
+                  <span className="text-xl">✈️</span>
+                </div>
+              </label>
+            )}
+          />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-          <Controller
-            name="pnr"
-            control={control}
-            rules={{
-              required: 'PNR is required',
-              minLength: { value: 10, message: 'PNR must be 10 digits' },
-              maxLength: { value: 10, message: 'PNR must be 10 digits' },
-              pattern: {
-                value: /^\d{10}$/,
-                message: 'PNR must contain exactly 10 digits',
-              },
-            }}
-            render={({ field }) => (
-              <Input
-                label="PNR Number"
-                type="number"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={10}
-                placeholder="10-digit PNR"
-                leftIcon={<Ticket className="w-4 h-4 text-spiritual-textLight" />}
-                {...field}
-                error={errors.pnr?.message}
-                className="border-spiritual-zen-accent/30 focus:border-spiritual-zen-forest"
-              />
-            )}
-          />
+          {!isFlight ? (
+            <Controller
+              name="pnr"
+              control={control}
+              rules={{
+                required: 'PNR is required',
+                minLength: { value: 10, message: 'PNR must be 10 digits' },
+                maxLength: { value: 10, message: 'PNR must be 10 digits' },
+                pattern: {
+                  value: /^\d{10}$/,
+                  message: 'PNR must contain exactly 10 digits',
+                },
+              }}
+              render={({ field }) => (
+                <Input
+                  label="PNR Number"
+                  type="number"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={10}
+                  placeholder="10-digit PNR"
+                  leftIcon={<Ticket className="w-4 h-4 text-spiritual-textLight" />}
+                  {...field}
+                  error={errors.pnr?.message}
+                  className="border-spiritual-zen-accent/30 focus:border-spiritual-zen-forest"
+                />
+              )}
+            />
+          ) : (
+            <Controller
+              name="flightPnr"
+              control={control}
+              rules={{
+                required: 'Flight PNR is required',
+                minLength: { value: 5, message: 'Flight PNR must be at least 5 characters' },
+                maxLength: { value: 12, message: 'Flight PNR cannot exceed 12 characters' },
+                pattern: {
+                  value: /^[a-zA-Z0-9]+$/,
+                  message: 'Flight PNR must be alphanumeric only',
+                },
+              }}
+              render={({ field }) => (
+                <Input
+                  label="Flight PNR / Ticket Number"
+                  placeholder="Enter Flight PNR"
+                  leftIcon={<Ticket className="w-4 h-4 text-spiritual-textLight" />}
+                  {...field}
+                  value={field.value || ''}
+                  autoComplete="off"
+                  onChange={(e) => {
+                    const val = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                    field.onChange(val);
+                  }}
+                  error={errors.flightPnr?.message}
+                  className="border-spiritual-zen-accent/30 focus:border-spiritual-zen-forest font-mono"
+                />
+              )}
+            />
+          )}
 
           <Controller
             name="name"
@@ -1085,25 +1156,27 @@ export default function RegistrationForm({ initialPnr = '', yatraDetails }: Regi
       </div>
 
       {/* Error Message */}
-      {submissionError && (
-        <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 animate-slide-down">
-          <div className="flex items-start gap-3">
-            <div className="p-1 bg-red-100 rounded-full flex-shrink-0">
-              <X className="w-4 h-4 text-red-600" />
+      {
+        submissionError && (
+          <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 animate-slide-down">
+            <div className="flex items-start gap-3">
+              <div className="p-1 bg-red-100 rounded-full flex-shrink-0">
+                <X className="w-4 h-4 text-red-600" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-red-800 mb-1">Registration Failed</p>
+                <p className="text-sm text-red-700">{submissionError}</p>
+              </div>
+              <button
+                onClick={() => setSubmissionError('')}
+                className="text-red-600 hover:text-red-800 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-red-800 mb-1">Registration Failed</p>
-              <p className="text-sm text-red-700">{submissionError}</p>
-            </div>
-            <button
-              onClick={() => setSubmissionError('')}
-              className="text-red-600 hover:text-red-800 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Submit Actions */}
       <div className="flex flex-col-reverse sm:flex-row gap-3 pt-3 border-t border-spiritual-zen-accent/20">
@@ -1135,7 +1208,7 @@ export default function RegistrationForm({ initialPnr = '', yatraDetails }: Regi
           )}
         </Button>
       </div>
-    </form>
+    </form >
   );
 }
 

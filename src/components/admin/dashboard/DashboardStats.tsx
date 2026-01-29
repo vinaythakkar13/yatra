@@ -46,49 +46,49 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <StatCard
                 title="Registration Entries"
-                value={stats.totalRegistrations}
+                value={stats?.totalRegistrations}
                 icon={Users}
                 color="bg-heritage-primary"
                 description="Total booking forms"
             />
             <StatCard
                 title="Total Participants"
-                value={stats.totalPeople}
+                value={stats?.totalPeople}
                 icon={UserCheck}
                 color="bg-heritage-gold"
                 description="Count across all entries"
             />
             <StatCard
                 title="Allotted"
-                value={stats.allottedRegistrations}
+                value={stats?.allottedRegistrations}
                 icon={CheckCircle2}
                 color="bg-green-100"
                 description="Finalized bookings"
             />
             <StatCard
                 title="Pending Allotment"
-                value={stats.pendingAllotment}
+                value={stats?.pendingAllotment}
                 icon={Clock}
                 color="bg-heritage-maroon"
                 description="Waitlisted for rooms"
             />
             <StatCard
                 title="Cancelled"
-                value={stats.cancelledRegistrations}
+                value={stats?.cancelledRegistrations}
                 icon={UserMinus}
                 color="bg-heritage-secondary"
                 description="Withdrawals"
             />
             <StatCard
                 title="Available Rooms"
-                value={stats.availableRooms}
+                value={stats?.availableRooms}
                 icon={Home}
                 color="bg-heritage-gold"
                 description="Current vacant rooms"
             />
             <StatCard
                 title="Available Beds"
-                value={stats.availableBeds}
+                value={stats?.availableBeds}
                 icon={Bed}
                 color="bg-kesari-light"
                 description="Current vacant beds"

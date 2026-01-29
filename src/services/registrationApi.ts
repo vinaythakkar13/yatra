@@ -87,6 +87,7 @@ export interface Registration {
   rejectionReason?: string;
   cancellationReason?: string;
   createdAt: string;
+  ticketType?: string;
 }
 
 export interface Hotel {
@@ -210,6 +211,7 @@ export interface ApiRegistration {
     updated_at: string;
   }>;
   logs?: any[];
+  ticket_type?: string;
 }
 
 export interface GetRegistrationsResponse {
@@ -312,6 +314,7 @@ export const registrationApi = baseApi.injectEndpoints({
               rejectionReason: apiReg.rejection_reason || undefined,
               cancellationReason: apiReg.cancellation_reason || undefined,
               createdAt: apiReg.created_at,
+              ticketType: apiReg.ticket_type || undefined,
             };
           });
 
@@ -493,6 +496,25 @@ export const registrationApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Registration'],
     }),
+
+    /**
+     * Update Ticket Type Endpoint
+     * PATCH /registrations/:id/ticket-type
+     * 
+     * Updates the ticket type for a registration
+     */
+    updateTicketType: builder.mutation<{
+      success: boolean;
+      message?: string;
+      error?: string;
+      data?: any;
+    }, { id: string; ticketType: string }>({
+      query: ({ id, ticketType }) => ({
+        url: `/registrations/${id}/ticket-type`,
+        method: 'PATCH',
+        body: { ticketType },
+      }),
+    }),
   }),
 });
 
@@ -504,4 +526,5 @@ export const {
   useGetRegistrationByPnrQuery,
   useLazyGetRegistrationByPnrQuery,
   useCancelRegistrationMutation,
+  useUpdateTicketTypeMutation,
 } = registrationApi;

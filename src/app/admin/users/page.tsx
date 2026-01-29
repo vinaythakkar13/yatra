@@ -136,6 +136,7 @@ function UserManagement() {
   const [showUnassignModal, setShowUnassignModal] = useState(false);
   const [showDocumentViewer, setShowDocumentViewer] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
+  const [needsRefetch, setNeedsRefetch] = useState(false);
 
   // Document States
   const [currentDocuments, setCurrentDocuments] = useState<string[]>([]);
@@ -296,8 +297,23 @@ function UserManagement() {
       setCurrentDocumentIndex(0);
       setDocumentOwner(user);
       setShowDocumentViewer(true);
+      setNeedsRefetch(false);
     } else {
       toast.info('No documents uploaded for this registration');
+    }
+  };
+
+  const handleCloseDocumentViewer = (wasActionTaken?: any) => {
+    const shouldRefetch = wasActionTaken === true || needsRefetch;
+
+    setShowDocumentViewer(false);
+    setDocumentOwner(null);
+    setCurrentDocuments([]);
+    setCurrentDocumentIndex(0);
+
+    if (shouldRefetch) {
+      refetchRegistrations();
+      setNeedsRefetch(false);
     }
   };
 
@@ -305,8 +321,7 @@ function UserManagement() {
     if (documentOwner) {
       approveDocument(documentOwner.id);
       toast.success(`✅ Documents approved for ${documentOwner.name}`);
-      setShowDocumentViewer(false);
-      setDocumentOwner(null);
+      handleCloseDocumentViewer(true);
     }
   };
 
@@ -319,8 +334,7 @@ function UserManagement() {
       rejectDocument(documentOwner.id, rejectionReason);
       toast.success(`❌ Documents rejected for ${documentOwner.name}`);
       setShowRejectModal(false);
-      setShowDocumentViewer(false);
-      setDocumentOwner(null);
+      handleCloseDocumentViewer(true);
       setRejectionReason('');
     }
   };
@@ -504,12 +518,8 @@ function UserManagement() {
 
       <DocumentViewerModal
         isOpen={showDocumentViewer}
-        onClose={() => {
-          setShowDocumentViewer(false);
-          setDocumentOwner(null);
-          setCurrentDocuments([]);
-          setCurrentDocumentIndex(0);
-        }}
+        onClose={handleCloseDocumentViewer}
+        onAction={() => setNeedsRefetch(true)}
         documentOwner={documentOwner}
         currentDocuments={currentDocuments}
         currentDocumentIndex={currentDocumentIndex}

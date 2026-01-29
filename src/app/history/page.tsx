@@ -62,14 +62,13 @@ export default function HistoryPage() {
   const [cancelRegistration, { isLoading: isCancelling }] = useCancelRegistrationMutation();
 
   const handlePnrChange = (value: string) => {
-    const numericValue = value.replace(/\D/g, '').slice(0, 10);
-    setPnr(numericValue);
+    setPnr(value);
     setPnrError('');
   };
 
   const handleSearch = async () => {
-    if (!pnr || pnr.length !== 10) {
-      setPnrError('Please enter a valid 10-digit PNR number');
+    if (!pnr || pnr.length < 6) {
+      setPnrError('Please enter a valid PNR number');
       return;
     }
 
@@ -172,7 +171,7 @@ export default function HistoryPage() {
                 Enter Your PNR Number
               </h2>
               <p className="text-xs text-spiritual-textLight">
-                Your 10-digit PNR number is provided after registration
+                Enter your PNR number to view your registration details
               </p>
             </div>
 
@@ -180,10 +179,8 @@ export default function HistoryPage() {
               <Input
                 label="PNR Number"
                 type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                maxLength={10}
-                placeholder="Enter 10-digit PNR"
+                maxLength={12}
+                placeholder="Enter PNR"
                 value={pnr}
                 onChange={(e) => handlePnrChange(e.target.value)}
                 onKeyPress={handleKeyPress}
@@ -194,7 +191,7 @@ export default function HistoryPage() {
 
               <Button
                 onClick={handleSearch}
-                disabled={isLoading || !pnr || pnr.length !== 10}
+                disabled={(isLoading || !pnr || pnr.length < 6)}
                 className="w-full bg-gradient-to-r from-spiritual-zen-forest to-spiritual-zen-accent hover:from-spiritual-zen-forest/90 hover:to-spiritual-zen-accent/90 text-white py-2.5 text-sm font-semibold shadow-sm hover:shadow-md transition-all"
               >
                 {isLoading ? (

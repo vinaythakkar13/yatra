@@ -279,15 +279,19 @@ export default function ImageUpload({
 
   const stopCamera = () => {
     if (stream) {
-      stream.getTracks().forEach((track) => {
+      stream.getTracks().forEach(track => {
         track.stop();
       });
-      setStream(null);
     }
+
     if (videoRef.current) {
+      videoRef.current.pause();
       videoRef.current.srcObject = null;
     }
+
+    setStream(null);
   };
+
 
   const startCamera = async (mode?: 'user' | 'environment') => {
     // Check if we're on the client side and mediaDevices is available
@@ -303,8 +307,9 @@ export default function ImageUpload({
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: { ideal: facingMode },
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
+          width: { min: 1280, ideal: 1920 },
+          height: { min: 720, ideal: 1080 },
+          frameRate: { ideal: 30 }
         },
         audio: false,
       });
@@ -338,38 +343,36 @@ export default function ImageUpload({
   };
 
   const capturePhoto = () => {
-    if (videoRef.current && canvasRef.current) {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
+    if (!videoRef.current || !canvasRef.current) return;
 
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
 
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(video, 0, 0);
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
 
-        // Get image data URL for preview
-        const imageDataUrl = canvas.toDataURL('image/jpeg', 0.9);
-        setCapturedImage(imageDataUrl);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
-        // Stop camera to save resources
-        stopCamera();
+    ctx.drawImage(video, 0, 0);
 
-        // Create file for later submission
-        canvas.toBlob((blob) => {
-          if (blob) {
-            const file = new File(
-              [blob],
-              `ticket-photo-${Date.now()}.jpg`,
-              { type: 'image/jpeg' }
-            );
-            setCapturedFile(file);
-          }
-        }, 'image/jpeg', 0.9);
-      }
-    }
+    const imageDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+    setCapturedImage(imageDataUrl);
+
+    stopCamera(); // 🔴 CAMERA STOPS HERE IMMEDIATELY
+
+    canvas.toBlob(blob => {
+      if (!blob) return;
+
+      const file = new File(
+        [blob],
+        `ticket-photo-${Date.now()}.jpg`,
+        { type: 'image/jpeg' }
+      );
+      setCapturedFile(file);
+    }, 'image/jpeg', 0.9);
   };
+
 
   const handleRetake = async () => {
     setCapturedImage(null);
@@ -431,6 +434,7 @@ export default function ImageUpload({
   };
 
   const closeCamera = () => {
+    stopCamera();
     setShowCamera(false);
     setCapturedImage(null);
     setCapturedFile(null);
@@ -563,6 +567,9 @@ export default function ImageUpload({
         footer={
           capturedImage ? (
             <>
+              <Button variant="outline" onClick={closeCamera}>
+                Cancel
+              </Button>
               <Button variant="outline" onClick={handleRetake}>
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Retake

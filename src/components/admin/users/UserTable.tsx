@@ -1,7 +1,68 @@
 import React from 'react';
-import { Eye, RefreshCw, UserX, Home, FileText, CheckCircle, XCircle, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Eye, RefreshCw, UserX, Home, FileText, CheckCircle, XCircle, ArrowRight, ArrowLeft, Plane, Train, Bus } from 'lucide-react';
 import Table from '@/components/ui/Table';
 import moment from 'moment';
+
+const TICKET_BADGE_CONFIG: Record<
+    string,
+    {
+        label: string;
+        icon: React.JSX.Element;
+        className: string;
+    }
+> = {
+    FLIGHT: {
+        label: 'Flight',
+        icon: <Plane className="w-3.5 h-3.5" />,
+        className: 'bg-blue-100 text-blue-700'
+    },
+    FIRST_AC: {
+        label: '1st AC',
+        icon: <Train className="w-3.5 h-3.5" />,
+        className: 'bg-green-100 text-green-700'
+    },
+    SECOND_AC: {
+        label: '2nd AC',
+        icon: <Train className="w-3.5 h-3.5" />,
+        className: 'bg-green-100 text-green-700'
+    },
+    THIRD_AC: {
+        label: '3rd AC',
+        icon: <Train className="w-3.5 h-3.5" />,
+        className: 'bg-green-100 text-green-700'
+    },
+    SLEEPER: {
+        label: 'Sleeper',
+        icon: <Train className="w-3.5 h-3.5" />,
+        className: 'bg-yellow-100 text-yellow-800'
+    },
+    GENERAL: {
+        label: 'General',
+        icon: <Train className="w-3.5 h-3.5" />,
+        className: 'bg-gray-100 text-gray-700'
+    },
+    BUS: {
+        label: 'Bus',
+        icon: <Bus className="w-3.5 h-3.5" />,
+        className: 'bg-indigo-100 text-indigo-700'
+    }
+};
+
+
+const TicketBadge = ({ type }: { type: string }) => {
+    const badge = TICKET_BADGE_CONFIG[type];
+    if (!badge) return null;
+
+    return (
+        <span
+            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold ${badge.className}`}
+        >
+            {badge.icon}
+            {badge.label}
+        </span>
+    );
+};
+
 
 interface UserTableProps {
     data: any[];
@@ -26,7 +87,13 @@ const UserTable: React.FC<UserTableProps> = ({
             key: 'pnr',
             header: 'PNR',
             render: (row: any) => (
-                <span className="font-mono font-semibold text-heritage-primary">{row.pnr}</span>
+                <div className="flex flex-col gap-1">
+                    <span className="font-mono font-semibold text-heritage-primary">{row.pnr}</span>
+                    {
+                        row.ticketType && <TicketBadge type={row.ticketType} />
+                    }
+
+                </div>
             ),
         },
         {

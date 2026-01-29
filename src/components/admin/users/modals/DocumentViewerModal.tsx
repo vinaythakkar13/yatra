@@ -1,10 +1,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
     ChevronLeft, ChevronRight, XCircle, CheckCircle,
-    FileText, ZoomIn, ZoomOut, RotateCcw, Move
+    FileText, ZoomIn, ZoomOut, RotateCcw, Move,
+    Rotate3D,
+    RotateCcwSquareIcon
 } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
+import { useUpdateTicketTypeMutation } from '@/services/registrationApi';
+import { toast } from 'react-toastify';
+import SelectDropdown from '@/components/ui/SelectDropdown';
 
 interface DocumentViewerModalProps {
     isOpen: boolean;
@@ -15,7 +20,21 @@ interface DocumentViewerModalProps {
     setCurrentDocumentIndex: (index: number) => void;
     onApprove: () => void;
     onReject: () => void;
+    onAction?: () => void;
 }
+
+
+// label should be in the format of TICKET_BADGE_CONFIG
+// text with icon
+const TICKET_TYPE_OPTIONS = [
+    { value: 'FLIGHT', label: 'FLIGHT' },
+    { value: 'FIRST_AC', label: 'FIRST AC' },
+    { value: 'SECOND_AC', label: 'SECOND AC' },
+    { value: 'THIRD_AC', label: 'THIRD AC' },
+    { value: 'SLEEPER', label: 'SLEEPER' },
+    { value: 'GENERAL', label: 'GENERAL' },
+    { value: 'BUS', label: 'BUS' },
+];
 
 const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
     isOpen,
@@ -26,17 +45,31 @@ const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
     setCurrentDocumentIndex,
     onApprove,
     onReject,
+    onAction,
 }) => {
     // Zoom and Pan State
     const [scale, setScale] = useState<number>(1);
     const [position, setPosition] = useState({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+    const [selectedTicketType, setSelectedTicketType] = useState<string>('');
     const containerRef = useRef<HTMLDivElement>(null);
+    const [rotation, setRotation] = useState<number>(0);
+
+
+    const [updateTicketType, { isLoading: isUpdatingTicketType }] = useUpdateTicketTypeMutation();
+
+    // Reset state when modal opens or document owner changes
+    useEffect(() => {
+        if (isOpen && documentOwner) {
+            setSelectedTicketType(documentOwner.ticketType || '');
+        }
+    }, [isOpen, documentOwner]);
 
     // Reset zoom when switching documents
     useEffect(() => {
         handleResetZoom();
+        setRotation(0);
     }, [currentDocumentIndex]);
 
     const handlePrevDocument = () => {
@@ -65,6 +98,7 @@ const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
     const handleResetZoom = () => {
         setScale(1);
         setPosition({ x: 0, y: 0 });
+        setRotation(0);
     };
 
     const handleMouseDown = (e: React.MouseEvent) => {
@@ -86,6 +120,29 @@ const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
     const handleMouseUp = () => {
         setIsDragging(false);
     };
+
+    const handleSaveTicketType = async () => {
+        if (!documentOwner?.id || !selectedTicketType) return;
+        try {
+            const result = await updateTicketType({
+                id: documentOwner.id,
+                ticketType: selectedTicketType
+            }).unwrap();
+            if (result.success) {
+                toast.success('Ticket type updated successfully!');
+                onAction?.();
+            } else {
+                toast.error(result.error || 'Failed to update ticket type');
+            }
+        } catch (err: any) {
+            toast.error(err?.data?.message || 'Error updating ticket type');
+        }
+    };
+
+    const handleRotate = () => {
+        setRotation((prev) => (prev + 90) % 360);
+    };
+
 
     const title = documentOwner ? (
         <div className="flex items-center justify-between w-full pr-8">
@@ -165,6 +222,35 @@ const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
                         </div>
                     )}
 
+                    {/* Ticket Type Selector */}
+                    <div className="bg-heritage-highlight/10 border border-heritage-highlight/20 rounded-xl p-4 sm:p-5">
+                        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+                            <div className="flex-1">
+                                <label className="block text-sm font-bold text-heritage-textDark mb-2 flex items-center gap-2">
+                                    <FileText className="w-4 h-4 text-heritage-primary" />
+                                    Select Ticket Type
+                                </label>
+                                <SelectDropdown
+                                    searchable={false}
+                                    options={TICKET_TYPE_OPTIONS}
+                                    value={selectedTicketType}
+                                    onChange={(val) => setSelectedTicketType(val)}
+                                    placeholder="Choose ticket type..."
+                                    className="bg-white border-heritage-highlight/30 focus:border-heritage-primary"
+                                />
+                            </div>
+                            <Button
+                                onClick={handleSaveTicketType}
+                                isLoading={isUpdatingTicketType}
+                                disabled={isUpdatingTicketType || selectedTicketType === (documentOwner?.ticketType || '')}
+                                variant="admin"
+                                className="sm:w-48 whitespace-nowrap shadow-md hover:shadow-lg transition-all"
+                            >
+                                {isUpdatingTicketType ? 'Updating...' : 'Save Ticket Type'}
+                            </Button>
+                        </div>
+                    </div>
+
                     {/* Image Viewer */}
                     <div
                         ref={containerRef}
@@ -178,7 +264,7 @@ const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
                         <div
                             className="w-full h-full flex items-center justify-center transition-transform duration-200"
                             style={{
-                                transform: `scale(${scale}) translate(${position.x / scale}px, ${position.y / scale}px)`,
+                                transform: `rotate(${rotation}deg) scale(${scale}) translate(${position.x / scale}px, ${position.y / scale}px)`,
                             }}
                         >
                             <img
@@ -209,6 +295,15 @@ const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
                             >
                                 <ZoomOut className="w-5 h-5" />
                             </button>
+
+                            <button
+                                onClick={handleRotate}
+                                className="p-2 bg-black/60 hover:bg-black/80 text-white rounded-lg backdrop-blur-sm transition-all border border-white/20"
+                                title="Rotate Image"
+                            >
+                                <RotateCcwSquareIcon className="w-5 h-5" />
+                            </button>
+
                             <button
                                 onClick={handleResetZoom}
                                 className="p-2 bg-black/60 hover:bg-black/80 text-white rounded-lg backdrop-blur-sm transition-all border border-white/20"
