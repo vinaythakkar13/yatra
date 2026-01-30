@@ -18,8 +18,8 @@ interface DemographicsData {
     male: number;
     female: number;
     ageGroups: {
-        '0-18': number;
-        '19-40': number;
+        '0-20': number;
+        '21-40': number;
         '41-60': number;
         '60+': number;
     };

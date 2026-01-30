@@ -1116,10 +1116,10 @@ export default function RegistrationForm({ initialPnr = '', yatraDetails }: Regi
             </div>
             <div className="flex-1 min-w-0">
               <h2 className="text-lg sm:text-xl font-bold text-spiritual-zen-charcoal mb-1">
-                Upload Railway Tickets
+                {isFlight ? 'Upload Flight Tickets' : 'Upload Railway Tickets'}
               </h2>
               <p className="text-xs sm:text-sm text-spiritual-textLight leading-relaxed">
-                Please upload clear photos of both arrival and return railway tickets for booking verification.
+                Please upload clear photos of both arrival and return tickets for booking verification.
               </p>
             </div>
           </div>

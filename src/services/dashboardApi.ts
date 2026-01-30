@@ -25,10 +25,10 @@ export interface CityData {
         female: number;
     };
     ageRanges: {
-        '0-18': number;
-        '19-35': number;
-        '36-50': number;
-        '50+': number;
+        '0-20': number;
+        '21-40': number;
+        '41-60': number;
+        '60+': number;
     };
     handicappedCount: number;
 }
@@ -37,6 +37,7 @@ export interface StateData {
     state: string;
     totalCount: number;
     cities: CityData[];
+    totalRegistrations: number | null;
 }
 
 export interface registrationsAnalytics {

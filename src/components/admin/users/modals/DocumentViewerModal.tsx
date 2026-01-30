@@ -33,7 +33,10 @@ const TICKET_TYPE_OPTIONS = [
     { value: 'THIRD_AC', label: 'THIRD AC' },
     { value: 'SLEEPER', label: 'SLEEPER' },
     { value: 'GENERAL', label: 'GENERAL' },
+    { value: 'WL', label: 'WAITING LIST' },
+    { value: 'RAC', label: 'RAC' },
     { value: 'BUS', label: 'BUS' },
+    { value: 'TBS', label: 'TBS' },
 ];
 
 const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({

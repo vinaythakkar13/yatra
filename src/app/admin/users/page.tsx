@@ -68,6 +68,7 @@ function UserManagement() {
   const [filterState, setFilterState] = useState('');
   const [filterMode, setFilterMode] = useState<'all' | 'general' | 'cancelled'>('general');
   const [filterDate, setFilterDate] = useState<Date | null>(null);
+  const [ticketType, setTicketType] = useState('');
 
   // Pagination State (must be before API query)
   const [currentPage, setCurrentPage] = useState(1);
@@ -76,7 +77,7 @@ function UserManagement() {
   // Reset pagination when searching, yatra changes, or filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedYatraId, debouncedSearchTerm, filterMode, filterState, filterDate]);
+  }, [selectedYatraId, debouncedSearchTerm, filterMode, filterState, filterDate, ticketType]);
 
   // Fetch registrations from API with pagination, search, and filters
   const {
@@ -85,16 +86,28 @@ function UserManagement() {
     isError: isRegistrationsError,
     error: registrationsError,
     refetch: refetchRegistrations,
+    isFetching,
   } = useGetRegistrationsQuery(
     {
       yatraId: selectedYatraId!,
       page: currentPage,
       limit: itemsPerPage,
       search: debouncedSearchTerm,
-      filterMode: filterMode
+      filterMode: filterMode,
+      ticketType: ticketType,
+      state: filterState
     },
     { skip: !selectedYatraId } // Skip query if no yatraId
   );
+
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refetchRegistrations();
+    // Small delay to make it feel responsive
+    setTimeout(() => setIsRefreshing(false), 500);
+  };
 
   // Extract registrations from API response
   const registrations = useMemo(() => {
@@ -464,9 +477,13 @@ function UserManagement() {
         filterDate={filterDate}
         setFilterDate={setFilterDate}
         stateOptions={stateOptions}
+        ticketType={ticketType}
+        setTicketType={setTicketType}
+        onRefresh={handleRefresh}
         totalCount={paginationData.total}
         filteredCount={paginationData.total}
         isLoadingStates={isLoadingStates}
+        isRefreshing={isRefreshing}
       />
 
       {/* Users Table */}
@@ -477,6 +494,7 @@ function UserManagement() {
         onReassignRoom={handleReassignRoom}
         onUnassignRoom={handleUnassignClick}
         onViewDocuments={handleViewDocuments}
+        isLoading={isFetching}
       />
 
       {/* Pagination */}

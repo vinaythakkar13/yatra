@@ -25,19 +25,19 @@ const CustomStateTooltip = ({ active, payload }: any) => {
             acc.male += city.gender.male;
             acc.female += city.gender.female;
             acc.handicapped += city.handicappedCount;
-            acc.age0_18 += city.ageRanges['0-18'];
-            acc.age19_35 += city.ageRanges['19-35'];
-            acc.age36_50 += city.ageRanges['36-50'];
-            acc.age50_plus += city.ageRanges['50+'];
+            acc.age0_20 += city.ageRanges['0-20'];
+            acc.age21_40 += city.ageRanges['21-40'];
+            acc.age41_60 += city.ageRanges['41-60'];
+            acc.age60_plus += city.ageRanges['60+'];
             return acc;
         }, {
             male: 0,
             female: 0,
             handicapped: 0,
-            age0_18: 0,
-            age19_35: 0,
-            age36_50: 0,
-            age50_plus: 0
+            age0_20: 0,
+            age21_40: 0,
+            age41_60: 0,
+            age60_plus: 0
         });
 
         return (
@@ -49,7 +49,12 @@ const CustomStateTooltip = ({ active, payload }: any) => {
 
                 <div className="space-y-3">
                     <div className="flex justify-between items-center text-sm">
-                        <span className="text-heritage-text/70 flex items-center gap-1">Total</span>
+                        <span className="text-heritage-text/70 flex items-center gap-1">Total Registrations</span>
+                        <span className="font-bold text-heritage-maroon">{data.totalRegistrations}</span>
+                    </div>
+
+                    <div className="flex justify-between items-center text-sm">
+                        <span className="text-heritage-text/70 flex items-center gap-1">Total Person</span>
                         <span className="font-bold text-heritage-maroon">{data.totalCount}</span>
                     </div>
 
@@ -82,20 +87,20 @@ const CustomStateTooltip = ({ active, payload }: any) => {
                         <p className="text-[10px] uppercase tracking-wider text-heritage-text/40 mb-2 font-bold">Age Groups</p>
                         <div className="grid grid-cols-2 gap-y-1 gap-x-3">
                             <div className="flex justify-between">
-                                <span className="text-[11px] text-heritage-text/60">0-18:</span>
-                                <span className="text-[11px] font-bold">{stats.age0_18}</span>
+                                <span className="text-[11px] text-heritage-text/60">0-20:</span>
+                                <span className="text-[11px] font-bold">{stats.age0_20}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-[11px] text-heritage-text/60">19-35:</span>
-                                <span className="text-[11px] font-bold">{stats.age19_35}</span>
+                                <span className="text-[11px] text-heritage-text/60">21-40:</span>
+                                <span className="text-[11px] font-bold">{stats.age21_40}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-[11px] text-heritage-text/60">36-50:</span>
-                                <span className="text-[11px] font-bold">{stats.age36_50}</span>
+                                <span className="text-[11px] text-heritage-text/60">41-60:</span>
+                                <span className="text-[11px] font-bold">{stats.age41_60}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-[11px] text-heritage-text/60">50+:</span>
-                                <span className="text-[11px] font-bold">{stats.age50_plus}</span>
+                                <span className="text-[11px] text-heritage-text/60">60+:</span>
+                                <span className="text-[11px] font-bold">{stats.age60_plus}</span>
                             </div>
                         </div>
                     </div>

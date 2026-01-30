@@ -259,8 +259,10 @@ export const registrationApi = baseApi.injectEndpoints({
       limit?: number;
       search?: string;
       filterMode?: 'all' | 'general' | 'cancelled';
+      ticketType?: string;
+      state?: string;
     }>({
-      query: ({ yatraId, pnr, page, limit, search, filterMode }) => {
+      query: ({ yatraId, pnr, page, limit, search, filterMode, ticketType, state }) => {
         const params: Record<string, string | number> = {};
         if (yatraId) params.yatraId = yatraId;
         if (pnr) params.pnr = pnr;
@@ -268,6 +270,8 @@ export const registrationApi = baseApi.injectEndpoints({
         if (limit) params.limit = limit;
         if (search) params.search = search;
         if (filterMode) params.filterMode = filterMode;
+        if (ticketType) params.ticketType = ticketType;
+        if (state) params.state = state;
 
         return {
           url: '/registrations',

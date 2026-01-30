@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, X, Filter } from 'lucide-react';
+import { Search, X, Filter, RefreshCw } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import SelectDropdown from '@/components/ui/SelectDropdown';
@@ -16,9 +16,13 @@ interface UserFiltersProps {
     filterDate: Date | null;
     setFilterDate: (date: Date | null) => void;
     stateOptions: { value: string; label: string }[];
+    ticketType: string;
+    setTicketType: (value: string) => void;
+    onRefresh: () => void;
     totalCount: number;
     filteredCount: number;
     isLoadingStates?: boolean;
+    isRefreshing?: boolean;
 }
 
 const UserFilters: React.FC<UserFiltersProps> = ({
@@ -31,16 +35,30 @@ const UserFilters: React.FC<UserFiltersProps> = ({
     filterDate,
     setFilterDate,
     stateOptions,
+    ticketType,
+    setTicketType,
+    onRefresh,
     totalCount,
     filteredCount,
     isLoadingStates = false,
+    isRefreshing = false,
 }) => {
-    const hasActiveFilters = searchTerm || filterState || filterMode !== 'general' || filterDate;
+    const hasActiveFilters = searchTerm || filterState || filterMode !== 'general' || filterDate || ticketType;
 
     const filterModeOptions = [
         { value: 'all', label: 'All Registrations' },
         { value: 'general', label: 'Active (Non-Cancelled)' },
         { value: 'cancelled', label: 'Cancelled Only' },
+    ];
+
+    const ticketTypeOptions = [
+        { value: '', label: 'All Tickets' },
+        { value: 'FLIGHT', label: 'FLIGHT' },
+        { value: 'BUS', label: 'BUS' },
+        { value: 'WL', label: 'WL' },
+        { value: 'TBS', label: 'TBS' },
+        { value: 'FIRST AC', label: 'FIRST AC' },
+        { value: 'Not added', label: 'Not Added' },
     ];
 
     return (
@@ -71,7 +89,7 @@ const UserFilters: React.FC<UserFiltersProps> = ({
                 </div>
 
                 {/* State Filter */}
-                <div className="flex-1 lg:max-w-[200px]">
+                <div className="flex-1 lg:max-w-[180px]">
                     <SelectDropdown
                         options={stateOptions}
                         value={filterState}
@@ -84,6 +102,30 @@ const UserFilters: React.FC<UserFiltersProps> = ({
                     />
                 </div>
 
+                {/* Ticket Type Filter */}
+                <div className="flex-1 lg:max-w-[180px]">
+                    <SelectDropdown
+                        options={ticketTypeOptions}
+                        value={ticketType}
+                        onChange={setTicketType}
+                        placeholder="Ticket Type"
+                        searchable={false}
+                        clearable={false}
+                        className="h-11 border-heritage-gold/30 focus:border-heritage-primary focus:ring-2 focus:ring-heritage-primary/20 hover:border-heritage-gold/50"
+                    />
+                </div>
+
+                {/* Refresh Button */}
+                <Button
+                    variant="outline"
+                    onClick={onRefresh}
+                    title="Refresh Data"
+                    disabled={isRefreshing}
+                    className="h-11 border-heritage-gold/30 text-heritage-primary hover:bg-heritage-primary/5 min-w-[44px] px-2 shadow-sm"
+                >
+                    <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                </Button>
+
                 {/* Clear Filters Button */}
                 {hasActiveFilters && (
                     <Button
@@ -93,6 +135,7 @@ const UserFilters: React.FC<UserFiltersProps> = ({
                             setFilterState('');
                             setFilterMode('general');
                             setFilterDate(null);
+                            setTicketType('');
                         }}
                         className="lg:min-w-[120px] h-11 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
                     >
