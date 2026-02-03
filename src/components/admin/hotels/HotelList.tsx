@@ -173,7 +173,7 @@ const HotelList: React.FC<HotelListProps> = ({
 
     // Hotels list
     return (
-        <div className="space-y-6 font-inter">
+        <div className="space-y-3 font-inter">
             {hotels.map((hotel) => (
                 <HotelCard
                     key={hotel.id}

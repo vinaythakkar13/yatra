@@ -325,71 +325,73 @@ function HotelManagement() {
                 Hotel Management
               </h1>
             </div>
-            <p className="text-sm md:text-base text-heritage-text/70 ml-0 sm:ml-12">
-              Manage hotels, rooms, and accommodations
-            </p>
           </div>
 
-          <div className="flex-shrink-0">
-            <Button
-              variant="admin"
-              onClick={() => setShowAddModal(true)}
-              className="w-full sm:w-auto bg-heritage-primary hover:bg-heritage-secondary text-white shadow-lg shadow-heritage-primary/20"
-            >
-              <Plus className="w-4 h-4 md:w-5 md:h-5 mr-2" />
-              <span className="text-sm md:text-base">Add Hotel</span>
-            </Button>
-          </div>
+
         </div>
       </div>
 
-      {/* Search Section */}
-      {hotels.length > 0 && (
-        <div className="mb-6">
-          <div className="relative max-w-md">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-5 w-5 text-heritage-text/40" />
-            </div>
-            <input
-              type="text"
-              placeholder="Search hotels by name, address, manager, or type... (Press / to focus)"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Escape') {
-                  setSearchQuery('');
-                  e.currentTarget.blur();
-                }
-              }}
-              className="block w-full pl-10 pr-10 py-3 border-2 border-heritage-gold/30 rounded-xl bg-white/80 backdrop-blur-sm text-heritage-textDark placeholder-heritage-text/50 focus:outline-none focus:ring-2 focus:ring-heritage-primary/30 focus:border-heritage-primary transition-all duration-200 text-sm"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-heritage-text/40 hover:text-heritage-primary transition-colors"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            )}
-          </div>
-          {searchQuery && (
-            <div className="mt-2 flex items-center gap-2">
-              {searchQuery !== debouncedSearchQuery && (
-                <div className="w-4 h-4 border-2 border-heritage-primary/30 border-t-heritage-primary rounded-full animate-spin"></div>
-              )}
-              <p className="text-sm text-heritage-text/60">
-                {filteredHotels.length === 0
-                  ? `No hotels found matching "${debouncedSearchQuery}"`
-                  : `Found ${filteredHotels.length} hotel${filteredHotels.length === 1 ? '' : 's'} matching "${debouncedSearchQuery}"`
-                }
-              </p>
-            </div>
-          )}
-        </div>
-      )}
+
+
 
       {/* Statistics Section */}
       <HotelStats hotels={filteredHotels} />
+
+      <div className='flex justify-end items-center gap-4 my-4'>
+        <Button
+          variant="admin"
+          onClick={() => setShowAddModal(true)}
+          className="w-full sm:w-auto bg-heritage-primary hover:bg-heritage-secondary text-white shadow-lg shadow-heritage-primary/20 py-2.5 px-6"
+        >
+          <Plus className="w-5 h-5 mr-2" />
+          <span className="text-sm md:text-base font-semibold">Add Hotel</span>
+        </Button>
+
+        {/* Search Section */}
+        {hotels.length > 0 && (
+          <div className="">
+            <div className="relative max-w-2xl w-full">
+              <div className="absolute z-10 inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-heritage-primary/60" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search hotels... (Press / to focus)"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setSearchQuery('');
+                    e.currentTarget.blur();
+                  }
+                }}
+                className="block w-full pl-11 pr-10 py-3 border-2 border-heritage-gold/30 rounded-xl bg-white/80 backdrop-blur-sm text-heritage-textDark placeholder-heritage-text/50 focus:outline-none focus:ring-2 focus:ring-heritage-primary/30 focus:border-heritage-primary transition-all duration-200 text-sm"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-heritage-text/40 hover:text-heritage-primary transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              )}
+            </div>
+            {searchQuery && (
+              <div className="mt-2 flex items-center gap-2">
+                {searchQuery !== debouncedSearchQuery && (
+                  <div className="w-4 h-4 border-2 border-heritage-primary/30 border-t-heritage-primary rounded-full animate-spin"></div>
+                )}
+                <p className="text-sm text-heritage-text/60">
+                  {filteredHotels.length === 0
+                    ? `No matching hotels found`
+                    : `Found ${filteredHotels.length} matching hotel${filteredHotels.length === 1 ? '' : 's'}`
+                  }
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Hotels List */}
       <HotelList
