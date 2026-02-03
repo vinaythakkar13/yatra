@@ -11,9 +11,11 @@ interface ModalProps {
   title?: string | React.ReactNode;
   children: React.ReactNode;
   footer?: React.ReactNode;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
   variant?: 'default' | 'admin';
   closeOnBackdropClick?: boolean;
+  showHeader?: boolean;
+  className?: string;
 }
 
 // close on backdrop click
@@ -39,6 +41,8 @@ export default function Modal({
   size = 'md',
   variant = 'default',
   closeOnBackdropClick = true,
+  showHeader = true,
+  className = '',
 }: ModalProps) {
   const [mounted, setMounted] = useState(false);
 
@@ -82,6 +86,7 @@ export default function Modal({
     md: 'max-w-2xl',
     lg: 'max-w-4xl',
     xl: 'max-w-6xl',
+    full: 'max-w-full w-full h-full',
   };
 
   // Modal content to be rendered via Portal
@@ -115,7 +120,8 @@ export default function Modal({
             : 'bg-white rounded-lg sm:rounded-xl md:rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.3)] border border-gray-200'
           }
           animate-scale-in
-          max-h-[96vh] sm:max-h-[90vh] flex flex-col
+          ${size === 'full' ? 'max-h-full h-full' : 'max-h-[96vh] sm:max-h-[90vh]'} flex flex-col
+          ${className}
         `}
         style={{
           transform: 'translateZ(0)', // Hardware acceleration
@@ -123,7 +129,7 @@ export default function Modal({
         }}
       >
         {/* Header */}
-        {title && (
+        {showHeader && title && (
           <div className={`flex items-center justify-between p-4 md:p-6 gap-2 ${variant === 'admin'
             ? 'border-b border-heritage-gold/20 bg-heritage-highlight/30'
             : 'border-b border-gray-200'

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     PieChart, Pie, Cell, Legend
@@ -140,16 +140,26 @@ const RegistrationInfographics: React.FC<RegistrationInfographicsProps> = ({
                 </div>
                 <div className="h-80 w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={stateData || []} layout="vertical">
+                        <BarChart
+                            data={stateData || []}
+                            layout="vertical"
+                            margin={{ top: 5, right: 30, left: 5, bottom: 5 }}
+                        >
                             <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="rgba(0,0,0,0.05)" />
                             <XAxis type="number" hide />
                             <YAxis
                                 dataKey="state"
                                 type="category"
-                                width={100}
+                                width={120}
                                 axisLine={false}
                                 tickLine={false}
-                                tick={{ fill: '#6B5A45', fontSize: 12, fontWeight: 500 }}
+                                tick={{
+                                    fill: '#6B5A45',
+                                    fontSize: 11,
+                                    fontWeight: 500,
+                                    textAnchor: 'end'
+                                }}
+                                interval={0}
                             />
                             <Tooltip
                                 content={<CustomStateTooltip />}
@@ -159,7 +169,7 @@ const RegistrationInfographics: React.FC<RegistrationInfographicsProps> = ({
                                 dataKey="totalCount"
                                 fill="#EBA83A"
                                 radius={[0, 8, 8, 0]}
-                                barSize={20}
+                                barSize={Math.max(15, Math.min(25, 300 / (stateData?.length || 1)))}
                                 animationDuration={1500}
                             />
                         </BarChart>
@@ -189,7 +199,7 @@ const RegistrationInfographics: React.FC<RegistrationInfographicsProps> = ({
                                     paddingAngle={5}
                                     dataKey="value"
                                 >
-                                    {genderData?.map((entry, index) => (
+                                    {genderData?.map((_, index) => (
                                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                     ))}
                                 </Pie>

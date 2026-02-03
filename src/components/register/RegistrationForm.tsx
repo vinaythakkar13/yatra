@@ -18,7 +18,7 @@ import { BsWhatsapp } from 'react-icons/bs';
 import DatePicker from '../ui/DatePicker';
 import { Yatra } from '@/types';
 import { useUploadBase64Mutation } from '@/services/cloudinaryApi';
-import { useCreateRegistrationMutation, CreateRegistrationRequest } from '@/services/registrationApi';
+import { useCreateRegistrationMutation, CreateRegistrationRequest, useSplitRegistrationMutation, SplitRegistrationRequest } from '@/services/registrationApi';
 import { toast } from 'react-toastify';
 import AnimatedSuccessIcon from '@/components/ui/AnimatedSuccessIcon';
 
@@ -47,6 +47,9 @@ interface RegistrationFormData {
 interface RegistrationFormProps {
   initialPnr?: string;
   yatraDetails?: Yatra;
+  isAdminMode?: boolean;
+  onSuccess?: (registrationData?: any) => void;
+  onCancel?: () => void;
 }
 
 /**
@@ -229,7 +232,7 @@ const fileToBase64 = (file: File): Promise<string> => {
   });
 };
 
-export default function RegistrationForm({ initialPnr = '', yatraDetails }: RegistrationFormProps) {
+export default function RegistrationForm({ initialPnr = '', yatraDetails, isAdminMode = false, onSuccess, onCancel }: RegistrationFormProps) {
   const router = useRouter();
   const { addRegistration } = useApp();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -242,6 +245,7 @@ export default function RegistrationForm({ initialPnr = '', yatraDetails }: Regi
   // API hooks
   const [uploadBase64] = useUploadBase64Mutation();
   const [createRegistration, { isLoading: isCreatingRegistration }] = useCreateRegistrationMutation();
+  const [splitRegistration, { isLoading: isSplitRegistration }] = useSplitRegistrationMutation();
 
 
   const {
@@ -421,8 +425,26 @@ export default function RegistrationForm({ initialPnr = '', yatraDetails }: Regi
         })),
       };
 
-      // Step 4: Call registration API
-      const result = await createRegistration(apiPayload).unwrap();
+      // Step 4: Call registration API (use split registration for admin mode)
+      let result;
+      if (isAdminMode) {
+        // For admin mode, use split registration API with additional fields
+        const splitPayload: SplitRegistrationRequest = {
+          originalPnr: apiPayload.pnr,
+          name: apiPayload.name,
+          whatsappNumber: apiPayload.whatsappNumber,
+          numberOfPersons: apiPayload.numberOfPersons,
+          yatraId: apiPayload.yatraId!,
+          persons: apiPayload.persons,
+          boardingPoint: apiPayload.boardingPoint,
+          arrivalDate: apiPayload.arrivalDate,
+          returnDate: apiPayload.returnDate,
+          ticketImages: uploadedImageUrls,
+        };
+        result = await splitRegistration(splitPayload).unwrap();
+      } else {
+        result = await createRegistration(apiPayload).unwrap();
+      }
 
       if (result.success) {
         // Store in local context for backward compatibility
@@ -442,10 +464,26 @@ export default function RegistrationForm({ initialPnr = '', yatraDetails }: Regi
         };
         addRegistration(newRegistration);
 
-        // Show success modal
-        setSuccessPnr(apiPayload.pnr);
-        setShowSuccess(true);
-        toast.success('Registration submitted successfully!');
+        if (isAdminMode) {
+          // For admin mode, call success callback with registration data and show toast
+          const registrationData = {
+            pnr: apiPayload.pnr,
+            name: apiPayload.name,
+            whatsappNumber: apiPayload.whatsappNumber,
+            numberOfPersons: apiPayload.numberOfPersons,
+            yatraName: yatraDetails?.name,
+            arrivalDate: apiPayload.arrivalDate,
+            returnDate: apiPayload.returnDate,
+            split_pnr: result?.data?.internalPnr || ""
+          };
+          toast.success('Registration created successfully!');
+          onSuccess?.(registrationData);
+        } else {
+          // Show success modal for regular users
+          setSuccessPnr(apiPayload.pnr);
+          setShowSuccess(true);
+          toast.success('Registration submitted successfully!');
+        }
       } else {
         throw new Error(result.error || 'Failed to submit registration');
       }
@@ -1183,22 +1221,22 @@ export default function RegistrationForm({ initialPnr = '', yatraDetails }: Regi
         <Button
           type="button"
           variant="outline"
-          onClick={() => router.push('/')}
-          disabled={isSubmitting || isCreatingRegistration}
+          onClick={() => isAdminMode ? onCancel?.() : router.push('/')}
+          disabled={isSubmitting || isCreatingRegistration || isSplitRegistration}
           className="w-full sm:w-auto border border-spiritual-zen-accent/30 text-spiritual-zen-charcoal hover:bg-spiritual-zen-mist/50 text-sm py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Cancel
         </Button>
         <Button
           type="submit"
-          isLoading={isSubmitting || isCreatingRegistration}
-          disabled={isSubmitting || isCreatingRegistration}
+          isLoading={isSubmitting || isCreatingRegistration || isSplitRegistration}
+          disabled={isSubmitting || isCreatingRegistration || isSplitRegistration}
           className="w-full sm:w-auto bg-gradient-to-r from-spiritual-zen-forest to-spiritual-zen-accent text-white hover:shadow-lg transition-all duration-300 text-sm py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isSubmitting || isCreatingRegistration ? (
+          {isSubmitting || isCreatingRegistration || isSplitRegistration ? (
             <span className="flex items-center gap-2">
               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-              {isSubmitting && !isCreatingRegistration ? 'Uploading images...' : 'Submitting registration...'}
+              {isSubmitting && !(isCreatingRegistration || isSplitRegistration) ? 'Uploading images...' : 'Submitting registration...'}
             </span>
           ) : (
             <span className="flex items-center gap-2">

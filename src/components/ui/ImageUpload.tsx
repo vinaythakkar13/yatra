@@ -12,6 +12,7 @@ interface ImageUploadProps {
   maxFiles?: number;
   onChange: (files: File[]) => void;
   value?: File[];
+  onlyUploadContainer?: boolean;
 }
 
 interface InstructionStep {
@@ -39,6 +40,7 @@ export default function ImageUpload({
   maxFiles = 10,
   onChange,
   value = [],
+  onlyUploadContainer = false
 }: ImageUploadProps) {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>(value);
   const [previews, setPreviews] = useState<string[]>([]);
@@ -451,7 +453,7 @@ export default function ImageUpload({
       {/* Upload Options */}
       <div className="space-y-4">
         {/* Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+        {!onlyUploadContainer && <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <Button
             type="button"
             variant="admin-outline"
@@ -486,7 +488,7 @@ export default function ImageUpload({
               </span>
             </div>
           )}
-        </div>
+        </div>}
 
         {/* Hidden File Input */}
         <input

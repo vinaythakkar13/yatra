@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Check,
   ChevronRight,
-  ChevronLeft,
   Hotel,
   MapPin,
   Calendar,
@@ -49,6 +48,7 @@ export interface HotelFormData {
   distanceFromBhavan?: number;
   hotelType: "A" | "B" | "C" | "D";
   yatraId?: string;
+  visitingCardImage?: File[];
   managerName: string;
   managerContact: string;
   numberOfDays: number;
@@ -59,6 +59,7 @@ export interface HotelFormData {
   hasElevator: boolean;
   totalFloors: number;
   floors: FloorData[];
+  advance_paid_amount?: number;
 }
 
 interface AddHotelModalProps {
@@ -67,6 +68,7 @@ interface AddHotelModalProps {
   onSubmit: (data: HotelFormData) => void;
   initialData?: any;
   isEditMode?: boolean;
+  isLoading?: boolean;
 }
 
 const steps = [
@@ -81,6 +83,7 @@ const AddHotelModal: React.FC<AddHotelModalProps> = ({
   onSubmit,
   initialData,
   isEditMode = false,
+  isLoading = false,
 }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [direction, setDirection] = useState(0);
@@ -105,6 +108,7 @@ const AddHotelModal: React.FC<AddHotelModalProps> = ({
       distanceFromBhavan: undefined,
       hotelType: "A",
       yatraId: "",
+      visitingCardImage: [],
       managerName: "",
       managerContact: "",
       numberOfDays: 1,
@@ -148,35 +152,62 @@ const AddHotelModal: React.FC<AddHotelModalProps> = ({
         reset({
           name: initialData.name || "",
           address: initialData.address || "",
-          mapLink: initialData.mapLink || "",
-          distanceFromBhavan: initialData.distanceFromBhavan || undefined,
-          hotelType: initialData.hotelType || "A",
-          yatraId: initialData.yatraId || "",
-          managerName: initialData.managerName || "",
-          managerContact: initialData.managerContact || "",
-          numberOfDays: initialData.numberOfDays || 1,
-          startDate: initialData.startDate || "",
-          endDate: initialData.endDate || "",
-          checkInTime: initialData.checkInTime || "12:00",
-          checkOutTime: initialData.checkOutTime || "11:00",
-          hasElevator: initialData.hasElevator || false,
+          mapLink: initialData.mapLink || initialData.map_link || "",
+          distanceFromBhavan: initialData.distanceFromBhavan
+            ? Number(initialData.distanceFromBhavan)
+            : initialData.distance_from_bhavan
+              ? Number(initialData.distance_from_bhavan)
+              : undefined,
+          hotelType: initialData.hotelType || initialData.hotel_type || "A",
+          yatraId: initialData.yatraId || initialData.yatra_id || initialData.yatra || "",
+          visitingCardImage: initialData.visitingCardImage || (initialData.visitingCardImage || initialData.visiting_card_image || initialData.visitingCardUrl ? [] : []), // Don't pre-populate with URL, let user upload new one if needed
+          managerName: initialData.managerName || initialData.manager_name || "",
+          managerContact: initialData.managerContact || initialData.manager_contact || "",
+          numberOfDays: initialData.numberOfDays || initialData.number_of_days || 1,
+          startDate: initialData.startDate || initialData.start_date
+            ? (() => {
+              const dateStr = initialData.startDate || initialData.start_date;
+              // If it's in DD-MM-YYYY format, convert to ISO
+              if (typeof dateStr === 'string' && /^\d{2}-\d{2}-\d{4}$/.test(dateStr)) {
+                const [day, month, year] = dateStr.split('-');
+                return new Date(Number(year), Number(month) - 1, Number(day)).toISOString();
+              }
+              // If it's already ISO or other format, use as is
+              return new Date(dateStr).toISOString();
+            })()
+            : "",
+          endDate: initialData.endDate || initialData.end_date
+            ? (() => {
+              const dateStr = initialData.endDate || initialData.end_date;
+              // If it's in DD-MM-YYYY format, convert to ISO
+              if (typeof dateStr === 'string' && /^\d{2}-\d{2}-\d{4}$/.test(dateStr)) {
+                const [day, month, year] = dateStr.split('-');
+                return new Date(Number(year), Number(month) - 1, Number(day)).toISOString();
+              }
+              // If it's already ISO or other format, use as is
+              return new Date(dateStr).toISOString();
+            })()
+            : "",
+          checkInTime: initialData.checkInTime || initialData.check_in_time || "12:00",
+          checkOutTime: initialData.checkOutTime || initialData.check_out_time || "11:00",
+          hasElevator: Boolean(initialData.hasElevator || initialData.has_elevator),
           totalFloors:
-            initialData.totalFloors || initialData.floors?.length || 1,
+            initialData.totalFloors || initialData.total_floors || initialData.floors?.length || 1,
           floors:
             initialData.floors && Array.isArray(initialData.floors)
               ? initialData?.floors?.map((f: any) => ({
-                floorNumber: f.floorNumber.toString(),
-                numberOfRooms: f.numberOfRooms,
-                roomNumbers: [...f.roomNumbers],
+                floorNumber: f.floorNumber?.toString() || f.floor_number?.toString() || "",
+                numberOfRooms: f.numberOfRooms || f.number_of_rooms || 0,
+                roomNumbers: f.roomNumbers || f.room_numbers || [],
                 rooms:
                   f.rooms && Array.isArray(f.rooms)
                     ? f?.rooms?.map((r: any) => ({
-                      roomNumber: r.roomNumber || "",
-                      toiletType: r.toiletType || "western",
-                      numberOfBeds: r.numberOfBeds || 1,
-                      chargePerDay: r.chargePerDay || 0,
+                      roomNumber: r.roomNumber || r.room_number || "",
+                      toiletType: r.toiletType || r.toilet_type || "western",
+                      numberOfBeds: r.numberOfBeds || r.number_of_beds || 1,
+                      chargePerDay: r.chargePerDay || r.charge_per_day || 0,
                     }))
-                    : f.roomNumbers.map(() => ({
+                    : (f.roomNumbers || f.room_numbers || []).map(() => ({
                       roomNumber: "",
                       toiletType: "western" as const,
                       numberOfBeds: 1,
@@ -198,6 +229,11 @@ const AddHotelModal: React.FC<AddHotelModalProps> = ({
                   ],
                 },
               ],
+          advance_paid_amount: initialData.advance_paid_amount
+            ? Number(initialData.advance_paid_amount)
+            : initialData.advancePaidAmount
+              ? Number(initialData.advancePaidAmount)
+              : undefined,
         });
       } else {
         reset({
@@ -207,6 +243,7 @@ const AddHotelModal: React.FC<AddHotelModalProps> = ({
           distanceFromBhavan: undefined,
           hotelType: "A",
           yatraId: "",
+          visitingCardImage: [],
           managerName: "",
           managerContact: "",
           numberOfDays: 1,
@@ -276,6 +313,7 @@ const AddHotelModal: React.FC<AddHotelModalProps> = ({
           "yatraId",
           "mapLink",
           "distanceFromBhavan",
+          "visitingCardImage",
         ];
         break;
       case 1:
@@ -354,6 +392,29 @@ const AddHotelModal: React.FC<AddHotelModalProps> = ({
       size="xl"
       variant="admin"
     >
+      {/* Loading Overlay */}
+      {isLoading && (
+        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center rounded-2xl">
+          <div className="flex flex-col items-center gap-4 p-8">
+            <div className="relative">
+              <div className="w-16 h-16 border-4 border-heritage-highlight/30 rounded-full animate-spin border-t-heritage-primary"></div>
+              <div className="absolute inset-0 w-16 h-16 border-4 border-transparent rounded-full animate-ping border-t-heritage-secondary/20"></div>
+            </div>
+            <div className="text-center">
+              <h3 className="text-lg font-bold text-heritage-textDark mb-2">
+                {isEditMode ? 'Updating Hotel...' : 'Creating Hotel...'}
+              </h3>
+              <p className="text-sm text-heritage-text/70">
+                {isEditMode
+                  ? 'Please wait while we update the hotel information'
+                  : 'Please wait while we process the hotel registration and upload images'
+                }
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col h-full">
         {/* Stepper Header */}
         <div className="mb-8 px-2">
@@ -439,6 +500,8 @@ const AddHotelModal: React.FC<AddHotelModalProps> = ({
                     control={control}
                     register={register}
                     errors={errors}
+                    isEditMode={isEditMode}
+                    existingVisitingCardUrl={isEditMode ? initialData?.visitingCardImage || initialData?.visiting_card_image || initialData?.visitingCardUrl : undefined}
                   />
                 )}
                 {currentStep === 1 && (
@@ -485,7 +548,12 @@ const AddHotelModal: React.FC<AddHotelModalProps> = ({
                   <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
                 </Button>
               ) : (
-                <Button type="submit" variant="admin" isLoading={isSubmitting}>
+                <Button
+                  type="submit"
+                  variant="admin"
+                  isLoading={isSubmitting || isLoading}
+                  disabled={isLoading}
+                >
                   {isEditMode ? "Update" : "Submit"}
                 </Button>
               )}
@@ -835,6 +903,32 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Advance Payment - Enhanced Card */}
+          {hotelData.advance_paid_amount !== undefined && hotelData.advance_paid_amount > 0 && (
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 sm:p-5 border-2 border-green-200 shadow-lg shadow-green-100">
+              <div className="flex items-center gap-3 mb-4 pb-3 border-b-2 border-green-300">
+                <div className="p-2.5 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl shadow-md">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                  </svg>
+                </div>
+                <h3 className="text-base sm:text-lg font-bold text-green-800">
+                  Advance Payment
+                </h3>
+              </div>
+              <div className="flex items-center justify-center p-4 bg-white/60 rounded-lg border border-green-200">
+                <div className="text-center">
+                  <p className="text-sm font-medium text-green-700 mb-2">
+                    Amount Paid in Advance
+                  </p>
+                  <p className="text-3xl font-black text-green-900">
+                    ₹{hotelData.advance_paid_amount.toLocaleString('en-IN')}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Action Buttons */}
