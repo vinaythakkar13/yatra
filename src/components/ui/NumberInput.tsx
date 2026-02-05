@@ -101,6 +101,33 @@ export default function NumberInput({
     }
   };
 
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedText = e.clipboardData.getData('text');
+
+    // Remove all non-numeric characters
+    const numericOnly = pastedText.replace(/[^0-9]/g, '');
+
+    if (numericOnly === '') {
+      return; // Don't paste if no numbers found
+    }
+
+    // Remove leading zeros
+    const cleanedValue = numericOnly.replace(/^0+/, '') || '0';
+    const newValue = parseInt(cleanedValue, 10);
+
+    // Validate and set the value
+    if (!isNaN(newValue)) {
+      if (newValue >= min && newValue <= max) {
+        onChange(newValue);
+      } else if (newValue < min) {
+        onChange(min);
+      } else if (newValue > max) {
+        onChange(max);
+      }
+    }
+  };
+
   const handleBlur = () => {
     // Ensure value is set to min if empty or invalid
     if (isNaN(value) || value < min) {
@@ -118,6 +145,20 @@ export default function NumberInput({
     } else if (e.key === 'ArrowDown') {
       e.preventDefault();
       handleDecrement();
+      return;
+    } else if (e.key === 'Enter') {
+      // Validate on Enter key press
+      e.preventDefault();
+      const input = e.currentTarget;
+      const currentValue = parseInt(input.value, 10);
+
+      if (isNaN(currentValue)) {
+        onChange(min);
+      } else if (currentValue < min) {
+        onChange(min);
+      } else if (currentValue > max) {
+        onChange(max);
+      }
       return;
     }
 
@@ -200,6 +241,7 @@ export default function NumberInput({
             onChange={handleInputChange}
             onBlur={handleBlur}
             onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
             min={min || undefined}
             max={max || undefined}
             step={step}

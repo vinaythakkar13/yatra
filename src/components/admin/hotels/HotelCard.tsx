@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Hotel as HotelIcon, MapPin, Edit, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Hotel as HotelIcon, MapPin, Edit, Trash2, ChevronDown, ChevronUp, Home, Users, BedDouble } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Table from '@/components/ui/Table';
 
@@ -93,94 +93,103 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onEdit, onDelete }) => {
   ];
 
   return (
-    <div className="bg-white/70 backdrop-blur-md border border-white/40 shadow-glass rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-glass-lg font-inter">
-      <div className="p-4 md:p-6">
-        {/* Hotel Header */}
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
-          <div className="flex items-start gap-4 flex-1 min-w-0">
-            <div className="bg-gradient-to-br from-heritage-primary to-heritage-secondary p-3 md:p-4 rounded-xl shadow-lg flex-shrink-0 text-white">
-              <HotelIcon className="w-6 h-6 md:w-8 md:h-8" />
+    <div className="bg-white/80 backdrop-blur-md border border-white/40 shadow-glass rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-glass-lg font-inter">
+      <div className="p-4 md:p-5">
+        {/* Elegant Header & Stats Section */}
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-white/40 p-3 rounded-xl border border-white/50 mb-4">
+          <div className="flex items-center gap-4 min-w-0 flex-1">
+            <div className="bg-gradient-to-br from-heritage-primary to-heritage-secondary p-2.5 rounded-xl shadow-lg text-white flex-shrink-0">
+              <HotelIcon className="w-6 h-6" />
             </div>
-            <div className="flex-1 min-w-0">
-              <h2 className="text-xl md:text-2xl font-bold text-heritage-textDark mb-1 md:mb-2 truncate">
+            <div className="min-w-0">
+              <h2 className="text-lg md:text-xl font-bold text-heritage-textDark truncate leading-tight">
                 {hotel.name}
               </h2>
-              <p className="text-sm text-heritage-text/70 mb-2 md:mb-3">
-                {hotel.totalFloors || hotel.floors?.length || 0} floors • {getTotalRooms(hotel)} total rooms
-              </p>
-
-              {hotel.address && (
-                <div className="flex items-start gap-2 mb-2">
-                  <MapPin className="w-4 h-4 text-heritage-primary flex-shrink-0 mt-0.5" />
-                  <span className="text-sm text-heritage-text/80 line-clamp-2">
-                    {hotel.address}
-                  </span>
-                </div>
-              )}
             </div>
           </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onEdit(hotel)}
-              className="flex-1 sm:flex-none justify-center border-heritage-primary/30 text-heritage-primary hover:bg-heritage-primary/10"
-            >
-              <Edit className="w-4 h-4 mr-2" />
-              Edit
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onDelete(hotel)}
-              className="flex-1 sm:flex-none justify-center border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Delete
-            </Button>
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Stats Row with Pills */}
+            <div className="flex flex-wrap items-center gap-2 border-r border-heritage-text/10 pr-3 last:border-0 last:pr-0">
+              <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-heritage-highlight/20 border border-heritage-highlight/30">
+                <span className="text-heritage-text/50"><Home className="w-3.5 h-3.5" /></span>
+                <span className="text-xs font-bold text-heritage-textDark">{getTotalRooms(hotel)} <span className="text-[10px] font-medium text-heritage-text/50 uppercase ml-0.5">Rooms</span></span>
+              </div>
+              <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-green-50 border border-green-100">
+                <span className="text-green-500"><Users className="w-3.5 h-3.5" /></span>
+                <span className="text-xs font-bold text-green-700">{getAvailableRooms(hotel)} <span className="text-[10px] font-medium text-green-600/60 uppercase ml-0.5">Free</span></span>
+              </div>
+              <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-heritage-maroon/5 border border-heritage-maroon/10">
+                <span className="text-heritage-maroon/60"><BedDouble className="w-3.5 h-3.5" /></span>
+                <span className="text-xs font-bold text-heritage-maroon">{getOccupiedRooms(hotel)} <span className="text-[10px] font-medium text-heritage-maroon/60 uppercase ml-0.5">Busy</span></span>
+              </div>
+              <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-blue-50 border border-blue-100">
+                <span className="text-xs font-bold text-blue-700">
+                  {getTotalRooms(hotel) ? Math.round((getOccupiedRooms(hotel) / getTotalRooms(hotel)) * 100) : 0}% <span className="text-[10px] font-medium text-blue-600/60 uppercase ml-0.5">Usage</span>
+                </span>
+              </div>
+            </div>
+
+            {/* Actions with Labels */}
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onEdit(hotel)}
+                className="h-9 px-3 border-heritage-primary/20 text-heritage-primary hover:bg-heritage-primary/5 transition-all text-xs font-semibold"
+              >
+                <Edit className="w-3.5 h-3.5 mr-1.5" />
+                Edit
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onDelete(hotel)}
+                className="h-9 px-3 border-red-100 text-red-600 hover:bg-red-50 transition-all text-xs font-semibold"
+              >
+                <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                Delete
+              </Button>
+            </div>
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
-          <div className="p-3 md:p-4 rounded-xl bg-heritage-highlight/20 border border-heritage-highlight backdrop-blur-sm">
-            <p className="text-[10px] md:text-xs text-heritage-text/70 uppercase tracking-wider mb-1 font-semibold">Total Rooms</p>
-            <p className="text-xl md:text-2xl font-bold text-heritage-textDark">{getTotalRooms(hotel)}</p>
+        {/* Secondary Info Row with Better Contrast */}
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mb-3 px-1">
+          <div className="flex items-center gap-2 text-sm text-heritage-text/70">
+            <span className="bg-heritage-gold/20 text-heritage-textDark px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">Floors</span>
+            <span className="font-semibold">{hotel.totalFloors || hotel.floors?.length || 0}</span>
           </div>
-          <div className="p-3 md:p-4 rounded-xl bg-green-100/50 border border-green-200/60 backdrop-blur-sm">
-            <p className="text-[10px] md:text-xs text-green-700 uppercase tracking-wider mb-1 font-semibold">Available</p>
-            <p className="text-xl md:text-2xl font-bold text-green-800">{getAvailableRooms(hotel)}</p>
-          </div>
-          <div className="p-3 md:p-4 rounded-xl bg-heritage-maroon/10 border border-heritage-maroon/20 backdrop-blur-sm">
-            <p className="text-[10px] md:text-xs text-heritage-maroon uppercase tracking-wider mb-1 font-semibold">Occupied</p>
-            <p className="text-xl md:text-2xl font-bold text-heritage-maroon">{getOccupiedRooms(hotel)}</p>
-          </div>
-          <div className="p-3 md:p-4 rounded-xl bg-blue-100/50 border border-blue-200/60 backdrop-blur-sm">
-            <p className="text-[10px] md:text-xs text-blue-700 uppercase tracking-wider mb-1 font-semibold">Occupancy</p>
-            <p className="text-xl md:text-2xl font-bold text-blue-800">
-              {getTotalRooms(hotel) ? Math.round((getOccupiedRooms(hotel) / getTotalRooms(hotel)) * 100) : 0}%
-            </p>
-          </div>
+          {hotel.address && (
+            <div className="flex items-center gap-2 text-sm text-heritage-text/60 min-w-0">
+              <MapPin className="w-4 h-4 text-heritage-primary flex-shrink-0" />
+              <span className="truncate">{hotel.address}</span>
+            </div>
+          )}
         </div>
 
-        {/* Collapsible Room List */}
-        <div className="border-t border-heritage-text/10 pt-4">
+        {/* Collapsible Section Control */}
+        <div className="border-t border-heritage-text/10 pt-3">
           <button
             onClick={() => setIsExpanded(!isExpanded)}
-            className="flex items-center justify-between w-full py-2 text-sm font-medium text-heritage-text/70 hover:text-heritage-primary transition-colors"
+            className="flex items-center justify-between w-full py-1 text-xs font-bold text-heritage-text/50 hover:text-heritage-primary transition-colors group"
           >
-            <span>View Room Details</span>
-            {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            <div className="flex items-center gap-3">
+              <span className="uppercase tracking-widest">{isExpanded ? 'Hide' : 'View'} Detailed Room List</span>
+              <div className="h-0.5 w-12 bg-heritage-text/10 group-hover:bg-heritage-primary/30 transition-all" />
+            </div>
+            {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
           </button>
 
           {isExpanded && (
-            <div className="mt-4 animate-fade-in">
-              <Table
-                data={hotel.rooms || []}
-                columns={roomColumns}
-                className="bg-white/50"
-              />
+            <div className="mt-4 animate-fade-in animate-duration-300">
+              <div className="rounded-xl border border-heritage-text/10 overflow-hidden bg-white/50">
+                <Table
+                  data={hotel.rooms || []}
+                  columns={roomColumns}
+                  className="text-sm"
+                />
+              </div>
             </div>
           )}
         </div>

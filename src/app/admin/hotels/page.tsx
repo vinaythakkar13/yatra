@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Hotel as HotelIcon } from 'lucide-react';
+import { Plus, Hotel as HotelIcon, Search, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
@@ -14,8 +14,12 @@ import {
   useDeleteHotelMutation,
   useGetAllHotelsQuery,
   transformHotelFormDataToApiPayload,
+  CreateHotelRequest,
+  UpdateHotelRequest,
 } from '@/services/hotelApi';
+import { useUploadBase64Mutation } from '@/services/cloudinaryApi';
 import { yatraStorage } from '@/utils/storage';
+import { useDebounce } from '@/hooks/useDebounce';
 
 /**
  * Hotel Management Page (Admin)
@@ -34,6 +38,23 @@ function HotelManagement() {
   const [editingHotel, setEditingHotel] = useState<any>(null);
   const [hotelToDelete, setHotelToDelete] = useState<any>(null);
   const [selectedYatraId, setSelectedYatraId] = useState<string | undefined>(undefined);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+
+  // Keyboard shortcut for search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        const searchInput = document.querySelector('input[type="text"]') as HTMLInputElement;
+        if (searchInput) {
+          searchInput.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Get selected yatra ID from storage and sync with changes
   useEffect(() => {
@@ -61,24 +82,73 @@ function HotelManagement() {
   // Fetch hotels from API filtered by selected yatra ID
   const { data: hotels = [], isLoading: isLoadingHotels, refetch: refetchHotels } = useGetAllHotelsQuery(selectedYatraId);
 
+  // Debounce search query to improve performance
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+  // Filter hotels based on debounced search query
+  const filteredHotels = React.useMemo(() => {
+    if (!debouncedSearchQuery.trim()) {
+      return hotels;
+    }
+
+    const query = debouncedSearchQuery.toLowerCase().trim();
+    return hotels.filter((hotel: any) =>
+      hotel.name?.toLowerCase().includes(query) ||
+      hotel.address?.toLowerCase().includes(query) ||
+      hotel.managerName?.toLowerCase().includes(query) ||
+      hotel.hotelType?.toLowerCase().includes(query)
+    );
+  }, [hotels, debouncedSearchQuery]);
+
   // RTK Query mutation hooks
   const [createHotel, { isLoading: isCreatingHotel }] = useCreateHotelMutation();
   const [updateHotel, { isLoading: isUpdatingHotel }] = useUpdateHotelMutation();
   const [deleteHotel, { isLoading: isDeletingHotel }] = useDeleteHotelMutation();
+  const [uploadBase64, { isLoading: isUploadingImage }] = useUploadBase64Mutation();
 
   // Handle Add Hotel form submission
   const handleAddHotel = async (data: HotelFormData) => {
     // Validate required fields
-    if (!data.yatraId) {
-      toast.error('Please select a Yatra', {
-        position: 'top-right',
-      });
-      return;
-    }
-
     try {
+      let visitingCardUrl = null;
+
+      // Upload visiting card image if provided
+      if (data.visitingCardImage && data.visitingCardImage.length > 0) {
+        const file = data.visitingCardImage[0];
+
+        // Convert file to base64
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const result = reader.result as string;
+            // Remove data:image/...;base64, prefix
+            const base64Data = result.split(',')[1];
+            resolve(base64Data);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+
+        // Upload to cloudinary
+        const uploadResult = await uploadBase64({
+          base64Image: base64,
+          folder: 'hotels/visiting-cards',
+          tags: ['hotel', 'visiting-card']
+        }).unwrap();
+
+        if (uploadResult.success && uploadResult.data) {
+          visitingCardUrl = uploadResult.data.secure_url;
+        } else {
+          throw new Error('Failed to upload visiting card image');
+        }
+      }
+
+      const selectedYatraId = localStorage.getItem('admin_selected_yatra_id') || "";
       // Transform form data to API payload format
-      const apiPayload = transformHotelFormDataToApiPayload(data, data.yatraId);
+      const apiPayload = {
+        ...(transformHotelFormDataToApiPayload(data, selectedYatraId) as CreateHotelRequest),
+        visitingCardImage: visitingCardUrl,
+      };
 
       // Call API to create hotel
       const result = await createHotel(apiPayload).unwrap();
@@ -118,17 +188,49 @@ function HotelManagement() {
   const handleUpdateHotel = async (data: HotelFormData) => {
     if (!editingHotel) return;
 
-    // Validate required fields
-    if (!data.yatraId) {
-      toast.error('Please select a Yatra', {
-        position: 'top-right',
-      });
-      return;
-    }
-
     try {
+      let visitingCardUrl = null;
+
+      // Upload visiting card image if provided
+      if (data.visitingCardImage && data.visitingCardImage.length > 0) {
+        const file = data.visitingCardImage[0];
+
+        // Convert file to base64
+        const base64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const result = reader.result as string;
+            // Remove data:image/...;base64, prefix
+            const base64Data = result.split(',')[1];
+            resolve(base64Data);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+
+        // Upload to cloudinary
+        const uploadResult = await uploadBase64({
+          base64Image: base64,
+          folder: 'hotels/visiting-cards',
+          tags: ['hotel', 'visiting-card']
+        }).unwrap();
+
+        if (uploadResult.success && uploadResult.data) {
+          visitingCardUrl = uploadResult.data.secure_url;
+        } else {
+          throw new Error('Failed to upload visiting card image');
+        }
+      }
+
+      const selectedYatraId = localStorage.getItem('admin_selected_yatra_id') || "";
+
       // Transform form data to API payload format
-      const apiPayload = transformHotelFormDataToApiPayload(data, data.yatraId);
+      const baseApiPayload = transformHotelFormDataToApiPayload(data, selectedYatraId, true) as UpdateHotelRequest; // true indicates this is an update
+
+      // Only include visitingCardImage if a new image was uploaded
+      const apiPayload = visitingCardUrl
+        ? { ...baseApiPayload, visitingCardImage: visitingCardUrl }
+        : baseApiPayload;
 
       // Call API to update hotel
       const result = await updateHotel({ id: editingHotel.id, data: apiPayload }).unwrap();
@@ -211,33 +313,83 @@ function HotelManagement() {
                 Hotel Management
               </h1>
             </div>
-            <p className="text-sm md:text-base text-heritage-text/70 ml-0 sm:ml-12">
-              Manage hotels, rooms, and accommodations
-            </p>
           </div>
 
-          <div className="flex-shrink-0">
-            <Button
-              variant="admin"
-              onClick={() => setShowAddModal(true)}
-              className="w-full sm:w-auto bg-heritage-primary hover:bg-heritage-secondary text-white shadow-lg shadow-heritage-primary/20"
-            >
-              <Plus className="w-4 h-4 md:w-5 md:h-5 mr-2" />
-              <span className="text-sm md:text-base">Add Hotel</span>
-            </Button>
-          </div>
+
         </div>
       </div>
 
+
+
+
       {/* Statistics Section */}
-      <HotelStats hotels={hotels} />
+      <HotelStats hotels={filteredHotels} />
+
+      <div className='flex justify-end items-center gap-4 my-4'>
+        <Button
+          variant="admin"
+          onClick={() => setShowAddModal(true)}
+          className="w-full sm:w-auto bg-heritage-primary hover:bg-heritage-secondary text-white shadow-lg shadow-heritage-primary/20 py-2.5 px-6"
+        >
+          <Plus className="w-5 h-5 mr-2" />
+          <span className="text-sm md:text-base font-semibold">Add Hotel</span>
+        </Button>
+
+        {/* Search Section */}
+        {hotels.length > 0 && (
+          <div className="">
+            <div className="relative max-w-2xl w-full">
+              <div className="absolute z-10 inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search className="h-5 w-5 text-heritage-primary/60" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search hotels... (Press / to focus)"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setSearchQuery('');
+                    e.currentTarget.blur();
+                  }
+                }}
+                className="block w-full pl-11 pr-10 py-3 border-2 border-heritage-gold/30 rounded-xl bg-white/80 backdrop-blur-sm text-heritage-textDark placeholder-heritage-text/50 focus:outline-none focus:ring-2 focus:ring-heritage-primary/30 focus:border-heritage-primary transition-all duration-200 text-sm"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-heritage-text/40 hover:text-heritage-primary transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              )}
+            </div>
+            {searchQuery && (
+              <div className="mt-2 flex items-center gap-2">
+                {searchQuery !== debouncedSearchQuery && (
+                  <div className="w-4 h-4 border-2 border-heritage-primary/30 border-t-heritage-primary rounded-full animate-spin"></div>
+                )}
+                <p className="text-sm text-heritage-text/60">
+                  {filteredHotels.length === 0
+                    ? `No matching hotels found`
+                    : `Found ${filteredHotels.length} matching hotel${filteredHotels.length === 1 ? '' : 's'}`
+                  }
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Hotels List */}
       <HotelList
-        hotels={hotels}
+        hotels={filteredHotels}
         onAddHotel={() => setShowAddModal(true)}
         onEditHotel={handleEditClick}
         onDeleteHotel={handleDeleteClick}
+        isLoading={isLoadingHotels}
+        searchQuery={debouncedSearchQuery}
+        hasYatraSelected={!!selectedYatraId}
       />
 
       {/* Add Hotel Modal */}
@@ -245,6 +397,7 @@ function HotelManagement() {
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
         onSubmit={handleAddHotel}
+        isLoading={isCreatingHotel || isUploadingImage}
       />
 
       {/* Edit Hotel Modal */}
@@ -257,6 +410,7 @@ function HotelManagement() {
         onSubmit={handleUpdateHotel}
         initialData={editingHotel}
         isEditMode={true}
+        isLoading={isUpdatingHotel || isUploadingImage}
       />
 
       {/* Delete Confirmation Modal */}

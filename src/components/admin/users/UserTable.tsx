@@ -1,5 +1,5 @@
 import React from 'react';
-import { Eye, RefreshCw, UserX, Home, FileText, CheckCircle, XCircle, ArrowRight, ArrowLeft, Plane, Train, Bus } from 'lucide-react';
+import { Eye, RefreshCw, UserX, Home, FileText, CheckCircle, XCircle, ArrowRight, ArrowLeft, Plane, Train, Bus, Phone } from 'lucide-react';
 import Table from '@/components/ui/Table';
 import moment from 'moment';
 import { RiUserStarLine } from 'react-icons/ri';
@@ -114,20 +114,31 @@ const UserTable: React.FC<UserTableProps> = ({
                 </div>
             ),
         },
+
+        // name and number of persons in single line with gap and in next line contact number
         {
             key: 'name',
             header: 'Name',
             render: (row: any) => (
-                <span className="font-semibold text-heritage-textDark">{row.name}</span>
+                <div className="flex flex-col gap-2">
+                    <div className="flex flex-row gap-2">
+                        <span className="font-bold text-heritage-textDark">{row.name}</span>
+                        {/* <span className="text-heritage-text p-1 rounded-full bg-heritage-primary/10">{row.numberOfPersons}</span> */}
+                    </div>
+                    <span className="text-heritage-text flex items-center gap-2">
+                        <Phone className="w-3 h-3 inline-block" />
+                        <span className="font-medium">{row.contactNumber}</span>
+                    </span>
+                </div>
             ),
         },
-        {
-            key: 'contactNumber',
-            header: 'Contact',
-            render: (row: any) => (
-                <span className="text-heritage-text">{row.contactNumber}</span>
-            ),
-        },
+        // {
+        //     key: 'contactNumber',
+        //     header: 'Contact',
+        //     render: (row: any) => (
+        //         <span className="text-heritage-text">{row.contactNumber}</span>
+        //     ),
+        // },
         {
             key: 'numberOfPersons',
             header: 'Persons',
@@ -151,14 +162,14 @@ const UserTable: React.FC<UserTableProps> = ({
             header: 'Journey Dates',
             render: (row: any) => (
                 <div className="flex flex-col gap-1">
-                    <span className="text-heritage-text whitespace-nowrap bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-semibold">
+                    <span className="text-heritage-text whitespace-nowrap bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-semibold max-w-fit">
                         {/* arrival icon */}
                         <ArrowRight className="w-3 h-3 inline-block" />
                         <span className="ml-1">{row.arrivalDate}</span>
                     </span>
 
                     {/* make it badge red for departure with exit icon */}
-                    <span className="text-heritage-text whitespace-nowrap bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-semibold">
+                    <span className="text-heritage-text whitespace-nowrap bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-semibold max-w-fit">
                         <ArrowLeft className="w-3 h-3 inline-block" />
                         <span className="ml-1">{row.returnDate}</span>
                     </span>

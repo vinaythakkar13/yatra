@@ -146,12 +146,14 @@ const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
         setRotation((prev) => (prev + 90) % 360);
     };
 
-
     const title = documentOwner ? (
         <div className="flex items-center justify-between w-full pr-8">
             <div>
-                <span className="text-gray-900">Documents - {documentOwner.name}</span>
-                <span className="text-sm text-gray-500 ml-2">(PNR: {documentOwner.pnr})</span>
+                <div className='flex items-center gap-2'>
+                    <span className="text-gray-900">Documents - {documentOwner.name}</span>
+                    <span className="text-sm text-gray-500 ml-2">(PNR: {documentOwner.pnr})</span>
+                </div>
+                {documentOwner?.originalPnr && documentOwner?.splitPnr && <span className='text-sm text-red-500 p-1.5 rounded-lg bg-red-100'>{`Original PNR: ${documentOwner?.originalPnr}`}</span>}
             </div>
             {documentOwner.documentStatus && (
                 <span

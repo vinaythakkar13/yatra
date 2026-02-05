@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, X, Filter, RefreshCw } from 'lucide-react';
+import { Search, X, Filter, RefreshCw, UserPlus } from 'lucide-react';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import SelectDropdown from '@/components/ui/SelectDropdown';
@@ -19,10 +19,13 @@ interface UserFiltersProps {
     ticketType: string;
     setTicketType: (value: string) => void;
     onRefresh: () => void;
+    onNewRegistration?: () => void;
     totalCount: number;
     filteredCount: number;
     isLoadingStates?: boolean;
     isRefreshing?: boolean;
+    documentApprovalStatus: string;
+    setDocumentApprovalStatus: (value: string) => void;
 }
 
 const UserFilters: React.FC<UserFiltersProps> = ({
@@ -38,10 +41,13 @@ const UserFilters: React.FC<UserFiltersProps> = ({
     ticketType,
     setTicketType,
     onRefresh,
+    onNewRegistration,
     totalCount,
     filteredCount,
     isLoadingStates = false,
     isRefreshing = false,
+    documentApprovalStatus,
+    setDocumentApprovalStatus,
 }) => {
     const hasActiveFilters = searchTerm || filterState || filterMode !== 'general' || filterDate || ticketType;
 
@@ -58,104 +64,148 @@ const UserFilters: React.FC<UserFiltersProps> = ({
         { value: 'WL', label: 'WL' },
         { value: 'TBS', label: 'TBS' },
         { value: 'FIRST AC', label: 'FIRST AC' },
+        { value: 'SECOND AC', label: 'SECOND AC' },
+        { value: 'THIRD AC', label: 'THIRD AC' },
         { value: 'Not added', label: 'Not Added' },
+    ];
+
+    const documentApprovalStatusOptions = [
+        { value: '', label: 'All' },
+        { value: 'approved', label: 'Approved' },
+        { value: 'pending', label: 'Pending' },
+        { value: 'rejected', label: 'Rejected' },
     ];
 
     return (
         <Card className="mb-6 bg-white/70 backdrop-blur-md border-white/40 shadow-glass font-inter">
-            <div className="flex flex-col lg:flex-row gap-3 items-stretch">
-                {/* Search Box */}
-                <div className="flex-1 lg:min-w-[300px]">
-                    <Input
-                        placeholder="Search by name, PNR, or contact..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        leftIcon={<Search className="w-5 h-5 text-gray-400" />}
-                        className="h-11 bg-white/50 border-white/40 focus:bg-white transition-all"
-                    />
-                </div>
-
-                {/* Registration Type Filter */}
-                <div className="flex-1 lg:max-w-[220px]">
-                    <SelectDropdown
-                        options={filterModeOptions}
-                        value={filterMode}
-                        onChange={(val: any) => setFilterMode(val)}
-                        placeholder="Registration Type"
-                        searchable={false}
-                        clearable={false}
-                        className="h-11 border-heritage-gold/30 focus:border-heritage-primary focus:ring-2 focus:ring-heritage-primary/20 hover:border-heritage-gold/50"
-                    />
-                </div>
-
-                {/* State Filter */}
-                <div className="flex-1 lg:max-w-[180px]">
-                    <SelectDropdown
-                        options={stateOptions}
-                        value={filterState}
-                        onChange={setFilterState}
-                        placeholder={isLoadingStates ? "Loading states..." : "State"}
-                        searchable
-                        clearable
-                        disabled={isLoadingStates}
-                        className="h-11"
-                    />
-                </div>
-
-                {/* Ticket Type Filter */}
-                <div className="flex-1 lg:max-w-[180px]">
-                    <SelectDropdown
-                        options={ticketTypeOptions}
-                        value={ticketType}
-                        onChange={setTicketType}
-                        placeholder="Ticket Type"
-                        searchable={false}
-                        clearable={false}
-                        className="h-11 border-heritage-gold/30 focus:border-heritage-primary focus:ring-2 focus:ring-heritage-primary/20 hover:border-heritage-gold/50"
-                    />
-                </div>
-
-                {/* Refresh Button */}
-                <Button
-                    variant="outline"
-                    onClick={onRefresh}
-                    title="Refresh Data"
-                    disabled={isRefreshing}
-                    className="h-11 border-heritage-gold/30 text-heritage-primary hover:bg-heritage-primary/5 min-w-[44px] px-2 shadow-sm"
-                >
-                    <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
-                </Button>
-
-                {/* Clear Filters Button */}
-                {hasActiveFilters && (
-                    <Button
-                        variant="outline"
-                        onClick={() => {
-                            setSearchTerm('');
-                            setFilterState('');
-                            setFilterMode('general');
-                            setFilterDate(null);
-                            setTicketType('');
-                        }}
-                        className="lg:min-w-[120px] h-11 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
-                    >
-                        <X className="w-4 h-4 mr-1" />
-                        Clear All
-                    </Button>
-                )}
-            </div>
-
-            {/* Results Count */}
-            {hasActiveFilters && (
-                <div className="mt-3 pt-3 border-t border-gray-200/50">
+            <div className="flex flex-col gap-4">
+                {/* Top Row - New Registration Button */}
+                <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
-                        <Filter className="w-4 h-4 text-heritage-primary" />
-                        <span className="text-sm font-medium text-heritage-text/70">
-                            Showing {filteredCount} of {totalCount} registrations
+                        <span className="text-sm font-medium text-heritage-textDark">
+                            Total: {totalCount} registrations
                         </span>
                     </div>
+
+                    {onNewRegistration && (
+                        <Button
+                            onClick={onNewRegistration}
+                            className="bg-heritage-primary hover:bg-heritage-secondary text-white"
+                        >
+                            <UserPlus className="w-4 h-4 mr-2" />
+                            New Registration
+                        </Button>
+                    )}
                 </div>
-            )}
+
+                {/* Filters Row */}
+                <div className="flex flex-col lg:flex-row gap-3 items-stretch">
+                    {/* Search Box */}
+                    <div className="flex-1 lg:min-w-[300px]">
+                        <Input
+                            placeholder="Search by name, PNR, or contact..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            leftIcon={<Search className="w-5 h-5 text-gray-400" />}
+                            className="h-11 bg-white/50 border-white/40 focus:bg-white transition-all"
+                        />
+                    </div>
+
+                    {/* Registration Type Filter */}
+                    <div className="flex-1 lg:max-w-[220px]">
+                        <SelectDropdown
+                            options={filterModeOptions}
+                            value={filterMode}
+                            onChange={(val: any) => setFilterMode(val)}
+                            placeholder="Registration Type"
+                            searchable={false}
+                            clearable={false}
+                            className="h-11 border-heritage-gold/30 focus:border-heritage-primary focus:ring-2 focus:ring-heritage-primary/20 hover:border-heritage-gold/50"
+                        />
+                    </div>
+
+                    {/* State Filter */}
+                    <div className="flex-1 lg:max-w-[180px]">
+                        <SelectDropdown
+                            options={stateOptions}
+                            value={filterState}
+                            onChange={setFilterState}
+                            placeholder={isLoadingStates ? "Loading states..." : "State"}
+                            searchable
+                            clearable
+                            disabled={isLoadingStates}
+                            className="h-11"
+                        />
+                    </div>
+
+                    {/* Ticket Type Filter */}
+                    <div className="flex-1 lg:max-w-[180px]">
+                        <SelectDropdown
+                            options={ticketTypeOptions}
+                            value={ticketType}
+                            onChange={setTicketType}
+                            placeholder="Ticket Type"
+                            searchable={false}
+                            clearable={false}
+                            className="h-11 border-heritage-gold/30 focus:border-heritage-primary focus:ring-2 focus:ring-heritage-primary/20 hover:border-heritage-gold/50"
+                        />
+                    </div>
+
+                    {/* Document Approval Status Filter */}
+                    <div className="flex-1 lg:max-w-[180px]">
+                        <SelectDropdown
+                            options={documentApprovalStatusOptions}
+                            value={documentApprovalStatus}
+                            onChange={setDocumentApprovalStatus}
+                            placeholder="Document Status"
+                            searchable={false}
+                            clearable={false}
+                            className="h-11 border-heritage-gold/30 focus:border-heritage-primary focus:ring-2 focus:ring-heritage-primary/20 hover:border-heritage-gold/50"
+                        />
+                    </div>
+
+                    {/* Refresh Button */}
+                    <Button
+                        variant="outline"
+                        onClick={onRefresh}
+                        title="Refresh Data"
+                        disabled={isRefreshing}
+                        className="h-11 border-heritage-gold/30 text-heritage-primary hover:bg-heritage-primary/5 min-w-[44px] px-2 shadow-sm"
+                    >
+                        <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    </Button>
+
+                    {/* Clear Filters Button */}
+                    {hasActiveFilters && (
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setSearchTerm('');
+                                setFilterState('');
+                                setFilterMode('general');
+                                setFilterDate(null);
+                                setTicketType('');
+                            }}
+                            className="lg:min-w-[120px] h-11 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+                        >
+                            <X className="w-4 h-4 mr-1" />
+                            Clear All
+                        </Button>
+                    )}
+                </div>
+
+                {/* Results Count */}
+                {hasActiveFilters && (
+                    <div className="pt-3 border-t border-gray-200/50">
+                        <div className="flex items-center gap-2">
+                            <Filter className="w-4 h-4 text-heritage-primary" />
+                            <span className="text-sm font-medium text-heritage-text/70">
+                                Showing {filteredCount} of {totalCount} registrations
+                            </span>
+                        </div>
+                    </div>
+                )}
+            </div>
         </Card>
     );
 };

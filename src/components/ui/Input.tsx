@@ -154,7 +154,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           )}
           {/* Left Icon - displayed after prefix if prefix exists */}
           {leftIcon && (
-            <div className={`absolute inset-y-0 left-0 flex items-center pointer-events-none z-10 ${prefix ? 'pl-10 sm:pl-12' : 'pl-2.5 sm:pl-3'}`}>
+            <div className={`absolute inset-y-0 left-0 flex items-center pointer-events-none z-10 [&>*]:pointer-events-auto ${prefix ? 'pl-10 sm:pl-12' : 'pl-2.5 sm:pl-3'}`}>
               {leftIcon}
             </div>
           )}
@@ -182,7 +182,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             onChange={handleChange}
           />
           {rightIcon && (
-            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+            <div className="absolute inset-y-0 z-10 right-0 pr-3 flex items-center pointer-events-none [&>*]:pointer-events-auto">
               {rightIcon}
             </div>
           )}

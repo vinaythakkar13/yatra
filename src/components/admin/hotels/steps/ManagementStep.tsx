@@ -16,7 +16,7 @@ interface ManagementStepProps {
 
 const ManagementStep: React.FC<ManagementStepProps> = ({ control, register, errors, watch }) => {
     const startDate = watch('startDate') || "";
-    const yatraId = watch('yatraId');
+    const yatraId = localStorage.getItem('admin_selected_yatra_id');
     const { data: yatras = [] } = useGetActiveYatrasQuery();
 
     // Get selected yatra and its date range
@@ -33,11 +33,11 @@ const ManagementStep: React.FC<ManagementStepProps> = ({ control, register, erro
 
         const start = new Date(selectedYatra.start_date);
         const end = new Date(selectedYatra.end_date);
-        
+
         // Calculate difference in days (inclusive of both start and end dates)
         const diffTime = end.getTime() - start.getTime();
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both dates
-        
+
         return diffDays > 0 ? diffDays : undefined;
     }, [selectedYatra]);
 
@@ -112,7 +112,7 @@ const ManagementStep: React.FC<ManagementStepProps> = ({ control, register, erro
                 <Controller
                     control={control}
                     name="numberOfDays"
-                    rules={{ 
+                    rules={{
                         min: 1,
                         max: maxDays ? {
                             value: maxDays,

@@ -14,16 +14,12 @@ import { Hotel } from '@/types';
 
 // Type Definitions
 export interface CreateHotelRequest {
-  yatra: string; // UUID string
   name: string;
   address: string;
   hotelType: 'A' | 'B' | 'C' | 'D';
   managerName: string;
   managerContact: string;
   hasElevator: boolean;
-  totalFloors: number;
-  floors: FloorRequest[];
-  rooms: RoomRequest[];
   // Optional fields that might be needed
   mapLink?: string;
   distanceFromBhavan?: number;
@@ -32,6 +28,9 @@ export interface CreateHotelRequest {
   endDate?: string;
   checkInTime?: string;
   checkOutTime?: string;
+  visitingCardImage?: string | null;
+  advancePaidAmount?: number; // Changed from advance_paid_amount
+  yatraId?: string; // Made optional since it's not included in updates
 }
 
 export interface FloorRequest {
@@ -93,6 +92,8 @@ export interface UpdateHotelRequest {
   endDate?: string;
   checkInTime?: string;
   checkOutTime?: string;
+  visitingCardImage?: string | null;
+  advancePaidAmount?: number;
 }
 
 export interface UpdateHotelResponse {
@@ -128,7 +129,7 @@ export const hotelApi = baseApi.injectEndpoints({
         body: hotelData,
         // Token is automatically added via baseApi's prepareHeaders
       }),
-      
+
       // Invalidate hotels cache after creation
       invalidatesTags: ['Hotel'],
     }),
@@ -153,12 +154,12 @@ export const hotelApi = baseApi.injectEndpoints({
           // Token is automatically added via baseApi's prepareHeaders
         };
       },
-      
+
       // Transform response to return just the hotels array
       transformResponse: (response: GetAllHotelsResponse) => {
         return response?.data || [];
       },
-      
+
       // Provide tags for cache invalidation
       providesTags: ['Hotel'],
     }),
@@ -175,12 +176,12 @@ export const hotelApi = baseApi.injectEndpoints({
         method: 'GET',
         // Token is automatically added via baseApi's prepareHeaders
       }),
-      
+
       // Transform response to return just the hotel object
       transformResponse: (response: GetHotelByIdResponse) => {
         return response?.data;
       },
-      
+
       // Provide tags for cache invalidation
       providesTags: (result, error, id) => [{ type: 'Hotel', id }],
     }),
@@ -198,7 +199,7 @@ export const hotelApi = baseApi.injectEndpoints({
         body: data,
         // Token is automatically added via baseApi's prepareHeaders
       }),
-      
+
       // Invalidate hotels cache after update
       invalidatesTags: ['Hotel'],
     }),
@@ -215,7 +216,7 @@ export const hotelApi = baseApi.injectEndpoints({
         method: 'DELETE',
         // Token is automatically added via baseApi's prepareHeaders
       }),
-      
+
       // Invalidate hotels cache after deletion
       invalidatesTags: ['Hotel'],
     }),
@@ -233,79 +234,65 @@ export const {
 } = hotelApi;
 
 /**
- * Transform HotelFormData to CreateHotelRequest format
+ * Transform HotelFormData to API payload format
  * Converts form data structure to API payload format
  */
 export function transformHotelFormDataToApiPayload(
   formData: any,
-  yatraId: string
-): CreateHotelRequest {
-  // Generate rooms array from floors configuration
-  const rooms: RoomRequest[] = [];
-  
-  formData.floors.forEach((floor: any) => {
-    const floorRooms = floor.rooms || [];
-    const floorNumber = floor.floorNumber === 'G' ? 0 : parseInt(floor.floorNumber, 10);
-    
-    floor.roomNumbers.forEach((roomNumber: string, index: number) => {
-      if (roomNumber && roomNumber.trim()) {
-        const roomConfig = floorRooms[index] || {};
-        rooms.push({
-          roomNumber: roomNumber.trim(),
-          floor: floorNumber,
-          toiletType: roomConfig.toiletType || 'western',
-          numberOfBeds: roomConfig.numberOfBeds || 1,
-          chargePerDay: roomConfig.chargePerDay || 0,
-          isOccupied: false,
-        });
-      }
-    });
-  });
+  yatraId: string,
+  isUpdate: boolean = false,
 
-  // Transform floors data
-  const floors: FloorRequest[] = formData.floors.map((floor: any) => ({
-    floorNumber: floor.floorNumber,
-    numberOfRooms: floor.numberOfRooms,
-    roomNumbers: floor.roomNumbers.filter((r: string) => r && r.trim() !== ''),
-    rooms: floor.rooms || [],
-  }));
-
-  // Build API payload
-  const payload: CreateHotelRequest = {
-    yatra: yatraId, // Map yatraId to yatra
+): CreateHotelRequest | UpdateHotelRequest {
+  // Build base API payload
+  const basePayload = {
     name: formData.name,
     address: formData.address,
     hotelType: formData.hotelType,
     managerName: formData.managerName,
     managerContact: formData.managerContact,
     hasElevator: formData.hasElevator,
-    totalFloors: formData.totalFloors,
-    floors,
-    rooms,
+    ...(yatraId && !isUpdate && { yatra: yatraId })
   };
 
   // Add optional fields if they exist
+  const optionalFields: any = {};
+
   if (formData.mapLink) {
-    payload.mapLink = formData.mapLink;
+    optionalFields.mapLink = formData.mapLink;
   }
   if (formData.distanceFromBhavan !== undefined && formData.distanceFromBhavan !== null) {
-    payload.distanceFromBhavan = formData.distanceFromBhavan;
+    optionalFields.distanceFromBhavan = formData.distanceFromBhavan;
   }
   if (formData.numberOfDays) {
-    payload.numberOfDays = formData.numberOfDays;
+    optionalFields.numberOfDays = formData.numberOfDays;
   }
   if (formData.startDate) {
-    payload.startDate = formData.startDate;
+    optionalFields.startDate = formData.startDate;
   }
   if (formData.endDate) {
-    payload.endDate = formData.endDate;
+    optionalFields.endDate = formData.endDate;
   }
   if (formData.checkInTime) {
-    payload.checkInTime = formData.checkInTime;
+    optionalFields.checkInTime = formData.checkInTime;
   }
   if (formData.checkOutTime) {
-    payload.checkOutTime = formData.checkOutTime;
+    optionalFields.checkOutTime = formData.checkOutTime;
+  }
+  if (formData.advance_paid_amount !== undefined && formData.advance_paid_amount !== null) {
+    optionalFields.advancePaidAmount = formData.advance_paid_amount;
   }
 
-  return payload;
+  if (isUpdate) {
+    // For updates, return UpdateHotelRequest (without yatraId)
+    return {
+      ...basePayload,
+      ...optionalFields,
+    } as UpdateHotelRequest;
+  } else {
+    // For creates, return CreateHotelRequest (with yatraId)
+    return {
+      ...basePayload,
+      ...optionalFields,
+    } as CreateHotelRequest;
+  }
 }

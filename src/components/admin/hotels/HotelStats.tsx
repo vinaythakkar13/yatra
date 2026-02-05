@@ -122,14 +122,14 @@ const HotelStats: React.FC<HotelStatsProps> = ({ hotels }) => {
                 >
                     <div className={`absolute -right-6 -top-6 w-24 h-24 rounded-full bg-gradient-to-br ${card.gradient} opacity-20 blur-2xl group-hover:opacity-30 transition-opacity`} />
 
-                    <div className="relative z-10">
+                    <div className="relative z-10 flex gap-4">
                         <div className="flex items-center justify-between mb-3 md:mb-4">
                             <div className={`p-2 md:p-2.5 rounded-xl bg-gradient-to-br ${card.gradient} text-white shadow-sm`}>
                                 <card.icon className="w-4 h-4 md:w-5 md:h-5" />
                             </div>
                         </div>
 
-                        <div>
+                        <div className="flex flex-col flex-1 min-w-0">
                             <p className="text-xs md:text-sm font-medium text-heritage-text/60 uppercase tracking-wide truncate">{card.label}</p>
                             <h3 className="text-xl md:text-2xl font-bold text-heritage-textDark mt-1">{card.value}</h3>
                             <p className="text-xs text-heritage-text/50 mt-1 truncate">{card.subtitle}</p>

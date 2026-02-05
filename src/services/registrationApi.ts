@@ -32,11 +32,34 @@ export interface CreateRegistrationRequest {
   yatraId: string; // Yatra ID
 }
 
+export interface SplitRegistrationRequest {
+  originalPnr: string;
+  ticketType?: string;
+  name: string;
+  whatsappNumber: string;
+  numberOfPersons: number;
+  yatraId: string;
+  persons: Array<{
+    name: string;
+    age: number;
+    gender: 'male' | 'female' | 'other';
+    isHandicapped: boolean;
+  }>;
+  boardingPoint: {
+    city: string;
+    state: string;
+  };
+  arrivalDate: string; // ISO 8601 format
+  returnDate: string; // ISO 8601 format
+  ticketImages: string[]; // Array of image URLs
+}
+
 export interface CreateRegistrationResponse {
   success: boolean;
   data?: {
     id: string;
     pnr: string;
+    internalPnr?: string | null;
     name: string;
     whatsappNumber: string;
     numberOfPersons: number;
@@ -87,7 +110,10 @@ export interface Registration {
   rejectionReason?: string;
   cancellationReason?: string;
   createdAt: string;
-  ticketType?: string;
+  ticketType: string | null;
+  splitPnr?: string;
+  originalPnr?: string;
+
 }
 
 export interface Hotel {
@@ -158,6 +184,9 @@ export interface RegistrationByPnrResponse {
       rejection_reason?: string | null;
       created_at: string;
       updated_at: string;
+      split_pnr?: string;
+      original_pnr?: string;
+      ticketType: string | null;
     };
     persons: Array<{
       id: string;
@@ -176,6 +205,8 @@ export interface RegistrationByPnrResponse {
 
 export interface ApiRegistration {
   id: string;
+  original_pnr?: string | null;
+  split_pnr?: string | null;
   user_id: string;
   yatra_id: string;
   pnr: string;
@@ -319,6 +350,8 @@ export const registrationApi = baseApi.injectEndpoints({
               cancellationReason: apiReg.cancellation_reason || undefined,
               createdAt: apiReg.created_at,
               ticketType: apiReg.ticket_type || undefined,
+              splitPnr: apiReg.split_pnr || null,
+              originalPnr: apiReg.original_pnr || null,
             };
           });
 
@@ -417,6 +450,9 @@ export const registrationApi = baseApi.injectEndpoints({
                 roomStatus: room ? 'Assigned' : 'Pending',
                 roomNumber: (room as any)?.room_number || (room as any)?.roomNumber,
                 createdAt: registration.created_at,
+                splitPnr: registration?.split_pnr,
+                originalPnr: registration?.original_pnr || "",
+                ticketType: registration?.ticketType || null,
               },
               persons: persons.map(person => ({
                 name: person.name,
@@ -519,6 +555,21 @@ export const registrationApi = baseApi.injectEndpoints({
         body: { ticketType },
       }),
     }),
+
+    /**
+     * Split Registration Endpoint
+     * POST /registrations/split
+     * 
+     * Creates a new registration for manual entry (admin use)
+     */
+    splitRegistration: builder.mutation<CreateRegistrationResponse, SplitRegistrationRequest>({
+      query: (registrationData) => ({
+        url: '/registrations/split',
+        method: 'POST',
+        body: registrationData,
+      }),
+      invalidatesTags: ['Registration'],
+    }),
   }),
 });
 
@@ -531,4 +582,5 @@ export const {
   useLazyGetRegistrationByPnrQuery,
   useCancelRegistrationMutation,
   useUpdateTicketTypeMutation,
+  useSplitRegistrationMutation,
 } = registrationApi;

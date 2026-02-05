@@ -19,7 +19,9 @@ import AssignRoomModal from '@/components/admin/users/modals/AssignRoomModal';
 import DocumentViewerModal from '@/components/admin/users/modals/DocumentViewerModal';
 import RejectDocumentModal from '@/components/admin/users/modals/RejectDocumentModal';
 
+
 import { useDebounce } from '@/hooks/useDebounce';
+import ManualRegistrationModal from '@/components/admin/users/modals/ManualRegistrationModal';
 
 /**
  * User Management Page (Admin)
@@ -69,6 +71,8 @@ function UserManagement() {
   const [filterMode, setFilterMode] = useState<'all' | 'general' | 'cancelled'>('general');
   const [filterDate, setFilterDate] = useState<Date | null>(null);
   const [ticketType, setTicketType] = useState('');
+  const [documentApprovalStatus, setDocumentApprovalStatus] = useState('');
+
 
   // Pagination State (must be before API query)
   const [currentPage, setCurrentPage] = useState(1);
@@ -149,6 +153,7 @@ function UserManagement() {
   const [showUnassignModal, setShowUnassignModal] = useState(false);
   const [showDocumentViewer, setShowDocumentViewer] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showManualRegistrationModal, setShowManualRegistrationModal] = useState(false);
   const [needsRefetch, setNeedsRefetch] = useState(false);
 
   // Document States
@@ -352,6 +357,15 @@ function UserManagement() {
     }
   };
 
+  const handleNewRegistration = () => {
+    setShowManualRegistrationModal(true);
+  };
+
+  const handleManualRegistrationSuccess = () => {
+    refetchRegistrations();
+    setShowManualRegistrationModal(false);
+  };
+
   // Loading State
   if (isLoadingRegistrations) {
     return (
@@ -480,10 +494,13 @@ function UserManagement() {
         ticketType={ticketType}
         setTicketType={setTicketType}
         onRefresh={handleRefresh}
+        onNewRegistration={handleNewRegistration}
         totalCount={paginationData.total}
         filteredCount={paginationData.total}
         isLoadingStates={isLoadingStates}
         isRefreshing={isRefreshing}
+        documentApprovalStatus={documentApprovalStatus}
+        setDocumentApprovalStatus={setDocumentApprovalStatus}
       />
 
       {/* Users Table */}
@@ -558,6 +575,12 @@ function UserManagement() {
         onConfirm={handleRejectDocument}
         rejectionReason={rejectionReason}
         setRejectionReason={setRejectionReason}
+      />
+
+      <ManualRegistrationModal
+        isOpen={showManualRegistrationModal}
+        onClose={() => setShowManualRegistrationModal(false)}
+        onSuccess={handleManualRegistrationSuccess}
       />
 
       <Modal

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useGetYatraByIdQuery } from '@/services/yatraApi';
 import RegistrationForm from '@/components/register/RegistrationForm';
@@ -10,6 +10,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeft, Calendar, AlertCircle } from 'lucide-react';
 import { Yatra } from '@/types';
+import { yatraStorage } from '@/utils/storage';
 
 function formatDate(dateString: string): string {
   if (!dateString) return '';
@@ -21,9 +22,44 @@ function formatDate(dateString: string): string {
   });
 }
 
-export default function RegisterClient() {
+interface RegisterClientProps {
+  isAdminMode?: boolean;
+  onSuccess?: (registrationData?: any) => void;
+  onCancel?: () => void;
+}
+
+export default function RegisterClient({ isAdminMode = false, onSuccess, onCancel }: RegisterClientProps = {}) {
   const searchParams = useSearchParams();
-  const yatraId = searchParams.get('yatraId');
+  const [selectedYatraId, setSelectedYatraId] = useState<string | null>(null);
+
+  // Get yatra ID from URL params (normal mode) or localStorage (admin mode)
+  useEffect(() => {
+    if (isAdminMode) {
+      // In admin mode, get yatra ID from localStorage
+      const yatraId = yatraStorage.getSelectedYatraId();
+      setSelectedYatraId(yatraId);
+
+      // Listen for storage changes (when yatra is changed in header)
+      const handleStorageChange = () => {
+        const newYatraId = yatraStorage.getSelectedYatraId();
+        setSelectedYatraId(newYatraId);
+      };
+
+      window.addEventListener('storage', handleStorageChange);
+      // Also check periodically for same-tab changes
+      const interval = setInterval(handleStorageChange, 500);
+
+      return () => {
+        window.removeEventListener('storage', handleStorageChange);
+        clearInterval(interval);
+      };
+    } else {
+      // In normal mode, get yatra ID from URL params
+      const yatraId = searchParams.get('yatraId');
+      setSelectedYatraId(yatraId);
+    }
+  }, [isAdminMode, searchParams]);
+
   const initialPnr = searchParams.get('pnr') || '';
 
   // Scroll to top on page load
@@ -37,13 +73,33 @@ export default function RegisterClient() {
     isLoading,
     isError,
     error,
-  } = useGetYatraByIdQuery(yatraId!, {
-    skip: !yatraId, // Skip query if no yatraId
+  } = useGetYatraByIdQuery(selectedYatraId!, {
+    skip: !selectedYatraId, // Skip query if no yatraId
   });
 
   // No yatraId provided
-  if (!yatraId) {
-    return <RegisterError />;
+  if (!selectedYatraId) {
+    if (isAdminMode) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-spiritual-zen-surface p-4">
+          <div className="max-w-md w-full bg-white rounded-2xl shadow-2xl border border-yellow-200 p-8 text-center">
+            <div className="mb-6 flex justify-center">
+              <div className="p-4 bg-yellow-100 rounded-full">
+                <AlertCircle className="w-12 h-12 text-yellow-600" />
+              </div>
+            </div>
+            <h2 className="text-2xl font-bold text-spiritual-zen-charcoal mb-3">
+              No Yatra Selected
+            </h2>
+            <p className="text-spiritual-textLight mb-6">
+              Please select a yatra from the header dropdown to create a new registration.
+            </p>
+          </div>
+        </div>
+      );
+    } else {
+      return <RegisterError />;
+    }
   }
 
   // Loading state
@@ -108,12 +164,14 @@ export default function RegisterClient() {
         {/* Content */}
         <div className="relative z-10 h-full flex flex-col">
           <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 pt-4 sm:pt-6">
-            {/* Back Button */}
-            <Link href="/" className="inline-flex items-center mb-4 sm:mb-6 group">
-              <button className="p-2 rounded-lg bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all duration-300 border border-white/20 hover:border-white/30 group-hover:scale-105">
-                <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
-              </button>
-            </Link>
+            {/* Back Button - only show in normal mode */}
+            {!isAdminMode && (
+              <Link href="/" className="inline-flex items-center mb-4 sm:mb-6 group">
+                <button className="p-2 rounded-lg bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all duration-300 border border-white/20 hover:border-white/30 group-hover:scale-105">
+                  <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                </button>
+              </Link>
+            )}
           </div>
 
           {/* Yatra Name and Dates */}
@@ -172,6 +230,9 @@ export default function RegisterClient() {
           <RegistrationForm
             yatraDetails={yatraDetails as Yatra}
             initialPnr={initialPnr}
+            isAdminMode={isAdminMode}
+            onSuccess={onSuccess}
+            onCancel={onCancel}
           />
         </div>
       </div>
