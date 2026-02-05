@@ -109,13 +109,6 @@ function HotelManagement() {
   // Handle Add Hotel form submission
   const handleAddHotel = async (data: HotelFormData) => {
     // Validate required fields
-    if (!data.yatraId) {
-      toast.error('Please select a Yatra', {
-        position: 'top-right',
-      });
-      return;
-    }
-
     try {
       let visitingCardUrl = null;
 
@@ -150,9 +143,10 @@ function HotelManagement() {
         }
       }
 
+      const selectedYatraId = localStorage.getItem('admin_selected_yatra_id') || "";
       // Transform form data to API payload format
       const apiPayload = {
-        ...(transformHotelFormDataToApiPayload(data, data.yatraId) as CreateHotelRequest),
+        ...(transformHotelFormDataToApiPayload(data, selectedYatraId) as CreateHotelRequest),
         visitingCardImage: visitingCardUrl,
       };
 
@@ -194,14 +188,6 @@ function HotelManagement() {
   const handleUpdateHotel = async (data: HotelFormData) => {
     if (!editingHotel) return;
 
-    // Validate required fields
-    if (!data.yatraId) {
-      toast.error('Please select a Yatra', {
-        position: 'top-right',
-      });
-      return;
-    }
-
     try {
       let visitingCardUrl = null;
 
@@ -236,8 +222,10 @@ function HotelManagement() {
         }
       }
 
+      const selectedYatraId = localStorage.getItem('admin_selected_yatra_id') || "";
+
       // Transform form data to API payload format
-      const baseApiPayload = transformHotelFormDataToApiPayload(data, data.yatraId, true) as UpdateHotelRequest; // true indicates this is an update
+      const baseApiPayload = transformHotelFormDataToApiPayload(data, selectedYatraId, true) as UpdateHotelRequest; // true indicates this is an update
 
       // Only include visitingCardImage if a new image was uploaded
       const apiPayload = visitingCardUrl

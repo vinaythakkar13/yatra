@@ -71,6 +71,8 @@ function UserManagement() {
   const [filterMode, setFilterMode] = useState<'all' | 'general' | 'cancelled'>('general');
   const [filterDate, setFilterDate] = useState<Date | null>(null);
   const [ticketType, setTicketType] = useState('');
+  const [documentApprovalStatus, setDocumentApprovalStatus] = useState('');
+
 
   // Pagination State (must be before API query)
   const [currentPage, setCurrentPage] = useState(1);
@@ -497,6 +499,8 @@ function UserManagement() {
         filteredCount={paginationData.total}
         isLoadingStates={isLoadingStates}
         isRefreshing={isRefreshing}
+        documentApprovalStatus={documentApprovalStatus}
+        setDocumentApprovalStatus={setDocumentApprovalStatus}
       />
 
       {/* Users Table */}

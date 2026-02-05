@@ -24,6 +24,8 @@ interface UserFiltersProps {
     filteredCount: number;
     isLoadingStates?: boolean;
     isRefreshing?: boolean;
+    documentApprovalStatus: string;
+    setDocumentApprovalStatus: (value: string) => void;
 }
 
 const UserFilters: React.FC<UserFiltersProps> = ({
@@ -44,6 +46,8 @@ const UserFilters: React.FC<UserFiltersProps> = ({
     filteredCount,
     isLoadingStates = false,
     isRefreshing = false,
+    documentApprovalStatus,
+    setDocumentApprovalStatus,
 }) => {
     const hasActiveFilters = searchTerm || filterState || filterMode !== 'general' || filterDate || ticketType;
 
@@ -60,7 +64,16 @@ const UserFilters: React.FC<UserFiltersProps> = ({
         { value: 'WL', label: 'WL' },
         { value: 'TBS', label: 'TBS' },
         { value: 'FIRST AC', label: 'FIRST AC' },
+        { value: 'SECOND AC', label: 'SECOND AC' },
+        { value: 'THIRD AC', label: 'THIRD AC' },
         { value: 'Not added', label: 'Not Added' },
+    ];
+
+    const documentApprovalStatusOptions = [
+        { value: '', label: 'All' },
+        { value: 'approved', label: 'Approved' },
+        { value: 'pending', label: 'Pending' },
+        { value: 'rejected', label: 'Rejected' },
     ];
 
     return (
@@ -132,6 +145,19 @@ const UserFilters: React.FC<UserFiltersProps> = ({
                             value={ticketType}
                             onChange={setTicketType}
                             placeholder="Ticket Type"
+                            searchable={false}
+                            clearable={false}
+                            className="h-11 border-heritage-gold/30 focus:border-heritage-primary focus:ring-2 focus:ring-heritage-primary/20 hover:border-heritage-gold/50"
+                        />
+                    </div>
+
+                    {/* Document Approval Status Filter */}
+                    <div className="flex-1 lg:max-w-[180px]">
+                        <SelectDropdown
+                            options={documentApprovalStatusOptions}
+                            value={documentApprovalStatus}
+                            onChange={setDocumentApprovalStatus}
+                            placeholder="Document Status"
                             searchable={false}
                             clearable={false}
                             className="h-11 border-heritage-gold/30 focus:border-heritage-primary focus:ring-2 focus:ring-heritage-primary/20 hover:border-heritage-gold/50"

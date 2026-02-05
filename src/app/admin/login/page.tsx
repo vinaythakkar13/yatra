@@ -180,11 +180,6 @@ export default function AdminLogin() {
       <div className="w-full max-w-md">
         {/* Logo and Header */}
         <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <div className="bg-heritage-maroon p-4 rounded-full shadow-lg">
-              <Mountain className="w-10 h-10 text-white" />
-            </div>
-          </div>
           <h1 className="text-3xl font-bold text-heritage-maroon mb-2">Admin Login</h1>
           <p className="text-heritage-text">Sign in to access the admin dashboard</p>
         </div>
@@ -239,7 +234,7 @@ export default function AdminLogin() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="text-heritage-text/60 hover:text-heritage-maroon transition-colors"
+                      className="text-heritage-text/60 z-10 hover:text-heritage-maroon transition-colors"
                     >
                       {showPassword ? (
                         <EyeOff className="w-5 h-5" />
@@ -284,16 +279,6 @@ export default function AdminLogin() {
               )}
             </Button>
           </form>
-
-          {/* Security Notice */}
-          <div className="mt-6 pt-6 border-t border-heritage-gold/30">
-            <div className="flex items-start gap-3 text-sm text-heritage-text/70">
-              <Shield className="w-4 h-4 text-heritage-maroon flex-shrink-0 mt-0.5" />
-              <p>
-                This is a secure admin area. Unauthorized access is prohibited.
-              </p>
-            </div>
-          </div>
         </div>
       </div>
     </div>

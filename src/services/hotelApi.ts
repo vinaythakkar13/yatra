@@ -240,7 +240,8 @@ export const {
 export function transformHotelFormDataToApiPayload(
   formData: any,
   yatraId: string,
-  isUpdate: boolean = false
+  isUpdate: boolean = false,
+
 ): CreateHotelRequest | UpdateHotelRequest {
   // Build base API payload
   const basePayload = {
@@ -250,6 +251,7 @@ export function transformHotelFormDataToApiPayload(
     managerName: formData.managerName,
     managerContact: formData.managerContact,
     hasElevator: formData.hasElevator,
+    ...(yatraId && !isUpdate && { yatra: yatraId })
   };
 
   // Add optional fields if they exist
@@ -291,7 +293,6 @@ export function transformHotelFormDataToApiPayload(
     return {
       ...basePayload,
       ...optionalFields,
-      yatraId: yatraId,
     } as CreateHotelRequest;
   }
 }

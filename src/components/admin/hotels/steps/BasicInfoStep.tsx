@@ -74,27 +74,7 @@ const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ control, register, errors
                         />
                     )}
                 />
-                <Controller
-                    control={control}
-                    name="yatraId"
-                    rules={{ required: 'Yatra selection is required' }}
-                    render={({ field }) => (
-                        <SelectDropdown
-                            label={isEditMode ? "Yatra (Cannot be changed)" : "Yatra"}
-                            options={yatraOptions}
-                            value={field.value}
-                            onChange={field.onChange}
-                            placeholder="Select a yatra"
-                            loading={isLoadingYatras}
-                            error={errors.yatraId?.message}
-                            variant="admin"
-                            className="h-12"
-                            searchable={false}
-                            disabled={isEditMode}
-                            helperText={isEditMode ? "Yatra cannot be changed when editing a hotel" : undefined}
-                        />
-                    )}
-                />
+
                 <Input
                     label="Address"
                     {...register('address', { required: 'Address is required' })}
@@ -130,10 +110,7 @@ const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ control, register, errors
                     helperText="Distance in kilometers (KM)"
                     variant="admin"
                 />
-            </div>
 
-            <div className='w-full flex gap-4'>
-                {/* Advance Payment */}
                 <div className="flex-1">
                     <Controller
                         control={control}
@@ -171,41 +148,41 @@ const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ control, register, errors
                         )}
                     />
                 </div>
+            </div>
 
-                {/* Has Elevator Checkbox */}
-                <div className="flex-1">
-                    <div className="mt-2 p-4 rounded-xl bg-heritage-highlight/20 border border-heritage-gold/20">
-                        <label className="flex items-center gap-3 cursor-pointer group">
-                            <div className="relative">
-                                <input
-                                    type="checkbox"
-                                    {...register('hasElevator')}
-                                    className="peer sr-only"
-                                />
-                                <div className="w-6 h-6 rounded-md border-2 border-heritage-primary/40 bg-white transition-all duration-200 peer-checked:bg-gradient-to-br peer-checked:from-heritage-primary peer-checked:to-heritage-secondary peer-checked:border-heritage-primary group-hover:border-heritage-primary/60 peer-focus:ring-2 peer-focus:ring-heritage-primary/30 peer-focus:ring-offset-2">
-                                    <svg
-                                        className={`w-full h-full text-white opacity-0 peer-checked:opacity-100 transition-all duration-200  ${hasElevator ? 'opacity-100 scale-100' : 'scale-0 opacity-0'}`}
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={3}
-                                            d="M5 13l4 4L19 7"
-                                        />
-                                    </svg>
-                                </div>
+            {/* Has Elevator Checkbox */}
+            <div className="flex-1">
+                <div className="mt-2 p-4 rounded-xl bg-heritage-highlight/20 border border-heritage-gold/20">
+                    <label className="flex items-center gap-3 cursor-pointer group">
+                        <div className="relative">
+                            <input
+                                type="checkbox"
+                                {...register('hasElevator')}
+                                className="peer sr-only"
+                            />
+                            <div className="w-6 h-6 rounded-md border-2 border-heritage-primary/40 bg-white transition-all duration-200 peer-checked:bg-gradient-to-br peer-checked:from-heritage-primary peer-checked:to-heritage-secondary peer-checked:border-heritage-primary group-hover:border-heritage-primary/60 peer-focus:ring-2 peer-focus:ring-heritage-primary/30 peer-focus:ring-offset-2">
+                                <svg
+                                    className={`w-full h-full text-white opacity-0 peer-checked:opacity-100 transition-all duration-200  ${hasElevator ? 'opacity-100 scale-100' : 'scale-0 opacity-0'}`}
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={3}
+                                        d="M5 13l4 4L19 7"
+                                    />
+                                </svg>
                             </div>
-                            <div className="flex-1">
-                                <span className="text-sm font-semibold text-heritage-textDark group-hover:text-heritage-primary transition-colors">
-                                    Has Elevator
-                                </span>
-                                <p className="text-xs text-heritage-text/60">Check if the hotel has elevator facilities</p>
-                            </div>
-                        </label>
-                    </div>
+                        </div>
+                        <div className="flex-1">
+                            <span className="text-sm font-semibold text-heritage-textDark group-hover:text-heritage-primary transition-colors">
+                                Has Elevator
+                            </span>
+                            <p className="text-xs text-heritage-text/60">Check if the hotel has elevator facilities</p>
+                        </div>
+                    </label>
                 </div>
             </div>
 

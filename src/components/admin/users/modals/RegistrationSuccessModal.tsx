@@ -28,9 +28,6 @@ const RegistrationSuccessModal: React.FC<RegistrationSuccessModalProps> = ({
     onClose,
     registrationData,
 }) => {
-
-    console.log("register data:", registrationData)
-
     if (!registrationData) return null;
 
     const handleCopyPnr = () => {

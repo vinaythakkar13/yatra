@@ -47,7 +47,6 @@ export interface HotelFormData {
   mapLink?: string;
   distanceFromBhavan?: number;
   hotelType: "A" | "B" | "C" | "D";
-  yatraId?: string;
   visitingCardImage?: File[];
   managerName: string;
   managerContact: string;
@@ -107,7 +106,6 @@ const AddHotelModal: React.FC<AddHotelModalProps> = ({
       mapLink: "",
       distanceFromBhavan: undefined,
       hotelType: "A",
-      yatraId: "",
       visitingCardImage: [],
       managerName: "",
       managerContact: "",
@@ -159,7 +157,6 @@ const AddHotelModal: React.FC<AddHotelModalProps> = ({
               ? Number(initialData.distance_from_bhavan)
               : undefined,
           hotelType: initialData.hotelType || initialData.hotel_type || "A",
-          yatraId: initialData.yatraId || initialData.yatra_id || initialData.yatra || "",
           visitingCardImage: initialData.visitingCardImage || (initialData.visitingCardImage || initialData.visiting_card_image || initialData.visitingCardUrl ? [] : []), // Don't pre-populate with URL, let user upload new one if needed
           managerName: initialData.managerName || initialData.manager_name || "",
           managerContact: initialData.managerContact || initialData.manager_contact || "",
@@ -242,7 +239,6 @@ const AddHotelModal: React.FC<AddHotelModalProps> = ({
           mapLink: "",
           distanceFromBhavan: undefined,
           hotelType: "A",
-          yatraId: "",
           visitingCardImage: [],
           managerName: "",
           managerContact: "",
@@ -310,7 +306,6 @@ const AddHotelModal: React.FC<AddHotelModalProps> = ({
           "name",
           "address",
           "hotelType",
-          "yatraId",
           "mapLink",
           "distanceFromBhavan",
           "visitingCardImage",
@@ -596,13 +591,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   onConfirm,
   hotelData,
 }) => {
-  const { data: yatras = [] } = useGetActiveYatrasQuery();
-
   if (!hotelData) return null;
-
-  // Get selected yatra name
-  const selectedYatra = yatras.find((y) => y.id === hotelData.yatraId);
-
   const formatDate = (dateString: string) => {
     if (!dateString) return "Not set";
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -632,17 +621,6 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
       closeOnBackdropClick={false}
     >
       <div className="space-y-4 sm:space-y-5">
-        {/* Info Message - Enhanced */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 rounded-lg p-3 sm:p-4 flex items-start gap-3 shadow-sm">
-          <div className="p-1.5 bg-blue-500 rounded-lg flex-shrink-0">
-            <Info className="w-4 h-4 text-white" />
-          </div>
-          <p className="text-sm text-blue-900 font-medium leading-relaxed">
-            Please review all the details carefully. Once confirmed, this hotel
-            will be added to the system.
-          </p>
-        </div>
-
         <div className="space-y-4">
           {/* Hotel & Location - Enhanced Card */}
           <div className="bg-white rounded-xl p-4 sm:p-5 border-2 border-heritage-gold/40 shadow-lg shadow-heritage-gold/10 hover:shadow-xl transition-shadow">
@@ -684,25 +662,6 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
                   </div>
                 </div>
               </div>
-
-              {/* Yatra - Enhanced */}
-              {selectedYatra && (
-                <div className="p-3 bg-gradient-to-r from-heritage-highlight/30 to-heritage-highlight/10 rounded-lg border border-heritage-gold/30">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-gradient-to-br from-heritage-primary/30 to-heritage-secondary/30 rounded-lg">
-                      <Navigation className="w-4 h-4 text-heritage-primary" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-heritage-text/60 mb-1">
-                        Yatra
-                      </p>
-                      <p className="text-sm font-bold text-heritage-textDark truncate">
-                        {selectedYatra.name}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {/* Address & Distance - Enhanced */}
               <div className="space-y-3">
@@ -907,25 +866,15 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           {/* Advance Payment - Enhanced Card */}
           {hotelData.advance_paid_amount !== undefined && hotelData.advance_paid_amount > 0 && (
             <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 sm:p-5 border-2 border-green-200 shadow-lg shadow-green-100">
-              <div className="flex items-center gap-3 mb-4 pb-3 border-b-2 border-green-300">
+              <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl shadow-md">
                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                   </svg>
                 </div>
-                <h3 className="text-base sm:text-lg font-bold text-green-800">
-                  Advance Payment
+                <h3 className="text-base sm:text-lg font-bold text-green-800 flex w-full gap-2">
+                  <span>Advance Payment</span><span> ₹{hotelData.advance_paid_amount.toLocaleString('en-IN')}</span>
                 </h3>
-              </div>
-              <div className="flex items-center justify-center p-4 bg-white/60 rounded-lg border border-green-200">
-                <div className="text-center">
-                  <p className="text-sm font-medium text-green-700 mb-2">
-                    Amount Paid in Advance
-                  </p>
-                  <p className="text-3xl font-black text-green-900">
-                    ₹{hotelData.advance_paid_amount.toLocaleString('en-IN')}
-                  </p>
-                </div>
               </div>
             </div>
           )}

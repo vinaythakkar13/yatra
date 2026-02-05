@@ -282,9 +282,6 @@ const UserTable: React.FC<UserTableProps> = ({
         },
     ];
 
-    console.log("Data: ", data)
-
-
     return (
         <div className="relative bg-white/70 backdrop-blur-md border border-white/40 rounded-glass shadow-glass font-inter">
             {isLoading && (
