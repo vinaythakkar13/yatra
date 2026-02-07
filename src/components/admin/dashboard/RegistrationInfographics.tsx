@@ -21,14 +21,14 @@ const CustomStateTooltip = ({ active, payload }: any) => {
         const data = payload[0].payload as StateData;
 
         // Aggregate data from cities
-        const stats = data.cities.reduce((acc, city) => {
-            acc.male += city.gender.male;
-            acc.female += city.gender.female;
-            acc.handicapped += city.handicappedCount;
-            acc.age0_20 += city.ageRanges['0-20'];
-            acc.age21_40 += city.ageRanges['21-40'];
-            acc.age41_60 += city.ageRanges['41-60'];
-            acc.age60_plus += city.ageRanges['60+'];
+        const stats = (data.cities || []).reduce((acc, city) => {
+            acc.male += (city.gender?.male || 0);
+            acc.female += (city.gender?.female || 0);
+            acc.handicapped += (city.handicappedCount || 0);
+            acc.age0_20 += (city.ageRanges?.['0-20'] || 0);
+            acc.age21_40 += (city.ageRanges?.['21-40'] || 0);
+            acc.age41_60 += (city.ageRanges?.['41-60'] || 0);
+            acc.age60_plus += (city.ageRanges?.['60+'] || 0);
             return acc;
         }, {
             male: 0,
@@ -50,12 +50,12 @@ const CustomStateTooltip = ({ active, payload }: any) => {
                 <div className="space-y-3">
                     <div className="flex justify-between items-center text-sm">
                         <span className="text-heritage-text/70 flex items-center gap-1">Total Registrations</span>
-                        <span className="font-bold text-heritage-maroon">{data.totalRegistrations}</span>
+                        <span className="font-bold text-heritage-maroon">{data.totalRegistrations || 0}</span>
                     </div>
 
                     <div className="flex justify-between items-center text-sm">
                         <span className="text-heritage-text/70 flex items-center gap-1">Total Person</span>
-                        <span className="font-bold text-heritage-maroon">{data.totalCount}</span>
+                        <span className="font-bold text-heritage-maroon">{data.totalCount || 0}</span>
                     </div>
 
                     <div className="pt-2 border-t border-heritage-primary/10">

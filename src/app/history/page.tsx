@@ -11,19 +11,17 @@ import { Calendar, MapPin, Users, FileText, CheckCircle, XCircle, Clock, Ticket,
 import { toast } from 'react-toastify';
 
 
-function getStatusBadge(status: string) {
+/* Helper to get status badge configuration */
+const getStatusBadge = (status: string) => {
+  // Current status from API might be 'rejected' but we want to show 'Cancelled'
+  const normalizedStatus = status.toLowerCase() === 'rejected' ? 'cancelled' : status.toLowerCase();
+
   const statusConfig = {
     approved: {
       bg: 'bg-green-100',
       text: 'text-green-800',
       icon: CheckCircle,
       label: 'Approved',
-    },
-    rejected: {
-      bg: 'bg-red-100',
-      text: 'text-red-800',
-      icon: XCircle,
-      label: 'Rejected',
     },
     pending: {
       bg: 'bg-yellow-100',
@@ -35,11 +33,17 @@ function getStatusBadge(status: string) {
       bg: 'bg-red-50',
       text: 'text-red-700 font-bold',
       icon: XCircle,
-      label: 'Cancelled',
+      label: 'Cancelled', // Unified label for both Rejected and Cancelled
     },
+    rejected: { // Keeping this as fallback if needed, but logic above handles it
+      bg: 'bg-red-50',
+      text: 'text-red-700 font-bold',
+      icon: XCircle,
+      label: 'Cancelled',
+    }
   };
 
-  const config = statusConfig[status.toLowerCase() as keyof typeof statusConfig] || statusConfig.pending;
+  const config = statusConfig[normalizedStatus as keyof typeof statusConfig] || statusConfig.pending;
   const Icon = config.icon;
 
   return (
@@ -48,10 +52,12 @@ function getStatusBadge(status: string) {
       <span>{config.label}</span>
     </div>
   );
-}
+};
 
 export default function HistoryPage() {
   const router = useRouter();
+  // ... (keep state and hooks same) ...
+
   const [pnr, setPnr] = useState('');
   const [pnrError, setPnrError] = useState('');
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -241,6 +247,41 @@ export default function HistoryPage() {
         {/* Registration Details */}
         {data?.data && !isLoading && (
           <div className="space-y-4">
+
+            {data.data.registration.documentStatus === 'cancelled' && (
+              <div className="flex items-start gap-2.5 p-3 bg-red-50 border border-red-100 rounded-lg">
+                <XCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-bold text-red-900 mb-0.5 uppercase tracking-wide">Registration Cancelled</p>
+                  <p className="text-xs text-red-700">
+                    {data.data.registration.cancellationReason
+                      ? `Reason: ${data.data.registration.cancellationReason}`
+                      : 'This registration has been cancelled.'}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Rejection Alert - Displayed on top if rejected */}
+            {data.data.registration.documentStatus === 'rejected' && data.data.registration.rejectionReason && (
+              <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg shadow-sm animate-fade-in relative z-10">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-red-100/50 rounded-full">
+                    <AlertCircle className="w-5 h-5 text-red-600" />
+                  </div>
+                  <div>
+                    <h4 className="text-base font-bold text-red-800">Registration Cancelled by Admin</h4>
+                    <p className="text-sm text-red-700 mt-1">
+                      Your registration has been cancelled/rejected.
+                    </p>
+                    <div className="mt-2 text-sm font-medium text-red-900 bg-red-100/50 px-3 py-2 rounded-md inline-block">
+                      Reason: {data.data.registration.rejectionReason}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Main Registration Card */}
             <Card className="p-5 md:p-6 shadow-md border border-spiritual-zen-accent/20">
               <div className="space-y-4">
@@ -255,6 +296,7 @@ export default function HistoryPage() {
                       <span className="font-mono text-base font-semibold text-spiritual-zen-charcoal">{data.data.registration.pnr}</span>
                     </div>
                   </div>
+                  {/* Status Badge - Rejected now shows as Cancelled */}
                   {getStatusBadge(data.data.registration.documentStatus || 'pending')}
                 </div>
 
@@ -382,32 +424,6 @@ export default function HistoryPage() {
                       <p className="text-sm font-medium text-green-900 mb-0.5">Registration Approved!</p>
                       <p className="text-xs text-green-700">
                         You will receive further details via WhatsApp.
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {data.data.registration.documentStatus === 'rejected' && data.data.registration.rejectionReason && (
-                  <div className="flex items-start gap-2.5 p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <XCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-red-900 mb-0.5">Registration Rejected</p>
-                      <p className="text-xs text-red-700">
-                        <strong>Reason:</strong> {data.data.registration.rejectionReason}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {data.data.registration.documentStatus === 'cancelled' && (
-                  <div className="flex items-start gap-2.5 p-3 bg-red-50 border border-red-100 rounded-lg">
-                    <XCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-bold text-red-900 mb-0.5 uppercase tracking-wide">Registration Cancelled</p>
-                      <p className="text-xs text-red-700">
-                        {data.data.registration.cancellationReason
-                          ? `Reason: ${data.data.registration.cancellationReason}`
-                          : 'This registration has been cancelled.'}
                       </p>
                     </div>
                   </div>

@@ -182,6 +182,8 @@ export interface RegistrationByPnrResponse {
       cancellation_reason?: string | null;
       admin_comments?: string | null;
       rejection_reason?: string | null;
+      document_status?: 'pending' | 'approved' | 'rejected';
+      document_rejection_reason?: string | null;
       created_at: string;
       updated_at: string;
       split_pnr?: string;
@@ -243,8 +245,10 @@ export interface ApiRegistration {
   }>;
   logs?: any[];
   ticket_type?: string;
+  document_status?: 'pending' | 'approved' | 'rejected';
+  document_rejection_reason?: string | null;
 }
-
+// ...
 export interface GetRegistrationsResponse {
   success: boolean;
   data?: Registration[]; // Transformed to frontend format (camelCase)
@@ -292,8 +296,9 @@ export const registrationApi = baseApi.injectEndpoints({
       filterMode?: 'all' | 'general' | 'cancelled';
       ticketType?: string;
       state?: string;
+      documentStatus?: string;
     }>({
-      query: ({ yatraId, pnr, page, limit, search, filterMode, ticketType, state }) => {
+      query: ({ yatraId, pnr, page, limit, search, filterMode, ticketType, state, documentStatus }) => {
         const params: Record<string, string | number> = {};
         if (yatraId) params.yatraId = yatraId;
         if (pnr) params.pnr = pnr;
@@ -303,6 +308,7 @@ export const registrationApi = baseApi.injectEndpoints({
         if (filterMode) params.filterMode = filterMode;
         if (ticketType) params.ticketType = ticketType;
         if (state) params.state = state;
+        if (documentStatus) params.documentStatus = documentStatus;
 
         return {
           url: '/registrations',
@@ -322,6 +328,11 @@ export const registrationApi = baseApi.injectEndpoints({
               'rejected': 'Pending',
               'cancelled': 'Pending',
             };
+
+            // Determine effective document status and reason
+            // Prioritize document_status if available, fallback to main status
+            const effectiveStatus = apiReg.document_status || apiReg.status;
+            const effectiveRejectionReason = apiReg.document_rejection_reason || apiReg.rejection_reason;
 
             return {
               id: apiReg.id,
@@ -345,8 +356,8 @@ export const registrationApi = baseApi.injectEndpoints({
               ticketImages: apiReg.ticket_images || [],
               yatraId: apiReg.yatra_id,
               roomStatus: roomStatusMap[apiReg.status] || 'Pending',
-              documentStatus: apiReg.status === 'approved' ? 'approved' : apiReg.status === 'rejected' ? 'rejected' : apiReg.status === 'cancelled' ? 'cancelled' : 'pending',
-              rejectionReason: apiReg.rejection_reason || undefined,
+              documentStatus: effectiveStatus === 'approved' ? 'approved' : effectiveStatus === 'rejected' ? 'rejected' : effectiveStatus === 'cancelled' ? 'cancelled' : 'pending',
+              rejectionReason: effectiveRejectionReason || undefined,
               cancellationReason: apiReg.cancellation_reason || undefined,
               createdAt: apiReg.created_at,
               ticketType: apiReg.ticket_type || undefined,
@@ -444,8 +455,8 @@ export const registrationApi = baseApi.injectEndpoints({
                 returnDate: formatDate(registration.return_date),
                 ticketImages: registration.ticket_images || [],
                 yatraId: yatra.id,
-                documentStatus: registration.status === 'approved' ? 'approved' : registration.status === 'rejected' ? 'rejected' : registration.status === 'cancelled' ? 'cancelled' : 'pending',
-                rejectionReason: registration.rejection_reason || undefined,
+                documentStatus: (registration.document_status || registration.status) === 'approved' ? 'approved' : (registration.document_status || registration.status) === 'rejected' ? 'rejected' : registration.status === 'cancelled' ? 'cancelled' : 'pending',
+                rejectionReason: registration.document_rejection_reason || registration.rejection_reason || undefined,
                 cancellationReason: registration.cancellation_reason || undefined,
                 roomStatus: room ? 'Assigned' : 'Pending',
                 roomNumber: (room as any)?.room_number || (room as any)?.roomNumber,
@@ -570,6 +581,40 @@ export const registrationApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Registration'],
     }),
+
+    /**
+     * Approve Document Endpoint
+     * POST /registrations/:id/approve-document
+     */
+    approveDocument: builder.mutation<{
+      success: boolean;
+      message?: string;
+      error?: string;
+    }, string>({
+      query: (registrationId) => ({
+        url: `/registrations/${registrationId}/approve-document`,
+        method: 'POST',
+        body: {},
+      }),
+      invalidatesTags: ['Registration'],
+    }),
+
+    /**
+     * Reject Document Endpoint
+     * POST /registrations/:id/reject-document
+     */
+    rejectDocument: builder.mutation<{
+      success: boolean;
+      message?: string;
+      error?: string;
+    }, { registrationId: string; reason: string; comments?: string }>({
+      query: ({ registrationId, reason, comments }) => ({
+        url: `/registrations/${registrationId}/reject-document`,
+        method: 'POST',
+        body: { reason, comments: comments || '' },
+      }),
+      invalidatesTags: ['Registration'],
+    }),
   }),
 });
 
@@ -583,4 +628,6 @@ export const {
   useCancelRegistrationMutation,
   useUpdateTicketTypeMutation,
   useSplitRegistrationMutation,
+  useApproveDocumentMutation,
+  useRejectDocumentMutation,
 } = registrationApi;

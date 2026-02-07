@@ -49,7 +49,7 @@ const UserFilters: React.FC<UserFiltersProps> = ({
     documentApprovalStatus,
     setDocumentApprovalStatus,
 }) => {
-    const hasActiveFilters = searchTerm || filterState || filterMode !== 'general' || filterDate || ticketType;
+    const hasActiveFilters = searchTerm || filterState || filterMode !== 'general' || filterDate || ticketType || documentApprovalStatus;
 
     const filterModeOptions = [
         { value: 'all', label: 'All Registrations' },
@@ -185,6 +185,7 @@ const UserFilters: React.FC<UserFiltersProps> = ({
                                 setFilterMode('general');
                                 setFilterDate(null);
                                 setTicketType('');
+                                setDocumentApprovalStatus('');
                             }}
                             className="lg:min-w-[120px] h-11 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
                         >

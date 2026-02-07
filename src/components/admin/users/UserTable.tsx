@@ -208,36 +208,38 @@ const UserTable: React.FC<UserTableProps> = ({
         {
             key: 'documents',
             header: 'Documents',
-            render: (row: any) => (
-                <div className="flex flex-col gap-1">
-                    {row.ticketImages && row.ticketImages.length > 0 ? (
-                        <>
-                            <button
-                                onClick={() => onViewDocuments(row)}
-                                className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold text-heritage-primary hover:bg-heritage-highlight/20 rounded-lg transition-colors w-fit"
-                                title="View Documents"
-                            >
-                                <FileText className="w-3 h-3" />
-                                {row.ticketImages.length} doc(s)
-                            </button>
-                            <span
-                                className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold w-fit ${row.documentStatus === 'approved'
-                                    ? 'bg-green-100 text-green-700'
-                                    : row.documentStatus === 'rejected'
-                                        ? 'bg-red-100 text-red-700'
-                                        : row.documentStatus === 'cancelled'
-                                            ? 'bg-red-600 text-white shadow-sm'
-                                            : 'bg-yellow-100 text-yellow-700'
-                                    }`}
-                            >
-                                {row.documentStatus === 'approved' ? '✓ Approved' : row.documentStatus === 'rejected' ? '✕ Rejected' : row.documentStatus === 'cancelled' ? '🗙 Cancelled' : '⏳ Pending'}
-                            </span>
-                        </>
-                    ) : (
-                        <span className="text-xs text-gray-400">No docs</span>
-                    )}
-                </div>
-            ),
+            render: (row: any) => {
+                return (
+                    <div className="flex flex-col gap-1">
+                        {row.ticketImages && row.ticketImages.length > 0 ? (
+                            <>
+                                <button
+                                    onClick={() => onViewDocuments(row)}
+                                    className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold text-heritage-primary hover:bg-heritage-highlight/20 rounded-lg transition-colors w-fit"
+                                    title="View Documents"
+                                >
+                                    <FileText className="w-3 h-3" />
+                                    {row.ticketImages.length} doc(s)
+                                </button>
+                                <span
+                                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold w-fit ${row.documentStatus === 'approved'
+                                        ? 'bg-green-100 text-green-700'
+                                        : row.documentStatus === 'rejected'
+                                            ? 'bg-red-100 text-red-700'
+                                            : row.documentStatus === 'cancelled'
+                                                ? 'bg-red-600 text-white shadow-sm'
+                                                : 'bg-yellow-100 text-yellow-700'
+                                        }`}
+                                >
+                                    {row.documentStatus === 'approved' ? '✓ Approved' : row.documentStatus === 'rejected' ? '✕ Rejected' : row.documentStatus === 'cancelled' ? '🗙 Cancelled' : '⏳ Pending'}
+                                </span>
+                            </>
+                        ) : (
+                            <span className="text-xs text-gray-400">No docs</span>
+                        )}
+                    </div>
+                )
+            },
         },
         {
             key: 'actions',

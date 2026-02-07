@@ -21,6 +21,7 @@ interface DocumentViewerModalProps {
     onApprove: () => void;
     onReject: () => void;
     onAction?: () => void;
+    isApproving?: boolean;
 }
 
 
@@ -49,6 +50,7 @@ const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
     onApprove,
     onReject,
     onAction,
+    isApproving = false,
 }) => {
     // Zoom and Pan State
     const [scale, setScale] = useState<number>(1);
@@ -187,7 +189,7 @@ const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
         'Documents'
     );
 
-    const footer = documentOwner?.documentStatus === 'pending' && (
+    const footer = (documentOwner?.documentStatus === 'pending' || documentOwner?.documentStatus === 'rejected') && (
         <div className="flex justify-end gap-2 w-full">
             <Button
                 onClick={onReject}
@@ -199,11 +201,13 @@ const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
             </Button>
             <Button
                 onClick={onApprove}
+                isLoading={isApproving}
+                disabled={isApproving}
                 variant="outline"
                 className="flex items-center gap-2 border-green-300 text-green-600 hover:bg-green-50"
             >
                 <CheckCircle className="w-4 h-4" />
-                Approve
+                {isApproving ? 'Approving...' : 'Approve'}
             </Button>
         </div>
     );

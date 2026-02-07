@@ -5,7 +5,7 @@ import { Users, UserX, Loader2, AlertCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useApp } from '@/contexts/AppContext';
 import { useGetIndianStatesQuery } from '@/services/locationApi';
-import { useGetRegistrationsQuery } from '@/services/registrationApi';
+import { useGetRegistrationsQuery, useApproveDocumentMutation, useRejectDocumentMutation } from '@/services/registrationApi';
 import { yatraStorage } from '@/utils/storage';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
@@ -18,6 +18,7 @@ import UserDetailsModal from '@/components/admin/users/modals/UserDetailsModal';
 import AssignRoomModal from '@/components/admin/users/modals/AssignRoomModal';
 import DocumentViewerModal from '@/components/admin/users/modals/DocumentViewerModal';
 import RejectDocumentModal from '@/components/admin/users/modals/RejectDocumentModal';
+import RejectionSuccessModal from '@/components/admin/users/modals/RejectionSuccessModal';
 
 
 import { useDebounce } from '@/hooks/useDebounce';
@@ -79,9 +80,10 @@ function UserManagement() {
   const itemsPerPage = 10;
 
   // Reset pagination when searching, yatra changes, or filters change
+  // Reset pagination when searching, yatra changes, or filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedYatraId, debouncedSearchTerm, filterMode, filterState, filterDate, ticketType]);
+  }, [selectedYatraId, debouncedSearchTerm, filterMode, filterState, filterDate, ticketType, documentApprovalStatus]);
 
   // Fetch registrations from API with pagination, search, and filters
   const {
@@ -99,7 +101,8 @@ function UserManagement() {
       search: debouncedSearchTerm,
       filterMode: filterMode,
       ticketType: ticketType,
-      state: filterState
+      state: filterState,
+      documentStatus: documentApprovalStatus
     },
     { skip: !selectedYatraId } // Skip query if no yatraId
   );
@@ -153,6 +156,7 @@ function UserManagement() {
   const [showUnassignModal, setShowUnassignModal] = useState(false);
   const [showDocumentViewer, setShowDocumentViewer] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showRejectionSuccessModal, setShowRejectionSuccessModal] = useState(false);
   const [showManualRegistrationModal, setShowManualRegistrationModal] = useState(false);
   const [needsRefetch, setNeedsRefetch] = useState(false);
 
@@ -161,6 +165,10 @@ function UserManagement() {
   const [currentDocumentIndex, setCurrentDocumentIndex] = useState(0);
   const [rejectionReason, setRejectionReason] = useState('');
   const [documentOwner, setDocumentOwner] = useState<any>(null);
+
+  // API Mutations
+  const [approveDocumentApi, { isLoading: isApproving }] = useApproveDocumentMutation();
+  const [rejectDocumentApi, { isLoading: isRejecting }] = useRejectDocumentMutation();
 
   // Derived Data - State Options from API
   const stateOptions = useMemo(() => {
@@ -335,25 +343,44 @@ function UserManagement() {
     }
   };
 
-  const handleApproveDocument = () => {
+  const handleApproveDocument = async () => {
     if (documentOwner) {
-      approveDocument(documentOwner.id);
-      toast.success(`✅ Documents approved for ${documentOwner.name}`);
-      handleCloseDocumentViewer(true);
+      try {
+        const result = await approveDocumentApi(documentOwner.id).unwrap();
+        if (result.success) {
+          toast.success(`✅ Documents approved for ${documentOwner.name}`);
+          handleCloseDocumentViewer(true);
+        } else {
+          toast.error(result.error || 'Failed to approve document');
+        }
+      } catch (err: any) {
+        toast.error(err?.data?.message || 'Error approving document');
+      }
     }
   };
 
-  const handleRejectDocument = () => {
+  const handleRejectDocument = async () => {
     if (!rejectionReason.trim()) {
       toast.error('Please provide a reason for rejection');
       return;
     }
     if (documentOwner) {
-      rejectDocument(documentOwner.id, rejectionReason);
-      toast.success(`❌ Documents rejected for ${documentOwner.name}`);
-      setShowRejectModal(false);
-      handleCloseDocumentViewer(true);
-      setRejectionReason('');
+      try {
+        const result = await rejectDocumentApi({
+          registrationId: documentOwner.id,
+          reason: rejectionReason,
+        }).unwrap();
+
+        if (result.success) {
+          toast.success(`❌ Documents rejected for ${documentOwner.name}`);
+          setShowRejectModal(false);
+          setShowRejectionSuccessModal(true);
+        } else {
+          toast.error(result.error || 'Failed to reject document');
+        }
+      } catch (err: any) {
+        toast.error(err?.data?.message || 'Error rejecting document');
+      }
     }
   };
 
@@ -564,6 +591,7 @@ function UserManagement() {
           setRejectionReason('');
           setShowRejectModal(true);
         }}
+        isApproving={isApproving}
       />
 
       <RejectDocumentModal
@@ -575,6 +603,22 @@ function UserManagement() {
         onConfirm={handleRejectDocument}
         rejectionReason={rejectionReason}
         setRejectionReason={setRejectionReason}
+        isLoading={isRejecting}
+      />
+
+      <RejectionSuccessModal
+        isOpen={showRejectionSuccessModal}
+        onClose={() => {
+          setShowRejectionSuccessModal(false);
+          handleCloseDocumentViewer(true);
+          setRejectionReason('');
+        }}
+        registration={{
+          pnr: documentOwner?.pnr || '',
+          name: documentOwner?.name || '',
+          contactNumber: documentOwner?.contactNumber || ''
+        }}
+        reason={rejectionReason}
       />
 
       <ManualRegistrationModal
