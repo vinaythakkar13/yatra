@@ -3,6 +3,8 @@ import { Eye, RefreshCw, UserX, Home, FileText, CheckCircle, XCircle, ArrowRight
 import Table from '@/components/ui/Table';
 import moment from 'moment';
 import { RiUserStarLine } from 'react-icons/ri';
+import HouseIcon from '@/components/ui/svg/HouseIcon';
+import EyeSquareIcon from '@/components/ui/svg/EyeSquareIcon';
 
 const TICKET_BADGE_CONFIG: Record<
     string,
@@ -251,7 +253,7 @@ const UserTable: React.FC<UserTableProps> = ({
                         className="p-2 text-heritage-primary hover:bg-heritage-highlight/20 rounded-lg transition-colors"
                         title="View Details"
                     >
-                        <Eye className="w-3 h-3" />
+                        <EyeSquareIcon size={24} />
                     </button>
                     {row?.roomStatus === 'Assigned' ? (
                         <>
@@ -267,7 +269,7 @@ const UserTable: React.FC<UserTableProps> = ({
                                 className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                 title="Remove Assignment"
                             >
-                                <UserX className="w-3 h-3" />
+                                <EyeSquareIcon size={24} />
                             </button>
                         </>
                     ) : (
@@ -276,7 +278,7 @@ const UserTable: React.FC<UserTableProps> = ({
                             className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
                             title="Assign Room"
                         >
-                            <Home className="w-3 h-3" />
+                            <HouseIcon size={24} />
                         </button>
                     )}
                 </div>

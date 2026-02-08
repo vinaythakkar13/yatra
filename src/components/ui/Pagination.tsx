@@ -24,6 +24,32 @@ const Pagination: React.FC<PaginationProps> = ({
 
     if (totalPages <= 1) return null;
 
+    // Page builder: always show 1, last, current-1, current, current+1 with "..."
+    const getPageNumbers = () => {
+        const pages: (number | string)[] = [];
+
+        // Always add first page
+        pages.push(1);
+
+        // Add left dots if needed
+        if (currentPage > 3) pages.push('...');
+
+        // Middle pages (current - 1, current, current + 1)
+        for (let page = currentPage - 1; page <= currentPage + 1; page++) {
+            if (page > 1 && page < totalPages) pages.push(page);
+        }
+
+        // Add right dots if needed
+        if (currentPage < totalPages - 2) pages.push('...');
+
+        // Always add last page
+        if (totalPages > 1) pages.push(totalPages);
+
+        return pages;
+    };
+
+    const pages = getPageNumbers();
+
     return (
         <div className={`flex flex-col sm:flex-row items-center justify-between gap-4 py-4 ${className}`}>
             <div className="text-sm text-heritage-text/70">
@@ -33,53 +59,44 @@ const Pagination: React.FC<PaginationProps> = ({
             </div>
 
             <div className="flex items-center gap-2">
+                {/* Previous Button */}
                 <Button
                     variant="outline"
                     onClick={() => onPageChange(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className="h-9 w-9 !p-0 flex items-center justify-center rounded-lg border-2 border-kesari-dark text-kesari-dark bg-white/50 hover:bg-kesari-light hover:text-white hover:border-kesari-light hover:shadow-lg disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white/50 disabled:hover:text-kesari-dark transition-all duration-300 ease-in-out"
-                    title="Previous Page"
+                    className="h-9 w-9 !p-0 flex items-center justify-center rounded-lg border-2 border-kesari-dark text-kesari-dark bg-white/50 hover:bg-kesari-light hover:text-white hover:border-kesari-light hover:shadow-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300 ease-in-out"
                 >
                     <ChevronLeft className="w-4 h-4" />
                 </Button>
 
+                {/* Page Buttons */}
                 <div className="flex items-center gap-1.5">
-                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                        // Logic to show a window of pages around current page
-                        let pageNum = i + 1;
-                        if (totalPages > 5) {
-                            if (currentPage > 3) {
-                                pageNum = currentPage - 3 + i;
-                            }
-                            if (pageNum > totalPages) {
-                                pageNum = totalPages - (4 - i);
-                            }
-                        }
-
-                        // Ensure pageNum is valid
-                        if (pageNum < 1) pageNum = i + 1;
-
-                        return (
+                    {pages.map((page, index) =>
+                        page === '...' ? (
+                            <span key={`dots-${index}`} className="px-2 text-kesari-dark/60">
+                                ...
+                            </span>
+                        ) : (
                             <button
-                                key={pageNum}
-                                onClick={() => onPageChange(pageNum)}
-                                className={`h-9 w-9 flex items-center justify-center rounded-lg text-sm font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 ${currentPage === pageNum
-                                    ? 'bg-gradient-to-br from-kesari-light to-kesari-dark text-white shadow-lg shadow-kesari-dark/30 scale-105'
-                                    : 'bg-white/60 text-kesari-darker border-2 border-kesari-light/40 hover:bg-kesari-light/20 hover:border-kesari-dark hover:text-kesari-dark hover:shadow-md'
+                                key={page}
+                                onClick={() => onPageChange(page as number)}
+                                className={`h-9 w-9 flex items-center justify-center rounded-lg text-sm font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 ${currentPage === page
+                                        ? 'bg-gradient-to-br from-kesari-light to-kesari-dark text-white shadow-lg shadow-kesari-dark/30 scale-105'
+                                        : 'bg-white/60 text-kesari-darker border-2 border-kesari-light/40 hover:bg-kesari-light/20 hover:border-kesari-dark hover:text-kesari-dark hover:shadow-md'
                                     }`}
                             >
-                                {pageNum}
+                                {page}
                             </button>
-                        );
-                    })}
+                        )
+                    )}
                 </div>
 
+                {/* Next Button */}
                 <Button
                     variant="outline"
                     onClick={() => onPageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                    className="h-9 w-9 !p-0 flex items-center justify-center rounded-lg border-2 border-kesari-dark text-kesari-dark bg-white/50 hover:bg-kesari-light hover:text-white hover:border-kesari-light hover:shadow-lg disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white/50 disabled:hover:text-kesari-dark transition-all duration-300 ease-in-out"
-                    title="Next Page"
+                    className="h-9 w-9 !p-0 flex items-center justify-center rounded-lg border-2 border-kesari-dark text-kesari-dark bg-white/50 hover:bg-kesari-light hover:text-white hover:border-kesari-light hover:shadow-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-300 ease-in-out"
                 >
                     <ChevronRight className="w-4 h-4" />
                 </Button>
