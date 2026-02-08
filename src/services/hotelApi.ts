@@ -281,6 +281,22 @@ export function transformHotelFormDataToApiPayload(
   if (formData.advance_paid_amount !== undefined && formData.advance_paid_amount !== null) {
     optionalFields.advancePaidAmount = formData.advance_paid_amount;
   }
+  if (formData.totalFloors) {
+    optionalFields.totalFloors = formData.totalFloors;
+  }
+  if (formData.floors && Array.isArray(formData.floors) && formData.floors.length > 0) {
+    optionalFields.floors = formData.floors.map((floor: any) => ({
+      floorNumber: floor.floorNumber,
+      numberOfRooms: floor.numberOfRooms,
+      roomNumbers: floor.roomNumbers,
+      rooms: floor.rooms?.map((room: any) => ({
+        roomNumber: room.roomNumber,
+        toiletType: room.toiletType,
+        numberOfBeds: room.numberOfBeds,
+        chargePerDay: room.chargePerDay,
+      })) || []
+    }));
+  }
 
   if (isUpdate) {
     // For updates, return UpdateHotelRequest (without yatraId)
