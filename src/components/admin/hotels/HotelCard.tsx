@@ -1,28 +1,37 @@
 import React, { useState } from 'react';
-import { Hotel as HotelIcon, MapPin, Edit, Trash2, ChevronDown, ChevronUp, Home, Users, BedDouble } from 'lucide-react';
+import { Hotel as HotelIcon, MapPin, Edit, Trash2, ChevronDown, ChevronUp, Home, Users, BedDouble, IndianRupee } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Table from '@/components/ui/Table';
+import { Hotel, HotelRoom } from './steps/interface';
+
 
 interface HotelCardProps {
-  hotel: any;
-  onEdit: (hotel: any) => void;
-  onDelete: (hotel: any) => void;
+  hotel: Hotel;
+  onEdit: (hotel: Hotel) => void;
+  onDelete: (hotel: Hotel) => void;
 }
 
 const HotelCard: React.FC<HotelCardProps> = ({ hotel, onEdit, onDelete }) => {
+
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const getTotalRooms = (hotel: any) => hotel.rooms?.length || 0;
-  const getOccupiedRooms = (hotel: any) =>
-    hotel.rooms?.filter((r: any) => r.isOccupied).length || 0;
-  const getAvailableRooms = (hotel: any) =>
-    hotel.rooms?.filter((r: any) => !r.isOccupied).length || 0;
+  const getTotalRooms = (hotel: Hotel) => hotel.rooms?.length || 0;
+  const getOccupiedRooms = (hotel: Hotel) =>
+    hotel.rooms?.filter((r: HotelRoom) => r.is_occupied).length || 0;
+  const getAvailableRooms = (hotel: Hotel) =>
+    hotel.rooms?.filter((r: HotelRoom) => !r.is_occupied).length || 0;
+
+  const getTotalPayments = (hotel: Hotel) => {
+    const total = hotel.rooms?.reduce((total, room) => total + (Number(room.charge_per_day) || 0), 0) || 0;
+    return total * hotel.number_of_days;
+  }
+
 
   const roomColumns = [
     {
       key: 'roomNumber',
       header: 'Room Number',
-      render: (row: any) => (
+      render: (row: HotelRoom) => (
         <span className="font-mono font-bold text-lg text-heritage-primary">
           {row.room_number}
         </span>
@@ -31,18 +40,18 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onEdit, onDelete }) => {
     {
       key: 'floor',
       header: 'Floor',
-      render: (row: any) => (
+      render: (row: HotelRoom) => (
         <span className="text-heritage-text/80">Floor {row.floor}</span>
       ),
     },
     {
       key: 'numberOfBeds',
       header: 'Beds',
-      render: (row: any) => (
+      render: (row: HotelRoom) => (
         <div className="text-center">
           <p className="font-bold text-heritage-textDark">{row.number_of_beds || 0}</p>
           <p className="text-xs text-heritage-text/60">
-            {row.isOccupied ? (
+            {row.is_occupied ? (
               <span className="text-heritage-maroon">Occupied</span>
             ) : (
               <span className="text-green-600">Available</span>
@@ -54,7 +63,7 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onEdit, onDelete }) => {
     {
       key: 'toiletType',
       header: 'Toilet',
-      render: (row: any) => (
+      render: (row: HotelRoom) => (
         <span className="text-sm text-heritage-text/80 capitalize">
           {row.toilet_type || 'N/A'}
         </span>
@@ -63,28 +72,28 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onEdit, onDelete }) => {
     {
       key: 'chargePerDay',
       header: 'Charge/Day',
-      render: (row: any) => (
+      render: (row: HotelRoom) => (
         <span className="font-semibold text-green-700">
-          ₹{row.charge_per_day?.toLocaleString('en-IN') || 0}
+          ₹{Number(row.charge_per_day || 0).toLocaleString('en-IN')}
         </span>
       ),
     },
     {
-      key: 'isOccupied',
+      key: 'is_occupied',
       header: 'Status',
-      render: (row: any) => (
+      render: (row: HotelRoom) => (
         <div>
           <span
-            className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${row.isOccupied
+            className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold ${row.is_occupied
               ? 'bg-heritage-maroon/10 text-heritage-maroon'
               : 'bg-green-100 text-green-700'
               }`}
           >
-            {row.isOccupied ? 'Occupied' : 'Available'}
+            {row.is_occupied ? 'Occupied' : 'Available'}
           </span>
-          {row.assignedTo && (
+          {row.assigned_to_user_id && (
             <p className="text-xs text-heritage-text/60 mt-1">
-              Assigned to: {row.assignedTo}
+              Assigned to: {row.assigned_to_user_id}
             </p>
           )}
         </div>
@@ -111,6 +120,19 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onEdit, onDelete }) => {
           <div className="flex flex-wrap items-center gap-3">
             {/* Stats Row with Pills */}
             <div className="flex flex-wrap items-center gap-2 border-r border-heritage-text/10 pr-3 last:border-0 last:pr-0">
+
+              {/* total Payment */}
+              <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-heritage-highlight/20 border border-heritage-highlight/30">
+                <span className="text-heritage-text/50"><IndianRupee className="w-3.5 h-3.5" /></span>
+                <span className="text-xs font-bold text-heritage-textDark">{getTotalPayments(hotel)} <span className="text-[10px] font-medium text-heritage-text/50 uppercase ml-0.5">Total Payment</span></span>
+              </div>
+
+              {/* advance paid */}
+              <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-heritage-highlight/20 border border-heritage-highlight/30">
+                <span className="text-heritage-text/50"><IndianRupee className="w-3.5 h-3.5" /></span>
+                <span className="text-xs font-bold text-heritage-textDark">{hotel.advance_paid_amount} <span className="text-[10px] font-medium text-heritage-text/50 uppercase ml-0.5">Advance Paid</span></span>
+              </div>
+
               <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-heritage-highlight/20 border border-heritage-highlight/30">
                 <span className="text-heritage-text/50"><Home className="w-3.5 h-3.5" /></span>
                 <span className="text-xs font-bold text-heritage-textDark">{getTotalRooms(hotel)} <span className="text-[10px] font-medium text-heritage-text/50 uppercase ml-0.5">Rooms</span></span>
@@ -158,7 +180,7 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onEdit, onDelete }) => {
         <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mb-3 px-1">
           <div className="flex items-center gap-2 text-sm text-heritage-text/70">
             <span className="bg-heritage-gold/20 text-heritage-textDark px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">Floors</span>
-            <span className="font-semibold">{hotel.totalFloors || hotel.floors?.length || 0}</span>
+            <span className="font-semibold">{hotel.total_floors || 0}</span>
           </div>
           {hotel.address && (
             <div className="flex items-center gap-2 text-sm text-heritage-text/60 min-w-0">

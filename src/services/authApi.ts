@@ -18,19 +18,19 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface AdminStaffUser {
+  id: string;
+  email: string;
+  name: string;
+  role: "super_admin" | "admin" | "staff";
+}
+
 export interface LoginResponse {
   success: boolean;
   message: string;
   data: {
-    user: {
-      id: string;
-      email: string;
-      name: string;
-      role: string;
-      phone?: string;
-      avatar?: string;
-    };
-   token: string;
+    admin: AdminStaffUser
+    token: string;
   };
 }
 
@@ -85,12 +85,12 @@ export const authApi = baseApi.injectEndpoints({
         body: credentials,
         credentials: 'include',
       }),
-      
+
       // Transform response before caching
       transformResponse: (response: LoginResponse) => {
         return response;
       },
-      
+
       // Handle side effects on successful login
       async onQueryStarted(arg, { queryFulfilled }) {
         try {
@@ -98,17 +98,17 @@ export const authApi = baseApi.injectEndpoints({
           // Store tokens and user data
           if (data.success && data.data) {
             tokenStorage.setAccessToken(data.data.token);
-            userStorage.setUser(data.data.user);
+            userStorage.setUser(data.data.admin);
           }
         } catch (error) {
           console.error('[Auth API] Login failed:', error);
         }
       },
-      
+
       // Invalidate cache tags on successful login
       invalidatesTags: ['Auth', 'User'],
     }),
-    
+
     /**
      * Register Endpoint
      * POST /auth/register
@@ -119,24 +119,24 @@ export const authApi = baseApi.injectEndpoints({
         method: 'POST',
         body: userData,
       }),
-      
+
       async onQueryStarted(arg, { queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
-          
+
           // Store tokens and user data after registration
           if (data.success && data.data) {
             tokenStorage.setAccessToken(data.data.token);
-            userStorage.setUser(data.data.user);
+            userStorage.setUser(data.data.admin);
           }
         } catch (error) {
           console.error('[Auth API] Registration failed:', error);
         }
       },
-      
+
       invalidatesTags: ['Auth', 'User'],
     }),
-    
+
     /**
      * Logout Endpoint
      * POST /auth/logout
@@ -146,41 +146,41 @@ export const authApi = baseApi.injectEndpoints({
         url: '/auth/logout',
         method: 'POST',
       }),
-      
+
       async onQueryStarted(arg, { queryFulfilled }) {
         try {
           await queryFulfilled;
-          
+
           // Clear all stored data
           tokenStorage.clearTokens();
           userStorage.removeUser();
-          
+
         } catch (error) {
           console.error('[Auth API] Logout failed:', error);
-          
+
           // Clear data even if API call fails
           tokenStorage.clearTokens();
           userStorage.removeUser();
         }
       },
-      
+
       invalidatesTags: ['Auth', 'User'],
     }),
-    
+
     /**
      * Get Current User Profile
      * GET /auth/me
      */
-    getCurrentUser: builder.query<LoginResponse['data']['user'], void>({
+    getCurrentUser: builder.query<LoginResponse['data']['admin'], void>({
       query: () => '/auth/me',
-      
+
       // Provide cache tags
       providesTags: ['User'],
-      
+
       // Keep fresh for 5 minutes
       keepUnusedDataFor: 300,
     }),
-    
+
     /**
      * Forgot Password Endpoint
      * POST /auth/forgot-password
@@ -192,7 +192,7 @@ export const authApi = baseApi.injectEndpoints({
         body,
       }),
     }),
-    
+
     /**
      * Reset Password Endpoint
      * POST /auth/reset-password
@@ -203,10 +203,10 @@ export const authApi = baseApi.injectEndpoints({
         method: 'POST',
         body,
       }),
-      
+
       invalidatesTags: ['Auth'],
     }),
-    
+
     /**
      * Change Password Endpoint
      * POST /auth/change-password
@@ -217,10 +217,10 @@ export const authApi = baseApi.injectEndpoints({
         method: 'POST',
         body,
       }),
-      
+
       invalidatesTags: ['Auth'],
     }),
-    
+
     /**
      * Verify Email Endpoint
      * POST /auth/verify-email
@@ -231,11 +231,11 @@ export const authApi = baseApi.injectEndpoints({
         method: 'POST',
         body,
       }),
-      
+
       invalidatesTags: ['User'],
     }),
   }),
-  
+
   overrideExisting: false,
 });
 

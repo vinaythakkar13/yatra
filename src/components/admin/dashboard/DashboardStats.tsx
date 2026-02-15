@@ -39,9 +39,10 @@ interface DashboardStatsProps {
         availableRooms: number;
         availableBeds: number;
     };
+    userRole?: string;
 }
 
-const DashboardStats: React.FC<DashboardStatsProps> = ({ stats }) => {
+const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, userRole }) => {
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <StatCard
@@ -79,20 +80,24 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats }) => {
                 color="bg-heritage-secondary"
                 description="Withdrawals"
             />
-            <StatCard
-                title="Available Rooms"
-                value={stats?.availableRooms}
-                icon={Home}
-                color="bg-heritage-gold"
-                description="Current vacant rooms"
-            />
-            <StatCard
-                title="Available Beds"
-                value={stats?.availableBeds}
-                icon={Bed}
-                color="bg-kesari-light"
-                description="Current vacant beds"
-            />
+            {userRole !== 'staff' && (
+                <>
+                    <StatCard
+                        title="Available Rooms"
+                        value={stats?.availableRooms}
+                        icon={Home}
+                        color="bg-heritage-gold"
+                        description="Current vacant rooms"
+                    />
+                    <StatCard
+                        title="Available Beds"
+                        value={stats?.availableBeds}
+                        icon={Bed}
+                        color="bg-kesari-light"
+                        description="Current vacant beds"
+                    />
+                </>
+            )}
         </div>
     );
 };

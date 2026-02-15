@@ -90,6 +90,7 @@ interface UserTableProps {
     onUnassignRoom: (user: any) => void;
     onViewDocuments: (user: any) => void;
     isLoading?: boolean;
+    userRole?: string;
 }
 
 const UserTable: React.FC<UserTableProps> = ({
@@ -100,6 +101,7 @@ const UserTable: React.FC<UserTableProps> = ({
     onUnassignRoom,
     onViewDocuments,
     isLoading = false,
+    userRole,
 }) => {
 
     const columns = [
@@ -255,31 +257,36 @@ const UserTable: React.FC<UserTableProps> = ({
                     >
                         <EyeSquareIcon size={24} />
                     </button>
-                    {row?.roomStatus === 'Assigned' ? (
+
+                    {userRole !== 'staff' && (
                         <>
-                            <button
-                                onClick={() => onReassignRoom(row)}
-                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                title="Reassign Room"
-                            >
-                                <RefreshCw className="w-3 h-3" />
-                            </button>
-                            <button
-                                onClick={() => onUnassignRoom(row)}
-                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                title="Remove Assignment"
-                            >
-                                <EyeSquareIcon size={24} />
-                            </button>
+                            {row?.roomStatus === 'Assigned' ? (
+                                <>
+                                    <button
+                                        onClick={() => onReassignRoom(row)}
+                                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                        title="Reassign Room"
+                                    >
+                                        <RefreshCw className="w-3 h-3" />
+                                    </button>
+                                    <button
+                                        onClick={() => onUnassignRoom(row)}
+                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                        title="Remove Assignment"
+                                    >
+                                        <EyeSquareIcon size={24} />
+                                    </button>
+                                </>
+                            ) : (
+                                <button
+                                    onClick={() => onAssignRoom(row)}
+                                    className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                    title="Assign Room"
+                                >
+                                    <HouseIcon size={24} />
+                                </button>
+                            )}
                         </>
-                    ) : (
-                        <button
-                            onClick={() => onAssignRoom(row)}
-                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                            title="Assign Room"
-                        >
-                            <HouseIcon size={24} />
-                        </button>
                     )}
                 </div>
             ),

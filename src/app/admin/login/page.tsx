@@ -74,11 +74,11 @@ export default function AdminLogin() {
 
       // Handle successful login
       if (result.success && result.data) {
-        const { token, user } = result.data;
+        const { token, admin } = result.data;
 
         // Store token and user data
         await tokenStorage.setAccessToken(token);
-        await userStorage.setUser(user);
+        await userStorage.setUser(admin);
 
         // Fetch yatras and select the nearest one
         try {

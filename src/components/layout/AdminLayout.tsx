@@ -57,21 +57,39 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     return null;
   });
 
+
   // Skip auth check for login page
   const isLoginPage = pathname === '/admin/login';
 
+  // Define NavItem interface
+  interface NavItem {
+    icon: any;
+    label: string;
+    href: string;
+    exact?: boolean;
+    allowedRoles?: string[]; // Optional array of allowed roles
+  }
+
   // Navigation items matching reference design
-  const navItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', href: '/admin', exact: true },
+  const navItems: NavItem[] = [
+    {
+      icon: LayoutDashboard, label: 'Dashboard', href: '/admin', exact: true,
+
+    },
     { icon: Users, label: 'Users', href: '/admin/users' },
-    { icon: Hotel, label: 'Hotels', href: '/admin/hotels' },
-    { icon: MapPinIcon, label: 'Yatras', href: '/admin/yatras' },
-    { icon: Calendar, label: 'Calendar', href: '/admin/calendar' },
-    { icon: Bell, label: 'Notifications', href: '/admin/notifications' },
-    { icon: Folder, label: 'Documents', href: '/admin/documents' },
-    { icon: Star, label: 'Reviews', href: '/admin/reviews' },
-    { icon: BarChart3, label: 'Reports', href: '/admin/reports' },
-    { icon: Settings, label: 'Settings', href: '/admin/settings' },
+    {
+      icon: Hotel,
+      label: 'Hotels',
+      href: '/admin/hotels',
+      allowedRoles: ['super_admin', 'admin'] // Only admin and super_admin see Hotels
+    },
+    // { icon: MapPinIcon, label: 'Yatras', href: '/admin/yatras' },
+    // { icon: Calendar, label: 'Calendar', href: '/admin/calendar' },
+    // { icon: Bell, label: 'Notifications', href: '/admin/notifications' },
+    // { icon: Folder, label: 'Documents', href: '/admin/documents' },
+    // { icon: Star, label: 'Reviews', href: '/admin/reviews' },
+    // { icon: BarChart3, label: 'Reports', href: '/admin/reports' },
+    // { icon: Settings, label: 'Settings', href: '/admin/settings' },
   ];
 
   useEffect(() => {
@@ -110,6 +128,24 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
       setIsAuthenticated(true);
       setIsChecking(false);
+
+      // 🛡️ RBAC: Check route permissions
+      // Find the nav item that matches the current path
+      const currentNavItem = navItems.find(item =>
+        item.exact ? pathname === item.href : pathname.startsWith(item.href)
+      );
+
+      // If item exists and has restricted roles
+      if (currentNavItem && currentNavItem.allowedRoles) {
+        // If user's role is NOT in allowed roles
+        if (userData && !currentNavItem.allowedRoles.includes(userData.role)) {
+          // Prevent infinite redirect loop if dashboard is also restricted (unlikely but safe)
+          if (pathname !== '/admin') {
+            toast.error(`Access Denied: You don't have permission to access ${currentNavItem.label}`);
+            router.replace('/admin');
+          }
+        }
+      }
     };
 
     if (isChecking) {
@@ -200,30 +236,41 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           {/* Navigation Items - Scrollable Middle Section */}
           <nav className="
            flex flex-col flex-1 py-4 space-y-2 overflow-y-auto overflow-x-hidden min-h-0 admin-sidebar-scroll">
-            {navItems.map((item, index) => {
-              const Icon = item.icon;
-              const active = isActiveRoute(item.href, item.exact);
+            {navItems
+              .filter(item => {
+                // If no user is logged in, show nothing (or default items, though layout usually redirects)
+                if (!user) return false;
 
-              return (
-                <Tooltip key={index} content={item.label} position="right">
-                  <Link
-                    href={item.href}
-                    onClick={() => setSidebarOpen(false)}
-                    className={`
+                // If item has no allowedRoles, it's accessible to everyone
+                if (!item.allowedRoles) return true;
+
+                // Check if user's role is in the allowedRoles array
+                return item.allowedRoles.includes(user.role);
+              })
+              .map((item, index) => {
+                const Icon = item.icon;
+                const active = isActiveRoute(item.href, item.exact);
+
+                return (
+                  <Tooltip key={index} content={item.label} position="right">
+                    <Link
+                      href={item.href}
+                      onClick={() => setSidebarOpen(false)}
+                      className={`
                       flex items-center justify-center
                       w-14 h-14 mx-auto rounded-xl
                       transition-all duration-200
                       ${active
-                        ? 'bg-heritage-highlight text-heritage-text shadow-lg scale-105'
-                        : 'text-white/70 hover:text-white hover:bg-white/10'
-                      }
+                          ? 'bg-heritage-highlight text-heritage-text shadow-lg scale-105'
+                          : 'text-white/70 hover:text-white hover:bg-white/10'
+                        }
                     `}
-                  >
-                    <Icon className="w-6 h-6" />
-                  </Link>
-                </Tooltip>
-              );
-            })}
+                    >
+                      <Icon className="w-6 h-6" />
+                    </Link>
+                  </Tooltip>
+                );
+              })}
           </nav>
 
           {/* Bottom Section - Profile & Add Button - Fixed at Bottom */}

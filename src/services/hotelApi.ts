@@ -10,7 +10,7 @@
  */
 
 import { baseApi } from './baseApi';
-import { Hotel } from '@/types';
+import { Hotel, APIHotel } from '@/types';
 
 // Type Definitions
 export interface CreateHotelRequest {
@@ -59,19 +59,19 @@ export interface RoomRequest {
 export interface CreateHotelResponse {
   success: boolean;
   message: string;
-  data: Hotel;
+  data: APIHotel;
 }
 
 export interface GetAllHotelsResponse {
   success: boolean;
   message: string;
-  data: Hotel[];
+  data: APIHotel[];
 }
 
 export interface GetHotelByIdResponse {
   success: boolean;
   message: string;
-  data: Hotel;
+  data: APIHotel;
 }
 
 export interface UpdateHotelRequest {
@@ -99,12 +99,29 @@ export interface UpdateHotelRequest {
 export interface UpdateHotelResponse {
   success: boolean;
   message: string;
-  data: Hotel;
+  data: APIHotel;
 }
 
 export interface DeleteHotelResponse {
   success: boolean;
   message: string;
+}
+
+export interface RoomAssignmentItem {
+  hotelId: string;
+  floor: string;
+  roomNumber: string;
+}
+
+export interface AssignRoomRequest {
+  registrationId: string;
+  assignments: RoomAssignmentItem[];
+}
+
+export interface AssignRoomResponse {
+  success: boolean;
+  message: string;
+  data: any; // Using any for now as response structure wasn't fully specified, can refine later
 }
 
 /**
@@ -141,7 +158,7 @@ export const hotelApi = baseApi.injectEndpoints({
      * Automatically includes Authorization header with Bearer token from baseApi
      * Optionally filters hotels by yatra ID
      */
-    getAllHotels: builder.query<Hotel[], string | undefined>({
+    getAllHotels: builder.query<APIHotel[], string | undefined>({
       query: (yatraId) => {
         const params = new URLSearchParams();
         if (yatraId) {
@@ -170,7 +187,7 @@ export const hotelApi = baseApi.injectEndpoints({
      * 
      * Automatically includes Authorization header with Bearer token from baseApi
      */
-    getHotelById: builder.query<Hotel, string>({
+    getHotelById: builder.query<APIHotel, string>({
       query: (id) => ({
         url: `/hotels/${id}`,
         method: 'GET',
@@ -220,6 +237,20 @@ export const hotelApi = baseApi.injectEndpoints({
       // Invalidate hotels cache after deletion
       invalidatesTags: ['Hotel'],
     }),
+
+    /**
+     * Assign Room Endpoint
+     * POST /hotels/assign-room
+     */
+    assignRoom: builder.mutation<AssignRoomResponse, AssignRoomRequest>({
+      query: (data) => ({
+        url: '/hotels/assign-room',
+        method: 'POST',
+        body: data,
+      }),
+      // Invalidate hotels to reflect occupancy changes
+      invalidatesTags: ['Hotel'],
+    }),
   }),
 });
 
@@ -231,6 +262,7 @@ export const {
   useLazyGetHotelByIdQuery,
   useUpdateHotelMutation,
   useDeleteHotelMutation,
+  useAssignRoomMutation,
 } = hotelApi;
 
 /**

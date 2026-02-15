@@ -8,9 +8,16 @@ import HotelInfographics from '@/components/admin/dashboard/HotelInfographics';
 import { yatraStorage } from '@/utils/storage';
 import { useGetDashboardDataQuery } from '@/services/dashboardApi';
 import { Loader2 } from 'lucide-react';
+import { userStorage } from '@/utils/storage';
 
 const AdminDashboard = () => {
   const [selectedYatraId, setSelectedYatraId] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  useEffect(() => {
+    const user = userStorage.getUser();
+    setCurrentUser(user);
+  }, []);
 
   useEffect(() => {
     // Sync with localStorage
@@ -82,7 +89,7 @@ const AdminDashboard = () => {
           transition={{ duration: 0.4 }}
         >
           {/* Top Summary Stats */}
-          <DashboardStats stats={dashboardData?.stats} />
+          <DashboardStats stats={dashboardData?.stats} userRole={currentUser?.role} />
 
           {/* Registration Insights */}
           <div className="mt-8">
@@ -98,14 +105,16 @@ const AdminDashboard = () => {
             />
           </div>
 
-          {/* Accommodation Status */}
-          <div className="mt-8">
-            <h2 className="text-xl font-bold text-heritage-textDark mb-6 flex items-center gap-2">
-              <span className="w-2 h-8 bg-heritage-secondary rounded-full"></span>
-              Accommodation Status
-            </h2>
-            <HotelInfographics hotelAvailability={dashboardData.hotelAnalytics} />
-          </div>
+          {/* Accommodation Status - Hide for staff */}
+          {currentUser?.role !== 'staff' && (
+            <div className="mt-8">
+              <h2 className="text-xl font-bold text-heritage-textDark mb-6 flex items-center gap-2">
+                <span className="w-2 h-8 bg-heritage-secondary rounded-full"></span>
+                Accommodation Status
+              </h2>
+              <HotelInfographics hotelAvailability={dashboardData.hotelAnalytics} />
+            </div>
+          )}
         </motion.div>
       </AnimatePresence>
     </div>

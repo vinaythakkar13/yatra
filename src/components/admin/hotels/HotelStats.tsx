@@ -82,6 +82,14 @@ const HotelStats: React.FC<HotelStatsProps> = ({ hotels }) => {
         0
     );
 
+    const totalAdvancePaid = hotels?.reduce(
+        (sum, hotel) => {
+            const advancePaid = hotel.advance_paid_amount ?? 0;
+            return sum + (typeof advancePaid === 'number' && !isNaN(advancePaid) ? advancePaid : 0);
+        },
+        0
+    );
+
     const summaryCards = [
         {
             label: 'Hotels onboarded',
@@ -107,6 +115,13 @@ const HotelStats: React.FC<HotelStatsProps> = ({ hotels }) => {
         {
             label: 'Total expense',
             value: `₹${(totalExpenseAllHotels || 0).toLocaleString('en-IN')}`,
+            subtitle: `Across ${numberOfHotels} hotel${numberOfHotels !== 1 ? 's' : ''}`,
+            icon: FileTextIcon,
+            gradient: 'from-[#FF725E] via-[#FF9778] to-[#FFC3A3]',
+        },
+        {
+            label: 'Total advance paid',
+            value: `₹${(totalAdvancePaid || 0).toLocaleString('en-IN')}`,
             subtitle: `Across ${numberOfHotels} hotel${numberOfHotels !== 1 ? 's' : ''}`,
             icon: FileTextIcon,
             gradient: 'from-[#FF725E] via-[#FF9778] to-[#FFC3A3]',

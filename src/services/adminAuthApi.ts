@@ -86,19 +86,19 @@ export const adminAuthApi = baseApi.injectEndpoints({
           'accept': 'application/json',
         },
       }),
-      
+
       /**
        * Transform Response
        * Handle the actual backend response structure
        */
       transformResponse: (response: AdminLoginResponse) => {
-        
+
         // The response is already in the correct format
         // Just log and return as-is
-        
+
         return response;
       },
-      
+
       /**
        * Side Effects Handler
        * Executes after successful mutation
@@ -111,23 +111,23 @@ export const adminAuthApi = baseApi.injectEndpoints({
       async onQueryStarted(arg, { queryFulfilled }) {
         try {
           const { data } = await queryFulfilled;
-          
+
           // Extract accessToken from response
           const accessToken = data.token;
-          
+
           // Store token in localStorage
           if (accessToken) {
             tokenStorage.setAccessToken(accessToken);
           } else {
             console.warn('[Admin Auth API] No accessToken received in response');
           }
-          
+
           // Note: This API only returns accessToken
           // User data will need to be fetched separately if needed
-          
+
         } catch (error: any) {
           console.error('[Admin Auth API] Login failed:', error);
-          
+
           // Log detailed error information
           if (error?.error) {
             console.error('[Admin Auth API] Error details:', {
@@ -138,7 +138,7 @@ export const adminAuthApi = baseApi.injectEndpoints({
           }
         }
       },
-      
+
       /**
        * Cache Invalidation
        * Invalidate auth-related cache tags on successful login
@@ -146,7 +146,7 @@ export const adminAuthApi = baseApi.injectEndpoints({
        */
       invalidatesTags: ['Auth', 'User'],
     }),
-    
+
     /**
      * Admin Logout Endpoint
      * 
@@ -165,28 +165,28 @@ export const adminAuthApi = baseApi.injectEndpoints({
         url: '/admin/logout',
         method: 'POST',
       }),
-      
+
       async onQueryStarted(arg, { queryFulfilled }) {
         try {
           await queryFulfilled;
-          
+
           // Clear all stored authentication data
           tokenStorage.clearTokens();
           userStorage.removeUser();
-          
+
         } catch (error) {
           console.error('[Admin Auth API] Logout API failed:', error);
-          
+
           // Clear data even if API call fails (fail-safe approach)
           tokenStorage.clearTokens();
           userStorage.removeUser();
 
         }
       },
-      
+
       invalidatesTags: ['Auth', 'User'],
     }),
-    
+
     /**
      * Get Current Admin User
      * 
@@ -205,13 +205,13 @@ export const adminAuthApi = baseApi.injectEndpoints({
       avatar?: string;
     }, void>({
       query: () => '/admin/me',
-      
+
       // Provide cache tags for invalidation
       providesTags: ['User'],
-      
+
       // Keep data fresh for 5 minutes
       keepUnusedDataFor: 300,
-      
+
       // Transform error response
       transformErrorResponse: (error) => {
         console.error('[Admin Auth API] Failed to fetch admin user:', error);
@@ -219,7 +219,7 @@ export const adminAuthApi = baseApi.injectEndpoints({
       },
     }),
   }),
-  
+
   // Don't override existing endpoints
   overrideExisting: false,
 });

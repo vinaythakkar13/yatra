@@ -6,7 +6,7 @@ import { toast } from 'react-toastify';
 import { useApp } from '@/contexts/AppContext';
 import { useGetIndianStatesQuery } from '@/services/locationApi';
 import { useGetRegistrationsQuery, useApproveDocumentMutation, useRejectDocumentMutation } from '@/services/registrationApi';
-import { yatraStorage } from '@/utils/storage';
+import { userStorage, yatraStorage } from '@/utils/storage';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Pagination from '@/components/ui/Pagination';
@@ -39,7 +39,15 @@ import ManualRegistrationModal from '@/components/admin/users/modals/ManualRegis
  * - Protected route with AdminLayout
  */
 function UserManagement() {
-  const { hotels, assignRoom, unassignRoom, approveDocument, rejectDocument } = useApp();
+  const { assignRoom, unassignRoom, approveDocument, rejectDocument } = useApp();
+
+  // Get current user role
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  useEffect(() => {
+    const user = userStorage.getUser();
+    setCurrentUser(user);
+  }, []);
 
   // Get selected yatra ID from localStorage
   const [selectedYatraId, setSelectedYatraId] = useState<string | null>(null);
@@ -183,20 +191,6 @@ function UserManagement() {
       })),
     ];
   }, [statesData]);
-
-  const hotelOptions = [
-    { value: '', label: 'Select a hotel' },
-    ...hotels.map((hotel) => ({
-      value: hotel.id,
-      label: hotel.name + (hotel.hasElevator ? '\n(Has Elevator)' : ''),
-    })),
-  ];
-
-  const selectedHotelData = hotels.find(h => h.id === selectedHotel);
-  const availableRoomsForHotel = selectedHotelData
-    ? selectedHotelData.rooms.filter((room) => !room.isOccupied)
-    : [];
-
   const totalSelectedBeds = Object.keys(bedAssignments).length;
   const totalPassengers = selectedUser?.numberOfPersons || 0;
 
@@ -539,6 +533,7 @@ function UserManagement() {
         onUnassignRoom={handleUnassignClick}
         onViewDocuments={handleViewDocuments}
         isLoading={isFetching}
+        userRole={currentUser?.role}
       />
 
       {/* Pagination */}
@@ -557,26 +552,27 @@ function UserManagement() {
         user={selectedUser}
       />
 
-      <AssignRoomModal
-        isOpen={showAssignModal}
-        onClose={() => {
-          setShowAssignModal(false);
-          setIsReassigning(false);
-          setSelectedHotel('');
-          setSelectedRooms([]);
-          setBedAssignments({});
-        }}
-        isReassigning={isReassigning}
-        selectedUser={selectedUser}
-        selectedHotel={selectedHotel}
-        setSelectedHotel={setSelectedHotel}
-        hotelOptions={hotelOptions}
-        availableRoomsForHotel={availableRoomsForHotel}
-        selectedRooms={selectedRooms}
-        handleRoomToggle={handleRoomToggle}
-        totalPassengers={totalPassengers}
-        onConfirmAssignment={handleConfirmAssignment}
-      />
+      {/* Only render AssignRoomModal if user is NOT staff (blocks API calls) */}
+      {currentUser?.role !== 'staff' && (
+        <AssignRoomModal
+          isOpen={showAssignModal}
+          onClose={() => {
+            setShowAssignModal(false);
+            setIsReassigning(false);
+            setSelectedHotel('');
+            setSelectedRooms([]);
+            setBedAssignments({});
+          }}
+          isReassigning={isReassigning}
+          selectedUser={selectedUser}
+          selectedHotel={selectedHotel}
+          setSelectedHotel={setSelectedHotel}
+          selectedRooms={selectedRooms}
+          handleRoomToggle={handleRoomToggle}
+          totalPassengers={totalPassengers}
+          onConfirmAssignment={handleConfirmAssignment}
+        />
+      )}
 
       <DocumentViewerModal
         isOpen={showDocumentViewer}
@@ -703,3 +699,8 @@ function UserManagement() {
 }
 
 export default UserManagement;
+
+
+
+
+
