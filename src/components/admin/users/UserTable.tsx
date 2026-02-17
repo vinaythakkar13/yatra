@@ -111,7 +111,7 @@ const UserTable: React.FC<UserTableProps> = ({
                 <div className="flex flex-col gap-1">
                     <span className="font-mono font-semibold text-heritage-primary">{row.pnr}</span>
                     {
-                        row.ticketType && <TicketBadge type={row.ticketType} />
+                        row.ticket_type && <TicketBadge type={row.ticket_type} />
                     }
 
                 </div>
