@@ -84,11 +84,13 @@ const HotelStats: React.FC<HotelStatsProps> = ({ hotels }) => {
 
     const totalAdvancePaid = hotels?.reduce(
         (sum, hotel) => {
-            const advancePaid = hotel.advance_paid_amount ?? 0;
+            // Handle both camelCase and snake_case
+            const advancePaid = parseInt(hotel.advance_paid_amount) ?? 0;
             return sum + (typeof advancePaid === 'number' && !isNaN(advancePaid) ? advancePaid : 0);
         },
         0
     );
+
 
     const summaryCards = [
         {

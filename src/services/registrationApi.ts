@@ -83,38 +83,109 @@ export interface CreateRegistrationResponse {
   error?: string;
 }
 
+export interface User {
+  id: string;
+  name: string;
+  contact_number: string;
+  email: string | null;
+  gender: "male" | "female" | "other";
+  age: number;
+  number_of_persons: number;
+  pnr: string;
+  boarding_state: string;
+  boarding_city: string;
+  boarding_point: string;
+  arrival_date: string;
+  return_date: string;
+  assigned_room_id: string | null;
+  ticket_images: string[];
+  registration_status: "pending" | "approved" | "rejected";
+  is_room_assigned: boolean;
+  room_assignment_status: "draft" | "finalized";
+  created_at: string;
+  updated_at: string;
+
+  assignedRooms: AssignedRoom[];
+  hotel: Hotel;
+}
+
+export interface Person {
+  id: string;
+  registration_id: string;
+  name: string;
+  age: number;
+  gender: "male" | "female" | "other";
+  is_handicapped: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AssignedRoom {
+  id: string;
+  room_number: string;
+  floor: string;
+}
+
+export interface Hotel {
+  id: string;
+  name: string;
+  address: string;
+  manager_name: string;
+  manager_contact: string;
+  map_link: string;
+}
+
+export interface Yatra {
+  id: string;
+  name: string;
+  banner_image: string;
+  mobile_banner_image: string;
+  start_date: string;
+  end_date: string;
+  registration_start_date: string;
+  registration_end_date: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+
 export interface Registration {
   id: string;
+  user_id: string;
+  yatra_id: string;
   pnr: string;
+  split_pnr: string | null;
+  original_pnr: string | null;
+  ticket_type: string | null;
   name: string;
-  whatsappNumber: string;
-  contactNumber?: string; // For backward compatibility
-  numberOfPersons: number;
-  persons: Array<{
-    name: string;
-    age: number;
-    gender: 'male' | 'female' | 'other';
-    isHandicapped: boolean;
-  }>;
-  boardingPoint: {
-    city: string;
-    state: string;
-  };
-  arrivalDate: string;
-  returnDate: string;
-  ticketImages: string[];
-  yatraId: string;
-  roomStatus?: 'Assigned' | 'Pending';
-  roomNumber?: string;
-  documentStatus?: 'approved' | 'rejected' | 'pending' | 'cancelled';
-  rejectionReason?: string;
-  cancellationReason?: string;
-  createdAt: string;
-  ticketType: string | null;
-  splitPnr?: string;
-  originalPnr?: string;
+  whatsapp_number: string;
+  number_of_persons: number;
+  boarding_city: string;
+  boarding_state: string;
+  arrival_date: string;
+  return_date: string;
+  ticket_images: string[];
+  status: "pending" | "approved" | "rejected" | "cancelled";
+  cancellation_reason: string | null;
+  admin_comments: string | null;
+  rejection_reason: string | null;
+  document_status: "pending" | "approved" | "rejected";
+  document_rejection_reason: string | null;
+  approved_by_admin_id: string | null;
+  rejected_by_admin_id: string | null;
+  approved_at: string | null;
+  rejected_at: string | null;
+  cancelled_at: string | null;
+  cancelled_by_admin_id: string | null;
+  created_at: string;
+  updated_at: string;
 
+  user: User;
+  yatra: Yatra;
+  persons: Person[];
 }
+
 
 export interface Hotel {
   id: string;
@@ -247,6 +318,11 @@ export interface ApiRegistration {
   ticket_type?: string;
   document_status?: 'pending' | 'approved' | 'rejected';
   document_rejection_reason?: string | null;
+  hotel?: any;
+  assignedRooms?: any[];
+  registration_status?: string;
+  is_room_assigned?: boolean;
+  room_assignment_status?: string;
 }
 // ...
 export interface GetRegistrationsResponse {
@@ -261,6 +337,36 @@ export interface GetRegistrationsResponse {
   message?: string;
   error?: string;
 }
+
+export interface FrontendRegistrationDetails {
+  id: string;
+  pnr: string;
+  name: string;
+  whatsappNumber: string;
+  contactNumber: string;
+  numberOfPersons: number;
+  boardingPoint: {
+    city: string;
+    state: string;
+  };
+  arrivalDate: string;
+  returnDate: string;
+  ticketImages: string[];
+  yatraId: string;
+  roomStatus: string;
+  documentStatus: string;
+  createdAt: string;
+  splitPnr: string | null;
+  originalPnr: string | null;
+  assignedRooms: Array<{
+    id: string;
+    room_number: string;
+    floor: string;
+  }>;
+  cancellationReason?: string | null;
+  rejectionReason?: string | null;
+}
+
 
 /**
  * Registration API Slice
@@ -317,52 +423,87 @@ export const registrationApi = baseApi.injectEndpoints({
         };
       },
       transformResponse: (response: any): GetRegistrationsResponse => {
-        // Transform API response (snake_case) to frontend format (camelCase)
         // API returns: { success: true, data: [...], pagination: {...} }
         if (response.success && response.data && Array.isArray(response.data)) {
           const registrations: Registration[] = response.data.map((apiReg: ApiRegistration) => {
-            // Map status to roomStatus with proper capitalization
-            const roomStatusMap: Record<string, 'Assigned' | 'Pending'> = {
-              'pending': 'Pending',
-              'approved': 'Assigned',
-              'rejected': 'Pending',
-              'cancelled': 'Pending',
-            };
-
-            // Determine effective document status and reason
-            // Prioritize document_status if available, fallback to main status
-            const effectiveStatus = apiReg.document_status || apiReg.status;
-            const effectiveRejectionReason = apiReg.document_rejection_reason || apiReg.rejection_reason;
-
             return {
               id: apiReg.id,
+              user_id: apiReg.user_id,
+              yatra_id: apiReg.yatra_id,
               pnr: apiReg.pnr,
+              split_pnr: apiReg.split_pnr || null,
+              original_pnr: apiReg.original_pnr || null,
+              ticket_type: apiReg.ticket_type || null,
               name: apiReg.name,
-              whatsappNumber: apiReg.whatsapp_number,
-              contactNumber: apiReg.whatsapp_number, // Map for backward compatibility
-              numberOfPersons: apiReg.number_of_persons,
+              whatsapp_number: apiReg.whatsapp_number,
+              number_of_persons: apiReg.number_of_persons,
+              boarding_city: apiReg.boarding_city,
+              boarding_state: apiReg.boarding_state,
+              arrival_date: apiReg.arrival_date,
+              return_date: apiReg.return_date,
+              ticket_images: apiReg.ticket_images || [],
+              status: apiReg.status,
+              cancellation_reason: apiReg.cancellation_reason || null,
+              admin_comments: apiReg.admin_comments || null,
+              rejection_reason: apiReg.rejection_reason || null,
+              document_status: apiReg.document_status || 'pending',
+              document_rejection_reason: apiReg.document_rejection_reason || null,
+              approved_by_admin_id: apiReg.approved_by_admin_id || null,
+              rejected_by_admin_id: apiReg.rejected_by_admin_id || null,
+              approved_at: apiReg.approved_at || null,
+              rejected_at: apiReg.rejected_at || null,
+              cancelled_at: apiReg.cancelled_at || null,
+              cancelled_by_admin_id: (apiReg as any).cancelled_by_admin_id || null,
+              created_at: apiReg.created_at,
+              updated_at: apiReg.updated_at,
+
+              user: {
+                id: apiReg.user?.id || apiReg.user_id,
+                name: apiReg.user?.name || apiReg.name,
+                contact_number: apiReg.user?.contact_number || apiReg.whatsapp_number,
+                email: apiReg.user?.email || null,
+                gender: apiReg.user?.gender || 'male',
+                age: apiReg.user?.age || 0,
+                number_of_persons: apiReg.user?.number_of_persons || apiReg.number_of_persons,
+                pnr: apiReg.user?.pnr || apiReg.pnr,
+                boarding_state: apiReg.user?.boarding_state || apiReg.boarding_state,
+                boarding_city: apiReg.user?.boarding_city || apiReg.boarding_city,
+                boarding_point: apiReg.user?.boarding_point || `${apiReg.boarding_city}, ${apiReg.boarding_state}`,
+                arrival_date: apiReg.user?.arrival_date || apiReg.arrival_date,
+                return_date: apiReg.user?.return_date || apiReg.return_date,
+                assigned_room_id: apiReg.user?.assigned_room_id || null,
+                ticket_images: apiReg.user?.ticket_images || apiReg.ticket_images || [],
+                registration_status: apiReg.user?.registration_status || (apiReg.status as any),
+                is_room_assigned: apiReg.user?.is_room_assigned || apiReg.is_room_assigned || false,
+                room_assignment_status: apiReg.user?.room_assignment_status || (apiReg.room_assignment_status as any) || 'draft',
+                created_at: apiReg.user?.created_at || apiReg.created_at,
+                updated_at: apiReg.user?.updated_at || apiReg.updated_at,
+                assignedRooms: apiReg.user?.assignedRooms || apiReg.assignedRooms || [],
+                hotel: apiReg.user?.hotel || apiReg.hotel || null,
+              },
+              yatra: {
+                id: apiReg.yatra?.id || apiReg.yatra_id,
+                name: apiReg.yatra?.name || '',
+                banner_image: apiReg.yatra?.banner_image || '',
+                mobile_banner_image: apiReg.yatra?.mobile_banner_image || '',
+                start_date: apiReg.yatra?.start_date || apiReg.arrival_date,
+                end_date: apiReg.yatra?.end_date || apiReg.return_date,
+                registration_start_date: apiReg.yatra?.registration_start_date || '',
+                registration_end_date: apiReg.yatra?.registration_end_date || '',
+                description: apiReg.yatra?.description || null,
+                created_at: apiReg.yatra?.created_at || apiReg.created_at,
+                updated_at: apiReg.yatra?.updated_at || apiReg.updated_at,
+              },
               persons: (apiReg.persons || []).map(person => ({
+                id: person.id,
+                registration_id: person.registration_id || apiReg.id,
                 name: person.name,
                 age: person.age,
                 gender: person.gender,
-                isHandicapped: person.is_handicapped,
+                is_handicapped: person.is_handicapped,
+                created_at: person.created_at,
+                updated_at: person.updated_at,
               })),
-              boardingPoint: {
-                city: apiReg.boarding_city,
-                state: apiReg.boarding_state,
-              },
-              arrivalDate: formatDate(apiReg.arrival_date),
-              returnDate: formatDate(apiReg.return_date),
-              ticketImages: apiReg.ticket_images || [],
-              yatraId: apiReg.yatra_id,
-              roomStatus: roomStatusMap[apiReg.status] || 'Pending',
-              documentStatus: effectiveStatus === 'approved' ? 'approved' : effectiveStatus === 'rejected' ? 'rejected' : effectiveStatus === 'cancelled' ? 'cancelled' : 'pending',
-              rejectionReason: effectiveRejectionReason || undefined,
-              cancellationReason: apiReg.cancellation_reason || undefined,
-              createdAt: apiReg.created_at,
-              ticketType: apiReg.ticket_type || undefined,
-              splitPnr: apiReg.split_pnr || null,
-              originalPnr: apiReg.original_pnr || null,
             };
           });
 
@@ -393,7 +534,7 @@ export const registrationApi = baseApi.injectEndpoints({
     getRegistrationByPnr: builder.query<{
       success: boolean;
       data?: {
-        registration: Registration;
+        registration: FrontendRegistrationDetails;
         persons: Array<{
           name: string;
           age: number;
@@ -414,7 +555,7 @@ export const registrationApi = baseApi.injectEndpoints({
       transformResponse: (response: RegistrationByPnrResponse): {
         success: boolean;
         data?: {
-          registration: Registration;
+          registration: FrontendRegistrationDetails;
           persons: Array<{
             name: string;
             age: number;
@@ -431,89 +572,55 @@ export const registrationApi = baseApi.injectEndpoints({
         if (response.success && response.data) {
           const { registration, persons, yatra, hotel, room } = response.data;
 
+          const frontendRegistration: FrontendRegistrationDetails = {
+            id: registration.id,
+            pnr: registration.pnr,
+            name: registration.name,
+            whatsappNumber: registration.whatsapp_number,
+            contactNumber: registration.whatsapp_number,
+            numberOfPersons: registration.number_of_persons,
+            boardingPoint: {
+              city: registration.boarding_city,
+              state: registration.boarding_state,
+            },
+            arrivalDate: formatDate(registration.arrival_date),
+            returnDate: formatDate(registration.return_date),
+            ticketImages: registration.ticket_images || [],
+            yatraId: yatra.id,
+            roomStatus: room ? 'Assigned' : 'Pending',
+            documentStatus: registration.document_status || 'pending',
+            createdAt: registration.created_at,
+            splitPnr: registration.split_pnr || null,
+            originalPnr: registration.original_pnr || null,
+            assignedRooms: room ? [{ id: room.id, room_number: room.roomNumber, floor: room.floor }] : [],
+            cancellationReason: registration.cancellation_reason || null,
+            rejectionReason: registration.rejection_reason || null,
+          };
+
           return {
             success: true,
             data: {
-              registration: {
-                id: registration.id,
-                pnr: registration.pnr,
-                name: registration.name,
-                whatsappNumber: registration.whatsapp_number,
-                contactNumber: registration.whatsapp_number,
-                numberOfPersons: registration.number_of_persons,
-                persons: persons.map(person => ({
-                  name: person.name,
-                  age: person.age,
-                  gender: person.gender,
-                  isHandicapped: person.is_handicapped,
-                })),
-                boardingPoint: {
-                  city: registration.boarding_city,
-                  state: registration.boarding_state,
-                },
-                arrivalDate: formatDate(registration.arrival_date),
-                returnDate: formatDate(registration.return_date),
-                ticketImages: registration.ticket_images || [],
-                yatraId: yatra.id,
-                documentStatus: (registration.document_status || registration.status) === 'approved' ? 'approved' : (registration.document_status || registration.status) === 'rejected' ? 'rejected' : registration.status === 'cancelled' ? 'cancelled' : 'pending',
-                rejectionReason: registration.document_rejection_reason || registration.rejection_reason || undefined,
-                cancellationReason: registration.cancellation_reason || undefined,
-                roomStatus: room ? 'Assigned' : 'Pending',
-                roomNumber: (room as any)?.room_number || (room as any)?.roomNumber,
-                createdAt: registration.created_at,
-                splitPnr: registration?.split_pnr,
-                originalPnr: registration?.original_pnr || "",
-                ticketType: registration?.ticketType || null,
-              },
-              persons: persons.map(person => ({
-                name: person.name,
-                age: person.age,
-                gender: person.gender,
-                isHandicapped: person.is_handicapped,
+              registration: frontendRegistration,
+              persons: persons.map(p => ({
+                name: p.name,
+                age: p.age,
+                gender: p.gender,
+                isHandicapped: p.is_handicapped,
               })),
               yatra: {
                 id: yatra.id,
                 name: yatra.name,
-                bannerImage: (yatra as any).banner_image || yatra.bannerImage,
-                description: yatra.description,
-                startDate: (yatra as any).start_date || yatra.startDate,
-                endDate: (yatra as any).end_date || yatra.endDate,
-                registrationStartDate: (yatra as any).registration_start_date || yatra.registrationStartDate,
-                registrationEndDate: (yatra as any).registration_end_date || yatra.registrationEndDate,
-                createdAt: (yatra as any).created_at || yatra.createdAt,
-                updatedAt: (yatra as any).updated_at || yatra.updatedAt,
+                bannerImage: yatra.bannerImage,
+                description: yatra.description || undefined,
+                startDate: yatra.startDate,
+                endDate: yatra.endDate,
+                registrationStartDate: yatra.registrationStartDate,
+                registrationEndDate: yatra.registrationEndDate,
+                createdAt: yatra.createdAt,
+                updatedAt: yatra.updatedAt,
               },
-              hotel: hotel ? {
-                id: (hotel as any).id,
-                name: (hotel as any).name,
-                address: (hotel as any).address,
-                mapLink: (hotel as any).map_link || (hotel as any).mapLink,
-                distanceFromBhavan: (hotel as any).distance_from_bhavan || (hotel as any).distanceFromBhavan,
-                hotelType: (hotel as any).hotel_type || (hotel as any).hotelType,
-                managerName: (hotel as any).manager_name || (hotel as any).managerName,
-                managerContact: (hotel as any).manager_contact || (hotel as any).managerContact,
-                numberOfDays: (hotel as any).number_of_days || (hotel as any).numberOfDays,
-                startDate: (hotel as any).start_date || (hotel as any).startDate,
-                endDate: (hotel as any).end_date || (hotel as any).endDate,
-                checkInTime: (hotel as any).check_in_time || (hotel as any).checkInTime,
-                checkOutTime: (hotel as any).check_out_time || (hotel as any).checkOutTime,
-                hasElevator: (hotel as any).has_elevator !== undefined ? (hotel as any).has_elevator : (hotel as any).hasElevator,
-                totalFloors: (hotel as any).total_floors || (hotel as any).totalFloors,
-                isActive: (hotel as any).is_active !== undefined ? (hotel as any).is_active : (hotel as any).isActive,
-                createdAt: (hotel as any).created_at || (hotel as any).createdAt,
-                updatedAt: (hotel as any).updated_at || (hotel as any).updatedAt,
-              } : null,
-              room: room ? {
-                id: (room as any).id,
-                roomNumber: (room as any).room_number || (room as any).roomNumber,
-                floor: (room as any).floor,
-                toiletType: (room as any).toilet_type || (room as any).toiletType,
-                numberOfBeds: (room as any).number_of_beds || (room as any).numberOfBeds,
-                chargePerDay: (room as any).charge_per_day || (room as any).chargePerDay,
-                isOccupied: (room as any).is_occupied !== undefined ? (room as any).is_occupied : (room as any).isOccupied,
-                createdAt: (room as any).created_at || (room as any).createdAt,
-                updatedAt: (room as any).updated_at || (room as any).updatedAt,
-              } : null,
+              hotel: hotel,
+              room: room,
             },
             message: response.message,
           };

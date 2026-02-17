@@ -98,6 +98,22 @@ export interface Registration {
     boardingPoint: BoardingPoint;
     arrivalDate: string;
     returnDate: string;
+    hotel?: {
+        id: string;
+        name: string;
+        address: string;
+        managerName: string;
+        managerContact: string;
+        mapLink: string;
+    };
+    assignedRooms?: {
+        id: string;
+        room_number: string;
+        floor: string;
+    }[];
+    registrationStatus?: string;
+    isRoomAssigned?: boolean;
+    roomAssignmentStatus?: string;
 }
 
 export type AccentColor =

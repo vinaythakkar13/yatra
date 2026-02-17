@@ -22,7 +22,7 @@ const RejectionSuccessModal: React.FC<RejectionSuccessModalProps> = ({
     reason,
 }) => {
     const handleSendWhatsApp = () => {
-        const message = `Namaste ${registration.name}, your document for PNR: ${registration.pnr} has been rejected due to: ${reason}. Please re-register with correct details at your earliest convenience.`;
+        const message = `Namaste ${registration.name}, your document for PNR: ${registration.pnr} has been rejected due to: ${reason}. Please re-register with correct details at your earliest convenience. \n\n SEWA ME: ADI AMMA GROUP, ULHASNAGAR 3.`;
         const whatsappUrl = `https://wa.me/${registration.contactNumber.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
         window.open(whatsappUrl, '_blank');
     };

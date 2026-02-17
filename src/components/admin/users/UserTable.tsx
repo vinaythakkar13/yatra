@@ -103,7 +103,6 @@ const UserTable: React.FC<UserTableProps> = ({
     isLoading = false,
     userRole,
 }) => {
-
     const columns = [
         {
             key: 'pnr',
@@ -148,7 +147,7 @@ const UserTable: React.FC<UserTableProps> = ({
             header: 'Persons',
             render: (row: any) => (
                 <span className="bg-heritage-highlight/30 text-heritage-textDark px-3 py-1 rounded-full text-sm font-semibold">
-                    {row.numberOfPersons}
+                    {row.persons?.length || 0}
                 </span>
             ),
         },
@@ -157,7 +156,7 @@ const UserTable: React.FC<UserTableProps> = ({
             header: 'Boarding Point',
             render: (row: any) => (
                 <span className="text-heritage-text">
-                    {row.boardingPoint.city}, {row.boardingPoint.state}
+                    {row?.boarding_city}, {row?.boarding_state}
                 </span>
             ),
         },
@@ -169,13 +168,13 @@ const UserTable: React.FC<UserTableProps> = ({
                     <span className="text-heritage-text whitespace-nowrap bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-semibold max-w-fit">
                         {/* arrival icon */}
                         <ArrowRight className="w-3 h-3 inline-block" />
-                        <span className="ml-1">{row.arrivalDate}</span>
+                        <span className="ml-1">{row?.arrival_date}</span>
                     </span>
 
                     {/* make it badge red for departure with exit icon */}
                     <span className="text-heritage-text whitespace-nowrap bg-red-100 text-red-700 px-2 py-1 rounded-full text-xs font-semibold max-w-fit">
                         <ArrowLeft className="w-3 h-3 inline-block" />
-                        <span className="ml-1">{row.returnDate}</span>
+                        <span className="ml-1">{row?.return_date}</span>
                     </span>
                 </div>
             ),
@@ -201,7 +200,7 @@ const UserTable: React.FC<UserTableProps> = ({
                             : 'bg-yellow-100 text-yellow-700'
                             }`}
                     >
-                        {row.roomStatus}
+                        {row.status}
                     </span>
                     {row?.roomNumber && (
                         <span className="text-xs text-heritage-text/70">Room: {row.roomNumber}</span>
@@ -215,7 +214,7 @@ const UserTable: React.FC<UserTableProps> = ({
             render: (row: any) => {
                 return (
                     <div className="flex flex-col gap-1">
-                        {row.ticketImages && row.ticketImages.length > 0 ? (
+                        {row.ticket_images && row.ticket_images.length > 0 ? (
                             <>
                                 <button
                                     onClick={() => onViewDocuments(row)}
@@ -223,19 +222,19 @@ const UserTable: React.FC<UserTableProps> = ({
                                     title="View Documents"
                                 >
                                     <FileText className="w-3 h-3" />
-                                    {row.ticketImages.length} doc(s)
+                                    {row.ticket_images?.length} doc(s)
                                 </button>
                                 <span
-                                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold w-fit ${row.documentStatus === 'approved'
+                                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold w-fit ${row.document_status === 'approved'
                                         ? 'bg-green-100 text-green-700'
-                                        : row.documentStatus === 'rejected'
+                                        : row.document_status === 'rejected'
                                             ? 'bg-red-100 text-red-700'
-                                            : row.documentStatus === 'cancelled'
+                                            : row.document_status === 'cancelled'
                                                 ? 'bg-red-600 text-white shadow-sm'
                                                 : 'bg-yellow-100 text-yellow-700'
                                         }`}
                                 >
-                                    {row.documentStatus === 'approved' ? '✓ Approved' : row.documentStatus === 'rejected' ? '✕ Rejected' : row.documentStatus === 'cancelled' ? '🗙 Cancelled' : '⏳ Pending'}
+                                    {row.document_status === 'approved' ? '✓ Approved' : row.document_status === 'rejected' ? '✕ Rejected' : row.document_status === 'cancelled' ? '🗙 Cancelled' : '⏳ Pending'}
                                 </span>
                             </>
                         ) : (
@@ -260,7 +259,7 @@ const UserTable: React.FC<UserTableProps> = ({
 
                     {userRole !== 'staff' && (
                         <>
-                            {row?.roomStatus === 'Assigned' ? (
+                            {row?.user?.assignedRooms?.length > 0 ? (
                                 <>
                                     <button
                                         onClick={() => onReassignRoom(row)}
@@ -315,7 +314,7 @@ const UserTable: React.FC<UserTableProps> = ({
                     columns={columns}
                     data={data}
                     emptyMessage="No registrations found"
-                    getRowClassName={(row) => row.documentStatus === 'cancelled' ? 'bg-red-50 hover:bg-red-100/80 transition-colors' : ''}
+                    getRowClassName={(row) => row.document_status === 'cancelled' ? 'bg-red-50 hover:bg-red-100/80 transition-colors' : ''}
                 />
             </div>
         </div>

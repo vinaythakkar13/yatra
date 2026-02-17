@@ -10,12 +10,11 @@ import {
     ChevronRight,
     Accessibility,
     Plane,
+    BedIcon,
+    CheckCircle2,
     X,
     SlidersHorizontal,
-    ArrowUpDown,
-    Users as Persons,
-    Bed,
-    BedIcon
+    ArrowUpDown
 } from 'lucide-react';
 import { useGetAllHotelsQuery, useAssignRoomMutation, RoomAssignmentItem } from '@/services/hotelApi';
 import { yatraStorage } from '@/utils/storage';
@@ -47,12 +46,13 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
     totalPassengers,
     onConfirmAssignment,
 }) => {
+
     const [currentStep, setCurrentStep] = useState(1);
     const [selectedYatraId, setSelectedYatraId] = useState<string | undefined>(undefined);
     const [hasElevatorOnly, setHasElevatorOnly] = useState(false);
     const [radiusSort, setRadiusSort] = useState<'asc' | 'desc'>('asc');
     const [hotelType, setHotelType] = useState<'all' | 'A' | 'B' | 'C' | 'D'>('all');
-
+    const [isSameHotel, setIsSameHotel] = useState(false);
     const [assignRoom, { isLoading: isAssigning }] = useAssignRoomMutation();
 
     useEffect(() => {
@@ -70,6 +70,13 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
             clearInterval(interval);
         };
     }, []);
+
+    // Auto-select hotel if user already has one assigned
+    useEffect(() => {
+        if (isOpen && selectedUser?.hotel?.id && !selectedHotel) {
+            setSelectedHotel(selectedUser.hotel.id);
+        }
+    }, [isOpen, selectedUser, selectedHotel, setSelectedHotel]);
 
     const { data: hotels = [] } = useGetAllHotelsQuery(selectedYatraId);
 
@@ -106,6 +113,16 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
         return selectedHotelData.rooms;
     }, [selectedHotelData]);
 
+    const isSameHotelAsAssigned = useMemo(() => {
+        if (!selectedUser?.hotel?.id || !selectedHotel) return false;
+        return selectedUser.hotel.id.toLowerCase() === selectedHotel.toLowerCase();
+    }, [selectedUser, selectedHotel]);
+
+    const userAssignedRoomNumbers = useMemo(() => {
+        if (!isSameHotelAsAssigned) return [];
+        return selectedUser?.assignedRooms?.map(r => r.room_number) || [];
+    }, [isSameHotelAsAssigned, selectedUser]);
+
     const demographyCards: DemographyCard[] = [
         {
             title: 'Seniors (60+)',
@@ -139,7 +156,7 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
             title: 'Total Travelers',
             description: 'Overall group size for room allocation.',
             accent: 'gray',
-            Icon: Persons,
+            Icon: Users,
             users: selectedUser ? selectedUser?.persons?.length : 0,
         }
     ];
@@ -347,7 +364,7 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
                                         Boarding Point
                                     </div>
                                     <p className="text-sm font-bold text-gray-900 uppercase">
-                                        {selectedUser.boardingPoint?.city}, {selectedUser.boardingPoint?.state}
+                                        {selectedUser?.boardingPoint?.city}, {selectedUser.boardingPoint?.state}
                                     </p>
                                 </div>
 
@@ -530,6 +547,21 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
                                                 </div>
                                             </div>
 
+                                            {isSameHotelAsAssigned && (
+                                                <div className="mb-4 bg-orange-600/20 border border-orange-500/40 rounded-lg p-3 flex items-center justify-between">
+                                                    <div className="flex items-center gap-2">
+                                                        <CheckCircle2 className="w-5 h-5 text-orange-400" />
+                                                        <div>
+                                                            <p className="text-sm font-semibold text-orange-100">Same Hotel as Current Assignment</p>
+                                                            <p className="text-xs text-orange-200/70">You already have {userAssignedRoomNumbers.length} room(s) assigned in this hotel.</p>
+                                                        </div>
+                                                    </div>
+                                                    <span className="px-2 py-1 bg-orange-600/40 text-[10px] font-bold uppercase tracking-wider rounded border border-orange-500/50">
+                                                        CURRENTLY ASSIGNED
+                                                    </span>
+                                                </div>
+                                            )}
+
                                             <div className="flex items-center gap-2 flex-wrap mb-4">
                                                 {selectedHotelData?.has_elevator && (
                                                     <span className="px-2.5 py-1 text-[10px] uppercase tracking-wide rounded-full bg-emerald-500/20 text-emerald-200 border border-emerald-500/40">
@@ -569,25 +601,34 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
                                                                         })
                                                                         .map((room: RoomEntry) => {
                                                                             const isRoomSelected = selectedRooms.includes(room.room_number);
+                                                                            const isAlreadyAssigned = userAssignedRoomNumbers.includes(room.room_number);
                                                                             const isOccupied = room.is_occupied;
 
                                                                             return (
                                                                                 <button
                                                                                     key={room.room_number}
                                                                                     onClick={() => !isOccupied && handleRoomToggle(room.room_number)}
-                                                                                    disabled={isOccupied}
-                                                                                    className={`rounded-lg border px-2 py-2.5 flex flex-col items-center justify-center gap-1 transition-all shadow-sm ${isOccupied
-                                                                                        ? 'bg-red-900/20 border-red-800/30 text-red-300/60 cursor-not-allowed'
-                                                                                        : isRoomSelected
-                                                                                            ? 'bg-yellow-600 border-yellow-500 text-white shadow-yellow-900/20'
-                                                                                            : 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-750 hover:border-slate-500 cursor-pointer'
+                                                                                    disabled={isOccupied && !isAlreadyAssigned} // Allow toggle if it's already assigned (for re-selection)
+                                                                                    className={`rounded-lg border px-2 py-2.5 flex flex-col items-center justify-center gap-1 transition-all shadow-sm ${isAlreadyAssigned
+                                                                                        ? 'bg-orange-600 border-orange-500 text-white shadow-orange-900/40 transform scale-105 ring-2 ring-orange-400 ring-offset-2 ring-offset-slate-900'
+                                                                                        : isOccupied
+                                                                                            ? 'bg-red-900/20 border-red-800/30 text-red-300/60 cursor-not-allowed'
+                                                                                            : isRoomSelected
+                                                                                                ? 'bg-yellow-600 border-yellow-500 text-white shadow-yellow-900/20'
+                                                                                                : 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-750 hover:border-slate-500 cursor-pointer'
                                                                                         }`}
                                                                                 >
-                                                                                    <div className="text-sm font-bold tracking-wide leading-none">{room.room_number}</div>
-                                                                                    <div className={`flex items-center gap-1 text-[10px] uppercase font-semibold ${isOccupied ? 'text-red-400/50' : isRoomSelected ? 'text-amber-100' : 'text-slate-400'}`}>
+                                                                                    <div className="flex items-center gap-1">
+                                                                                        {isAlreadyAssigned && <CheckCircle2 className="w-3 h-3 text-orange-200" />}
+                                                                                        <div className="text-sm font-bold tracking-wide leading-none">{room.room_number}</div>
+                                                                                    </div>
+                                                                                    <div className={`flex items-center gap-1 text-[10px] uppercase font-semibold ${isAlreadyAssigned ? 'text-orange-100' : isOccupied ? 'text-red-400/50' : isRoomSelected ? 'text-amber-100' : 'text-slate-400'}`}>
                                                                                         <BedIcon className="w-3 h-3" />
                                                                                         <span>{room?.number_of_beds || 0} Beds</span>
                                                                                     </div>
+                                                                                    {isAlreadyAssigned && (
+                                                                                        <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-orange-400 rounded-full border-2 border-slate-900 shadow-sm" />
+                                                                                    )}
                                                                                 </button>
                                                                             );
                                                                         })}

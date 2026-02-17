@@ -56,11 +56,11 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ isOpen, onClose, us
                         </div>
                         <div>
                             <p className="text-sm text-heritage-text/70">Contact</p>
-                            <p className="font-semibold text-heritage-textDark">{user.contactNumber}</p>
+                            <p className="font-semibold text-heritage-textDark">{user.whatsapp_number}</p>
                         </div>
                         <div>
                             <p className="text-sm text-heritage-text/70">Number of Persons</p>
-                            <p className="font-semibold text-heritage-textDark">{user.numberOfPersons}</p>
+                            <p className="font-semibold text-heritage-textDark">{user.persons.length || 0}</p>
                         </div>
                     </div>
                 </div>
@@ -74,26 +74,25 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ isOpen, onClose, us
                         <div>
                             <p className="text-sm text-heritage-text/70">Boarding Point</p>
                             <p className="font-semibold text-heritage-textDark">
-                                {user.boardingPoint.city}, {user.boardingPoint.state}
+                                {user?.boarding_city}, {user?.boarding_state}
                             </p>
                         </div>
                         <div>
                             <p className="text-sm text-heritage-text/70">Room Status</p>
                             <p className="font-semibold text-heritage-textDark">
-                                {user.roomStatus}
-                                {user.roomNumber && ` - Room ${user.roomNumber}`}
+                                {user.status}
                             </p>
                         </div>
                         <div>
                             <p className="text-sm text-heritage-text/70">Arrival Date</p>
                             <p className="font-semibold text-heritage-textDark">
-                                {user.arrivalDate}
+                                {user?.arrival_date}
                             </p>
                         </div>
                         <div>
                             <p className="text-sm text-heritage-text/70">Return Date</p>
                             <p className="font-semibold text-heritage-textDark">
-                                {user.returnDate}
+                                {user?.return_date}
                             </p>
                         </div>
                     </div>
@@ -122,8 +121,6 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ isOpen, onClose, us
                                             </span>
                                         )}
                                     </p>
-
-
                                 </div>
                             </div>
                         ))}

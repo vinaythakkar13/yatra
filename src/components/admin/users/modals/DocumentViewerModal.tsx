@@ -67,7 +67,7 @@ const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
     // Reset state when modal opens or document owner changes
     useEffect(() => {
         if (isOpen && documentOwner) {
-            setSelectedTicketType(documentOwner.ticketType || '');
+            setSelectedTicketType(documentOwner.ticket_images || '');
         }
     }, [isOpen, documentOwner]);
 
@@ -157,21 +157,21 @@ const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
                 </div>
                 {documentOwner?.originalPnr && documentOwner?.splitPnr && <span className='text-sm text-red-500 p-1.5 rounded-lg bg-red-100'>{`Original PNR: ${documentOwner?.originalPnr}`}</span>}
             </div>
-            {documentOwner.documentStatus && (
+            {documentOwner.document_status && (
                 <span
-                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${documentOwner.documentStatus === 'approved'
+                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${documentOwner.document_status === 'approved'
                         ? 'bg-green-100 text-green-700 border border-green-300'
-                        : documentOwner.documentStatus === 'rejected'
+                        : documentOwner.document_status === 'rejected'
                             ? 'bg-red-100 text-red-700 border border-red-300'
                             : 'bg-yellow-100 text-yellow-700 border border-yellow-300'
                         }`}
                 >
-                    {documentOwner.documentStatus === 'approved' ? (
+                    {documentOwner.document_status === 'approved' ? (
                         <>
                             <CheckCircle className="w-3.5 h-3.5" />
                             Approved
                         </>
-                    ) : documentOwner.documentStatus === 'rejected' ? (
+                    ) : documentOwner.document_status === 'rejected' ? (
                         <>
                             <XCircle className="w-3.5 h-3.5" />
                             Rejected
@@ -189,7 +189,7 @@ const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
         'Documents'
     );
 
-    const footer = (documentOwner?.documentStatus === 'pending' || documentOwner?.documentStatus === 'rejected') && (
+    const footer = (documentOwner?.document_status === 'pending' || documentOwner?.document_status === 'rejected' || documentOwner?.document_status === 'approved') && (
         <div className="flex justify-end gap-2 w-full">
             <Button
                 onClick={onReject}
@@ -217,7 +217,7 @@ const DocumentViewerModal: React.FC<DocumentViewerModalProps> = ({
             {currentDocuments.length > 0 && (
                 <div className="space-y-4">
                     {/* Rejection Reason Display (if rejected) */}
-                    {documentOwner?.documentStatus === 'rejected' && documentOwner?.rejectionReason && (
+                    {documentOwner?.document_status === 'rejected' && documentOwner?.rejectionReason && (
                         <div className="bg-red-50 border-2 border-red-300 rounded-lg p-4">
                             <div className="flex items-start gap-3">
                                 <div className="bg-red-100 p-2 rounded-lg flex-shrink-0">

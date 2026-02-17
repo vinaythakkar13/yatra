@@ -312,8 +312,8 @@ function UserManagement() {
   };
 
   const handleViewDocuments = (user: any) => {
-    if (user.ticketImages && user.ticketImages.length > 0) {
-      setCurrentDocuments(user.ticketImages);
+    if (user.ticket_images && user.ticket_images.length > 0) {
+      setCurrentDocuments(user.ticket_images);
       setCurrentDocumentIndex(0);
       setDocumentOwner(user);
       setShowDocumentViewer(true);
