@@ -103,6 +103,7 @@ const UserTable: React.FC<UserTableProps> = ({
     isLoading = false,
     userRole,
 }) => {
+    console.log('data: ', data)
     const columns = [
         {
             key: 'pnr',
@@ -130,7 +131,7 @@ const UserTable: React.FC<UserTableProps> = ({
                     </div>
                     <span className="text-heritage-text flex items-center gap-2">
                         <Phone className="w-3 h-3 inline-block" />
-                        <span className="font-medium">{row.contactNumber}</span>
+                        <span className="font-medium">{row.whatsapp_number}</span>
                     </span>
                 </div>
             ),
