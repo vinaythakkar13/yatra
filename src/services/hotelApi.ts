@@ -124,6 +124,25 @@ export interface AssignRoomResponse {
   data: any; // Using any for now as response structure wasn't fully specified, can refine later
 }
 
+export interface UnassignRoomResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    releasedRoomsCount: number;
+  };
+}
+
+export interface GenerateCredentialsResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    hotel_id: string;
+    hotel_name: string;
+    login_id: string;
+    password: string;
+  };
+}
+
 /**
  * Hotel API Slice
  * Extends the base API with hotel endpoints
@@ -248,8 +267,32 @@ export const hotelApi = baseApi.injectEndpoints({
         method: 'POST',
         body: data,
       }),
-      // Invalidate hotels to reflect occupancy changes
-      invalidatesTags: ['Hotel'],
+      // Invalidate hotels and registrations to reflect occupancy + assignment changes
+      invalidatesTags: ['Hotel', 'Registration'],
+    }),
+
+    /**
+     * Unassign Room Endpoint
+     * DELETE /hotels/assignments/:registrationId
+     */
+    unassignRoom: builder.mutation<UnassignRoomResponse, string>({
+      query: (registrationId) => ({
+        url: `/hotels/assignments/${registrationId}`,
+        method: 'DELETE',
+      }),
+      // Invalidate hotels and registrations to reflect freed room + cleared assignment
+      invalidatesTags: ['Hotel', 'Registration'],
+    }),
+
+    /**
+     * Generate Hotel Credentials Endpoint
+     * POST /hotels/:id/generate-credentials
+     */
+    generateHotelCredentials: builder.mutation<GenerateCredentialsResponse, string>({
+      query: (hotelId) => ({
+        url: `/hotels/${hotelId}/generate-credentials`,
+        method: 'POST',
+      }),
     }),
   }),
 });
@@ -263,6 +306,8 @@ export const {
   useUpdateHotelMutation,
   useDeleteHotelMutation,
   useAssignRoomMutation,
+  useUnassignRoomMutation,
+  useGenerateHotelCredentialsMutation,
 } = hotelApi;
 
 /**

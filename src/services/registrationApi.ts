@@ -170,7 +170,7 @@ export interface Registration {
   cancellation_reason: string | null;
   admin_comments: string | null;
   rejection_reason: string | null;
-  document_status: "pending" | "approved" | "rejected";
+  document_status: "pending" | "approved" | "rejected" | "cancelled";
   document_rejection_reason: string | null;
   approved_by_admin_id: string | null;
   rejected_by_admin_id: string | null;
@@ -180,7 +180,6 @@ export interface Registration {
   cancelled_by_admin_id: string | null;
   created_at: string;
   updated_at: string;
-
   user: User;
   yatra: Yatra;
   persons: Person[];

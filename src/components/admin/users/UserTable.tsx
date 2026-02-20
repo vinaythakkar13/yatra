@@ -5,6 +5,8 @@ import moment from 'moment';
 import { RiUserStarLine } from 'react-icons/ri';
 import HouseIcon from '@/components/ui/svg/HouseIcon';
 import EyeSquareIcon from '@/components/ui/svg/EyeSquareIcon';
+import { Registration } from '@/services/registrationApi';
+import HouseMedicalXmarkIcon from '@/components/ui/svg/HouseMedicalXmarkIcon';
 
 const TICKET_BADGE_CONFIG: Record<
     string,
@@ -83,12 +85,12 @@ const TicketBadge = ({ type }: { type: string }) => {
 
 
 interface UserTableProps {
-    data: any[];
-    onViewDetails: (user: any) => void;
-    onAssignRoom: (user: any) => void;
-    onReassignRoom: (user: any) => void;
-    onUnassignRoom: (user: any) => void;
-    onViewDocuments: (user: any) => void;
+    data: Registration[];
+    onViewDetails: (user: Registration) => void;
+    onAssignRoom: (user: Registration) => void;
+    onReassignRoom: (user: Registration) => void;
+    onUnassignRoom: (user: Registration) => void;
+    onViewDocuments: (user: Registration) => void;
     isLoading?: boolean;
     userRole?: string;
 }
@@ -103,12 +105,11 @@ const UserTable: React.FC<UserTableProps> = ({
     isLoading = false,
     userRole,
 }) => {
-    console.log('data: ', data)
     const columns = [
         {
             key: 'pnr',
             header: 'PNR',
-            render: (row: any) => (
+            render: (row: Registration) => (
                 <div className="flex flex-col gap-1">
                     <span className="font-mono font-semibold text-heritage-primary">{row.pnr}</span>
                     {
@@ -123,7 +124,7 @@ const UserTable: React.FC<UserTableProps> = ({
         {
             key: 'name',
             header: 'Name',
-            render: (row: any) => (
+            render: (row: Registration) => (
                 <div className="flex flex-col gap-2">
                     <div className="flex flex-row gap-2">
                         <span className="font-bold text-heritage-textDark">{row.name}</span>
@@ -146,7 +147,7 @@ const UserTable: React.FC<UserTableProps> = ({
         {
             key: 'numberOfPersons',
             header: 'Persons',
-            render: (row: any) => (
+            render: (row: Registration) => (
                 <span className="bg-heritage-highlight/30 text-heritage-textDark px-3 py-1 rounded-full text-sm font-semibold">
                     {row.persons?.length || 0}
                 </span>
@@ -164,7 +165,7 @@ const UserTable: React.FC<UserTableProps> = ({
         {
             key: 'arrivalDate',
             header: 'Journey Dates',
-            render: (row: any) => (
+            render: (row: Registration) => (
                 <div className="flex flex-col gap-1">
                     <span className="text-heritage-text whitespace-nowrap bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-semibold max-w-fit">
                         {/* arrival icon */}
@@ -184,35 +185,32 @@ const UserTable: React.FC<UserTableProps> = ({
         {
             key: 'createdAt',
             header: 'Created At',
-            render: (row: any) => (
+            render: (row: Registration) => (
                 <span className="text-heritage-text">
-                    {moment.utc(row.createdAt).format('DD-MM-YYYY')}
+                    {moment.utc(row.created_at).format('DD-MM-YYYY')}
                 </span>
             ),
         },
         {
             key: 'roomStatus',
             header: 'Room Status',
-            render: (row: any) => (
+            render: (row: Registration) => (
                 <div className="flex flex-col gap-1">
                     <span
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold w-fit ${row.roomStatus === 'Assigned'
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold w-fit ${row.status === 'approved'
                             ? 'bg-green-100 text-green-700'
                             : 'bg-yellow-100 text-yellow-700'
                             }`}
                     >
                         {row.status}
                     </span>
-                    {row?.roomNumber && (
-                        <span className="text-xs text-heritage-text/70">Room: {row.roomNumber}</span>
-                    )}
                 </div>
             ),
         },
         {
             key: 'documents',
             header: 'Documents',
-            render: (row: any) => {
+            render: (row: Registration) => {
                 return (
                     <div className="flex flex-col gap-1">
                         {row.ticket_images && row.ticket_images.length > 0 ? (
@@ -267,14 +265,14 @@ const UserTable: React.FC<UserTableProps> = ({
                                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                         title="Reassign Room"
                                     >
-                                        <RefreshCw className="w-3 h-3" />
+                                        <HouseIcon size={24} />
                                     </button>
                                     <button
                                         onClick={() => onUnassignRoom(row)}
                                         className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                         title="Remove Assignment"
                                     >
-                                        <EyeSquareIcon size={24} />
+                                        <HouseMedicalXmarkIcon size={24} stroke="red" />
                                     </button>
                                 </>
                             ) : (

@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import { useApp } from '@/contexts/AppContext';
 import { useGetIndianStatesQuery } from '@/services/locationApi';
 import { useGetRegistrationsQuery, useApproveDocumentMutation, useRejectDocumentMutation } from '@/services/registrationApi';
+import { useUnassignRoomMutation } from '@/services/hotelApi';
 import { userStorage, yatraStorage } from '@/utils/storage';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
@@ -39,7 +40,7 @@ import ManualRegistrationModal from '@/components/admin/users/modals/ManualRegis
  * - Protected route with AdminLayout
  */
 function UserManagement() {
-  const { assignRoom, unassignRoom, approveDocument, rejectDocument } = useApp();
+  const { approveDocument, rejectDocument } = useApp();
 
   // Get current user role
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -177,6 +178,7 @@ function UserManagement() {
   // API Mutations
   const [approveDocumentApi, { isLoading: isApproving }] = useApproveDocumentMutation();
   const [rejectDocumentApi, { isLoading: isRejecting }] = useRejectDocumentMutation();
+  const [unassignRoomApi, { isLoading: isUnassigning }] = useUnassignRoomMutation();
 
   // Derived Data - State Options from API
   const stateOptions = useMemo(() => {
@@ -279,13 +281,22 @@ function UserManagement() {
     setShowUnassignModal(true);
   };
 
-  const handleConfirmUnassignment = () => {
+  const handleConfirmUnassignment = async () => {
     if (!userToUnassign) return;
-    const roomToFree = userToUnassign.roomNumber;
-    unassignRoom(userToUnassign.id);
-    toast.success(`🗑️ Room assignment removed for ${userToUnassign.name}. Room ${roomToFree} is now available.`, { position: 'top-right' });
-    setShowUnassignModal(false);
-    setUserToUnassign(null);
+    try {
+      const result = await unassignRoomApi(userToUnassign.id).unwrap();
+      if (result.success) {
+        toast.success(`🗑️ Room assignment removed for ${userToUnassign.name}.`, { position: 'top-right' });
+        setShowUnassignModal(false);
+        setUserToUnassign(null);
+        refetchRegistrations(); // Force-refetch registrations list
+        // Tag invalidation on ['Hotel', 'Registration'] handles hotel refetch
+      } else {
+        toast.error('Failed to remove room assignment. Please try again.');
+      }
+    } catch (err: any) {
+      toast.error(err?.data?.message || 'Error removing room assignment.');
+    }
   };
 
   const handleConfirmAssignment = () => {
@@ -294,21 +305,13 @@ function UserManagement() {
       return;
     }
 
-    const primaryRoom = selectedRooms[0];
-    if (selectedUser && primaryRoom) {
-      assignRoom(selectedUser.id, primaryRoom);
-      setShowAssignModal(false);
-      setSelectedHotel('');
-      setSelectedRooms([]);
-      setBedAssignments({});
-      setIsReassigning(false);
-
-      if (isReassigning) {
-        toast.success(`🔄 Room reassigned! ${selectedUser.name} moved to Room ${primaryRoom}`, { position: 'top-right' });
-      } else {
-        toast.success(`✅ Room ${primaryRoom} assigned to ${selectedUser.name}!`, { position: 'top-right' });
-      }
-    }
+    // Close modal and reset state — actual API call is done inside AssignRoomModal
+    setShowAssignModal(false);
+    setSelectedHotel('');
+    setSelectedRooms([]);
+    setBedAssignments({});
+    setIsReassigning(false);
+    // Tag invalidation on ['Hotel', 'Registration'] in hotelApi handles auto-refetch
   };
 
   const handleViewDocuments = (user: any) => {
@@ -569,8 +572,10 @@ function UserManagement() {
           setSelectedHotel={setSelectedHotel}
           selectedRooms={selectedRooms}
           handleRoomToggle={handleRoomToggle}
+          clearSelectedRooms={() => setSelectedRooms([])}
           totalPassengers={totalPassengers}
           onConfirmAssignment={handleConfirmAssignment}
+          onRefetchRegistrations={refetchRegistrations}
         />
       )}
 
@@ -612,7 +617,7 @@ function UserManagement() {
         registration={{
           pnr: documentOwner?.pnr || '',
           name: documentOwner?.name || '',
-          contactNumber: documentOwner?.contactNumber || ''
+          contactNumber: documentOwner?.whatsapp_number || ''
         }}
         reason={rejectionReason}
       />
@@ -644,10 +649,20 @@ function UserManagement() {
             </Button>
             <Button
               onClick={handleConfirmUnassignment}
-              className="bg-red-600 hover:bg-red-700"
+              disabled={isUnassigning}
+              className="bg-red-600 hover:bg-red-700 disabled:opacity-50"
             >
-              <UserX className="w-4 h-4 mr-2" />
-              Confirm Removal
+              {isUnassigning ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Removing...
+                </>
+              ) : (
+                <>
+                  <UserX className="w-4 h-4 mr-2" />
+                  Confirm Removal
+                </>
+              )}
             </Button>
           </>
         }

@@ -92,6 +92,20 @@ const HotelStats: React.FC<HotelStatsProps> = ({ hotels }) => {
     );
 
 
+    // Calculate bed distribution
+    const bedDistribution = hotels?.reduce((acc: Record<string, number>, hotel) => {
+        hotel.rooms?.forEach((room: any) => {
+            const beds = getRoomField(room, 'numberOfBeds', 'number_of_beds');
+            if (beds > 0) {
+                acc[beds] = (acc[beds] || 0) + 1;
+            }
+        });
+        return acc;
+    }, {});
+
+    // Sort bed keys numerically
+    const sortedBedKeys = Object.keys(bedDistribution).sort((a, b) => Number(a) - Number(b));
+
     const summaryCards = [
         {
             label: 'Hotels onboarded',
@@ -121,39 +135,87 @@ const HotelStats: React.FC<HotelStatsProps> = ({ hotels }) => {
             icon: FileTextIcon,
             gradient: 'from-[#FF725E] via-[#FF9778] to-[#FFC3A3]',
         },
-        {
-            label: 'Total advance paid',
-            value: `₹${(totalAdvancePaid || 0).toLocaleString('en-IN')}`,
-            subtitle: `Across ${numberOfHotels} hotel${numberOfHotels !== 1 ? 's' : ''}`,
-            icon: FileTextIcon,
-            gradient: 'from-[#FF725E] via-[#FF9778] to-[#FFC3A3]',
-        },
     ];
 
     return (
-        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8 font-inter">
-            {summaryCards?.map((card) => (
-                <div
-                    key={card.label}
-                    className="relative overflow-hidden rounded-2xl bg-white/70 backdrop-blur-xl border border-white/50 p-3 md:p-5 shadow-glass group hover:shadow-glass-lg transition-all duration-300"
-                >
-                    <div className={`absolute -right-6 -top-6 w-24 h-24 rounded-full bg-gradient-to-br ${card.gradient} opacity-20 blur-2xl group-hover:opacity-30 transition-opacity`} />
+        <div className="space-y-4 mb-6 md:mb-8 font-inter">
+            {/* Main Summary Cards */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+                {summaryCards?.map((card) => (
+                    <div
+                        key={card.label}
+                        className="relative overflow-hidden rounded-2xl bg-white/70 backdrop-blur-xl border border-white/50 p-3 md:p-5 shadow-glass group hover:shadow-glass-lg transition-all duration-300"
+                    >
+                        <div className={`absolute -right-6 -top-6 w-24 h-24 rounded-full bg-gradient-to-br ${card.gradient} opacity-20 blur-2xl group-hover:opacity-30 transition-opacity`} />
 
-                    <div className="relative z-10 flex gap-4">
-                        <div className="flex items-center justify-between mb-3 md:mb-4">
-                            <div className={`p-2 md:p-2.5 rounded-xl bg-gradient-to-br ${card.gradient} text-white shadow-sm`}>
-                                <card.icon className="w-4 h-4 md:w-5 md:h-5" />
+                        <div className="relative z-10 flex gap-4">
+                            <div className="flex items-center justify-between mb-3 md:mb-4">
+                                <div className={`p-2 md:p-2.5 rounded-xl bg-gradient-to-br ${card.gradient} text-white shadow-sm`}>
+                                    <card.icon className="w-4 h-4 md:w-5 md:h-5" />
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col flex-1 min-w-0">
+                                <p className="text-xs md:text-sm font-medium text-heritage-text/60 uppercase tracking-wide truncate">{card.label}</p>
+                                <h3 className="text-xl md:text-2xl font-bold text-heritage-textDark mt-1">{card.value}</h3>
+                                <p className="text-xs text-heritage-text/50 mt-1 truncate">{card.subtitle}</p>
                             </div>
                         </div>
+                    </div>
+                ))}
+            </div>
 
-                        <div className="flex flex-col flex-1 min-w-0">
-                            <p className="text-xs md:text-sm font-medium text-heritage-text/60 uppercase tracking-wide truncate">{card.label}</p>
-                            <h3 className="text-xl md:text-2xl font-bold text-heritage-textDark mt-1">{card.value}</h3>
-                            <p className="text-xs text-heritage-text/50 mt-1 truncate">{card.subtitle}</p>
+            {/* Detailed Vertical Stats Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Bed Configuration Panel */}
+                <div className="rounded-2xl bg-white/70 backdrop-blur-xl border border-white/50 p-5 shadow-glass">
+                    <div className="flex items-center gap-3 mb-4">
+                        <div className="p-2 rounded-lg bg-orange-100 text-orange-600">
+                            <BedDouble className="w-5 h-5" />
                         </div>
+                        <h3 className="text-lg font-bold text-heritage-textDark">Bed Configuration</h3>
+                    </div>
+
+                    <div className="space-y-3">
+                        {sortedBedKeys.length > 0 ? (
+                            sortedBedKeys.map(beds => (
+                                <div key={beds} className="flex items-center justify-between p-3 rounded-xl bg-white/50 border border-white/40 hover:bg-white/80 transition-colors">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center text-orange-600 font-bold text-sm">
+                                            {beds}
+                                        </div>
+                                        <span className="text-sm font-medium text-heritage-textDark">{beds} Bed{Number(beds) !== 1 ? 's' : ''} Room</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-lg font-bold text-heritage-textDark">{bedDistribution[beds]}</span>
+                                        <span className="text-xs text-heritage-text/50">rooms</span>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <p className="text-sm text-heritage-text/50 text-center py-4">No bed configuration data available</p>
+                        )}
                     </div>
                 </div>
-            ))}
+
+                {/* Total Advance Paid Panel */}
+                <div className="rounded-2xl bg-white/70 backdrop-blur-xl border border-white/50 p-5 shadow-glass flex flex-col justify-center items-center text-center relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-green-50/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                    <div className="relative z-10">
+                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 text-green-600 flex items-center justify-center shadow-sm">
+                            <FileTextIcon className="w-8 h-8" />
+                        </div>
+                        <h3 className="text-lg font-medium text-heritage-text/70">Total Advance Paid</h3>
+                        <div className="text-4xl md:text-5xl font-bold text-heritage-textDark mt-2 tracking-tight">
+                            ₹{(totalAdvancePaid || 0).toLocaleString('en-IN')}
+                        </div>
+                        <p className="text-sm text-heritage-text/50 mt-2">
+                            Aggregated across {numberOfHotels} partner propert{numberOfHotels !== 1 ? 'ies' : 'y'}
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };

@@ -19,7 +19,8 @@ import {
 import { useGetAllHotelsQuery, useAssignRoomMutation, RoomAssignmentItem } from '@/services/hotelApi';
 import { yatraStorage } from '@/utils/storage';
 import { APIHotel as Hotel, APIHotelRoom as RoomEntry } from '@/types';
-import { Registration, Person, DemographyCard } from './intreface';
+import { Person, DemographyCard } from './intreface';
+import { Registration } from '@/services/registrationApi';
 
 interface AssignRoomModalProps {
     isOpen: boolean;
@@ -30,8 +31,10 @@ interface AssignRoomModalProps {
     setSelectedHotel: (hotelId: string) => void;
     selectedRooms: string[];
     handleRoomToggle: (roomNumber: string) => void;
+    clearSelectedRooms: () => void;
     totalPassengers: number;
     onConfirmAssignment: () => void;
+    onRefetchRegistrations: () => void;
 }
 
 const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
@@ -43,8 +46,10 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
     setSelectedHotel,
     selectedRooms,
     handleRoomToggle,
+    clearSelectedRooms,
     totalPassengers,
     onConfirmAssignment,
+    onRefetchRegistrations,
 }) => {
 
     const [currentStep, setCurrentStep] = useState(1);
@@ -73,8 +78,8 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
 
     // Auto-select hotel if user already has one assigned
     useEffect(() => {
-        if (isOpen && selectedUser?.hotel?.id && !selectedHotel) {
-            setSelectedHotel(selectedUser.hotel.id);
+        if (isOpen && selectedUser?.user?.hotel?.id && !selectedHotel) {
+            setSelectedHotel(selectedUser?.user?.hotel.id);
         }
     }, [isOpen, selectedUser, selectedHotel, setSelectedHotel]);
 
@@ -114,13 +119,13 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
     }, [selectedHotelData]);
 
     const isSameHotelAsAssigned = useMemo(() => {
-        if (!selectedUser?.hotel?.id || !selectedHotel) return false;
-        return selectedUser.hotel.id.toLowerCase() === selectedHotel.toLowerCase();
+        if (!selectedUser?.user?.hotel?.id || !selectedHotel) return false;
+        return selectedUser?.user?.hotel?.id.toLowerCase() === selectedHotel.toLowerCase();
     }, [selectedUser, selectedHotel]);
 
     const userAssignedRoomNumbers = useMemo(() => {
         if (!isSameHotelAsAssigned) return [];
-        return selectedUser?.assignedRooms?.map(r => r.room_number) || [];
+        return selectedUser ? selectedUser?.user?.assignedRooms?.map(r => r.room_number) || [] : [];
     }, [isSameHotelAsAssigned, selectedUser]);
 
     const demographyCards: DemographyCard[] = [
@@ -129,28 +134,29 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
             description: 'Priority handling for senior travelers.',
             accent: 'blue',
             Icon: Users,
-            users: selectedUser?.persons?.filter((p: Person) => (p?.age >= 60 && p?.gender === 'male')).length || 0,
+            users: selectedUser?.persons?.filter((p) => (p?.age >= 60 && p?.gender === 'male')).length || 0,
+
         },
         {
             title: 'Females (40+)',
             description: 'Standard safety protocol groups.',
             accent: 'rose',
             Icon: User,
-            users: selectedUser?.persons?.filter((p: Person) => (p?.age >= 40 && p?.gender === 'female')).length || 0,
+            users: selectedUser?.persons?.filter((p) => (p?.age >= 40 && p?.gender === 'female')).length || 0,
         },
         {
             title: 'Medical/Disability',
             description: 'Accessible room requirements.',
             accent: 'green',
             Icon: Accessibility,
-            users: selectedUser?.persons?.filter((p: Person) => p?.isHandicapped).length || 0,
+            users: selectedUser?.persons?.filter((p) => p?.is_handicapped).length || 0,
         },
         {
             title: 'Single Parents',
             description: 'Guardians with children under 5.',
             accent: 'amber',
             Icon: UserCheck,
-            users: selectedUser?.persons?.filter((p: Person) => p?.age < 5).length || 0,
+            users: selectedUser?.persons?.filter((p) => p?.age < 5).length || 0,
         },
         {
             title: 'Total Travelers',
@@ -209,7 +215,8 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
             }).unwrap();
 
             if (result.success) {
-                onConfirmAssignment(); // Refresh parent data
+                onConfirmAssignment();
+                onRefetchRegistrations(); // Force-refetch registrations list
                 handleClose();
             }
         } catch (error) {
@@ -295,7 +302,7 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
                                         <div className="text-xs text-gray-500 uppercase tracking-wide mb-1">
                                             Total Persons
                                         </div>
-                                        <p className="text-3xl font-bold text-orange-600">{selectedUser.numberOfPersons}</p>
+                                        <p className="text-3xl font-bold text-orange-600">{selectedUser.persons.length}</p>
                                     </div>
                                 </div>
                             </div>
@@ -314,17 +321,17 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
 
                                 {/* 2-Column Grid */}
                                 <div className="grid grid-cols-2 gap-3">
-                                    {selectedUser.persons?.map((person: Person, index: number) => (
+                                    {selectedUser.persons?.map((person, index: number) => (
                                         <div
                                             key={index}
-                                            className={`relative ${person.gender === 'male' ? 'bg-blue-50' : 'bg-pink-50'} rounded-lg p-3 border border-gray-200 ${person.isHandicapped ? 'border-orange-600' : ''
+                                            className={`relative ${person.gender === 'male' ? 'bg-blue-50' : 'bg-pink-50'} rounded-lg p-3 border border-gray-200 ${person.is_handicapped ? 'border-orange-600' : ''
                                                 } `}
                                         >
                                             <div className="flex items-start gap-3">
                                                 {/* Avatar */}
-                                                <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${person.isHandicapped ? 'bg-orange-100' : person.gender === 'male' ? 'bg-blue-200' : 'bg-pink-100'
+                                                <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${person.is_handicapped ? 'bg-orange-100' : person.gender === 'male' ? 'bg-blue-200' : 'bg-pink-100'
                                                     } `}>
-                                                    {person.isHandicapped ? (
+                                                    {person.is_handicapped ? (
                                                         <Accessibility className="w-5 h-5 text-orange-600" />
                                                     ) : (
                                                         <User className={`w-5 h-5 ${person.gender === 'male' ? 'text-blue-600' : 'text-pink-600'}`} />
@@ -342,7 +349,7 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
                                                 </div>
 
                                                 {/* Special Needs Badge */}
-                                                {person.isHandicapped && (
+                                                {person.is_handicapped && (
                                                     <div className="absolute top-2 right-2">
                                                         <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-orange-100 text-orange-700 text-[10px] font-semibold uppercase tracking-wide rounded">
                                                             Special Needs
@@ -364,7 +371,7 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
                                         Boarding Point
                                     </div>
                                     <p className="text-sm font-bold text-gray-900 uppercase">
-                                        {selectedUser?.boardingPoint?.city}, {selectedUser.boardingPoint?.state}
+                                        {selectedUser?.boarding_city}, {selectedUser.boarding_state}
                                     </p>
                                 </div>
 
@@ -375,7 +382,7 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
                                         Arrival Date
                                     </div>
                                     <p className="text-sm font-bold text-gray-900">
-                                        {selectedUser.arrivalDate}
+                                        {selectedUser.arrival_date}
                                     </p>
                                 </div>
 
@@ -386,7 +393,7 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
                                         Return Date
                                     </div>
                                     <p className="text-sm font-bold text-gray-900">
-                                        {selectedUser.returnDate}
+                                        {selectedUser.return_date}
                                     </p>
                                 </div>
                             </div>
@@ -501,7 +508,7 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
                                             return (
                                                 <button
                                                     key={hotel.id}
-                                                    onClick={() => setSelectedHotel(hotel.id)}
+                                                    onClick={() => { setSelectedHotel(hotel.id); clearSelectedRooms(); }}
                                                     className={`w-full text-left border rounded-lg p-3 transition-all ${isSelected
                                                         ? 'border-orange-600 bg-orange-50'
                                                         : 'border-gray-200 bg-white hover:border-orange-300'
@@ -591,7 +598,7 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
                                                         return (
                                                             <div key={floor} className="flex items-start gap-3">
                                                                 <div className="text-xs font-semibold text-slate-300 w-12 pt-1">FLR {floor}</div>
-                                                                <div className="grid grid-cols-6 gap-2 flex-1">
+                                                                <div className="grid grid-cols-5 gap-3 flex-1">
                                                                     {roomsByFloor[floor]
                                                                         .sort((a, b) => {
                                                                             const ra = Number(a.room_number);
