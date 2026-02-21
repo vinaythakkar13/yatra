@@ -149,8 +149,8 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onEdit, onDelete }) => {
       <div className="bg-white/80 backdrop-blur-md border border-white/40 shadow-glass rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-glass-lg font-inter">
         <div className="p-4 md:p-5">
           {/* Elegant Header & Stats Section */}
-          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-white/40 p-3 rounded-xl border border-white/50 mb-4">
-            <div className="flex items-center gap-4 min-w-0 flex-1">
+          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-white/40 rounded-xl border border-white/50 mb-4">
+            <div className="flex items-center gap-4 flex-1">
               <div className="bg-gradient-to-br from-heritage-primary to-heritage-secondary p-2.5 rounded-xl shadow-lg text-white flex-shrink-0">
                 <HotelIcon className="w-6 h-6" />
               </div>
