@@ -284,15 +284,23 @@ export const hotelApi = baseApi.injectEndpoints({
       invalidatesTags: ['Hotel', 'Registration'],
     }),
 
-    /**
-     * Generate Hotel Credentials Endpoint
-     * POST /hotels/:id/generate-credentials
-     */
     generateHotelCredentials: builder.mutation<GenerateCredentialsResponse, string>({
       query: (hotelId) => ({
         url: `/hotels/${hotelId}/generate-credentials`,
         method: 'POST',
       }),
+    }),
+
+    /**
+     * Hotel Check-In Endpoint
+     * POST /hotels/check-in/:registrationId
+     */
+    hotelCheckIn: builder.mutation<{ success: boolean; message: string }, string>({
+      query: (registrationId) => ({
+        url: `/hotels/check-in/${registrationId}`,
+        method: 'POST',
+      }),
+      invalidatesTags: ['Registration', 'Hotel'],
     }),
   }),
 });
@@ -308,6 +316,7 @@ export const {
   useAssignRoomMutation,
   useUnassignRoomMutation,
   useGenerateHotelCredentialsMutation,
+  useHotelCheckInMutation,
 } = hotelApi;
 
 /**
