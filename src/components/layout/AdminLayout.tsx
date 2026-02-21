@@ -19,7 +19,8 @@ import {
   Plus,
   Menu,
   X,
-  MapPinIcon
+  MapPinIcon,
+  LayoutGrid
 } from 'lucide-react';
 import { tokenStorage, userStorage, yatraStorage } from '@/utils/storage';
 import { toast } from 'react-toastify';
@@ -81,15 +82,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       icon: Hotel,
       label: 'Hotels',
       href: '/admin/hotels',
-      allowedRoles: ['super_admin', 'admin'] // Only admin and super_admin see Hotels
+      allowedRoles: ['super_admin', 'admin']
     },
-    // { icon: MapPinIcon, label: 'Yatras', href: '/admin/yatras' },
-    // { icon: Calendar, label: 'Calendar', href: '/admin/calendar' },
-    // { icon: Bell, label: 'Notifications', href: '/admin/notifications' },
-    // { icon: Folder, label: 'Documents', href: '/admin/documents' },
-    // { icon: Star, label: 'Reviews', href: '/admin/reviews' },
-    // { icon: BarChart3, label: 'Reports', href: '/admin/reports' },
-    // { icon: Settings, label: 'Settings', href: '/admin/settings' },
+    {
+      icon: LayoutGrid, label: 'Allotment', href: '/admin/allotment',
+      allowedRoles: ['super_admin', 'admin']
+    },
   ];
 
   useEffect(() => {
@@ -321,8 +319,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             <h1 className="text-2xl font-bold text-heritage-textDark">
               {navItems.find(item => isActiveRoute(item.href, item.exact))?.label || 'Dashboard'}
             </h1>
-
-
           </div>
 
           <div className="flex items-center gap-4">
@@ -353,7 +349,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </header>
 
         {/* Page Content - Full Width with Scroll */}
-        <main className="flex-1 p-6 overflow-y-auto w-full">
+        <main className="flex-1 p-6 overflow-y-auto w-full flex flex-col">
           {children}
         </main>
       </div>

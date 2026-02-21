@@ -7,8 +7,11 @@ import { formatDate } from '@/utils/dateUtils';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import { Calendar, MapPin, Users, FileText, CheckCircle, XCircle, Clock, Ticket, Search, Loader2, AlertCircle, Hotel, Bed, Map, Phone, X, AlertTriangle, ExternalLink, Eye, Image as ImageIcon, Accessibility } from 'lucide-react';
+import { Calendar, MapPin, Users, FileText, CheckCircle, XCircle, Clock, Ticket, Search, Loader2, AlertCircle, Hotel, Bed, Map, Phone, X, AlertTriangle, ExternalLink, Eye, Image as ImageIcon, Accessibility, Sparkles, Gift, EyeIcon, Key } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { AnimatePresence, motion } from 'framer-motion';
+import { QRCodeSVG } from 'qrcode.react';
+import RoomAssignmentModal from '@/components/history/RoomAssignmentModal';
 
 
 /* Helper to get status badge configuration */
@@ -61,6 +64,7 @@ export default function HistoryPage() {
   const [pnr, setPnr] = useState('');
   const [pnrError, setPnrError] = useState('');
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showRoomModal, setShowRoomModal] = useState(false);
   const [cancellationReason, setCancellationReason] = useState('');
   const [cancellationError, setCancellationError] = useState('');
 
@@ -247,6 +251,51 @@ export default function HistoryPage() {
         {/* Registration Details */}
         {data?.data && !isLoading && (
           <div className="space-y-4">
+
+            {/* Room Assignment Celebration - Lottery Style */}
+            {data?.data?.hotel && data?.data?.assignedRooms && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="relative"
+              >
+                <Card
+                  className="p-4 border border-gray-100 bg-white shadow-sm hover:shadow-md transition-all rounded-xl relative overflow-hidden flex items-center gap-4 w-full"
+                  cardChildWrapperClassName="flex items-center justify-between w-full"
+                >
+                  {/* Left Accent Bar */}
+                  <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-12 bg-sky-500 rounded-r-lg " />
+
+                  <div className="flex items-center justify-between w-full pl-2 w-full">
+                    <div className="flex items-center gap-4">
+                      {/* Icon Container */}
+                      <div className="w-11 h-11 bg-sky-50 rounded-full flex items-center justify-center">
+                        <Key className="w-5 h-5 text-sky-600" />
+                      </div>
+
+                      {/* Title & Badge */}
+                      <div className="flex items-center gap-3">
+                        <h3 className="text-[17px] font-bold text-slate-800">
+                          Room Assignment Confirmed
+                        </h3>
+                        <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-700 text-[11px] font-bold rounded-full">
+                          Success
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Action Button */}
+                    <button
+                      onClick={() => setShowRoomModal(true)}
+                      className="flex bg-sky-50 p-2 rounded-lg items-center gap-2 text-slate-500 hover:text-slate-800 font-semibold transition-colors pr-2"
+                    >
+                      <Eye className="w-5 h-5 text-sky-600" />
+                      <span className="text-sm text-sky-600">View Details</span>
+                    </button>
+                  </div>
+                </Card>
+              </motion.div>
+            )}
 
             {data.data.registration.documentStatus === 'cancelled' && (
               <div className="flex items-start gap-2.5 p-3 bg-red-50 border border-red-100 rounded-lg">
@@ -661,110 +710,118 @@ export default function HistoryPage() {
         )}
 
         {/* Cancel Registration Modal */}
-        {showCancelModal && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md p-4 animate-fade-in !m-0"
-            onClick={handleCancelClose}
-          >
+        <AnimatePresence>
+          {showCancelModal && (
             <div
-              className="relative max-w-md w-full"
-              onClick={(e: React.MouseEvent) => e.stopPropagation()}
+              className="fixed inset-0 z-[110] flex items-center justify-center p-4"
+              onClick={handleCancelClose}
             >
-              <Card className="p-8 shadow-2xl border border-gray-200/50 bg-white animate-scale-in">
-                {/* Close Button */}
-                <button
-                  onClick={handleCancelClose}
-                  className="absolute top-5 right-5 p-2 hover:bg-gray-100 rounded-full transition-all duration-200 group"
-                  aria-label="Close modal"
-                >
-                  <X className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors" />
-                </button>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative max-w-md w-full"
+                onClick={(e: React.MouseEvent) => e.stopPropagation()}
+              >
+                <Card className="p-8 shadow-2xl border border-gray-200/50 bg-white">
+                  {/* Close Button */}
+                  <button
+                    onClick={handleCancelClose}
+                    className="absolute top-5 right-5 p-2 hover:bg-gray-100 rounded-full transition-all duration-200 group"
+                    aria-label="Close modal"
+                  >
+                    <X className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors" />
+                  </button>
 
-                <div className="space-y-6">
-                  {/* Header */}
-                  <div className="text-center pt-2">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-red-50 to-orange-50 rounded-2xl mb-4 shadow-lg ring-4 ring-red-100/50">
-                      <AlertTriangle className="w-8 h-8 text-red-500" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-spiritual-zen-charcoal mb-2">
-                      Cancel Registration
-                    </h3>
-                    <p className="text-sm text-spiritual-textLight leading-relaxed">
-                      This action cannot be undone. Are you sure you want to proceed?
-                    </p>
-                  </div>
-
-                  {/* Cancellation Reason Input */}
-                  <div className="space-y-2">
-                    <label className="block text-sm font-semibold text-spiritual-zen-charcoal">
-                      Reason for Cancellation
-                      <span className="ml-1 text-xs font-normal text-gray-400">(Optional)</span>
-                    </label>
-                    <div className="relative">
-                      <textarea
-                        value={cancellationReason}
-                        onChange={(e) => handleReasonChange(e.target.value)}
-                        placeholder="Please share your reason for cancellation..."
-                        maxLength={100}
-                        rows={4}
-                        className={`w-full px-4 py-3 rounded-xl border-2 transition-all duration-200 text-sm resize-none bg-gray-50/50 placeholder:text-gray-400 focus:bg-white ${cancellationError
-                          ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100'
-                          : 'border-gray-200 focus:border-spiritual-zen-forest focus:ring-4 focus:ring-spiritual-zen-forest/10'
-                          }`}
-                      />
-
-                    </div>
-                    <div className="relative justify-end flex items-end">
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-md ${cancellationReason.length === 0
-                        ? 'text-gray-400 bg-gray-100'
-                        : cancellationReason.length > 90
-                          ? 'text-red-600 bg-red-50'
-                          : 'text-spiritual-textLight bg-spiritual-zen-mist/50'
-                        }`}>
-                        {cancellationReason.length}/100
-                      </span>
-                    </div>
-                    {cancellationError && (
-                      <p className="text-xs text-red-600 flex items-center gap-1.5">
-                        <AlertCircle className="w-3.5 h-3.5" />
-                        {cancellationError}
+                  <div className="space-y-6">
+                    {/* Header */}
+                    <div className="text-center pt-2">
+                      <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-red-50 to-orange-50 rounded-2xl mb-4 shadow-lg ring-4 ring-red-100/50">
+                        <AlertTriangle className="w-8 h-8 text-red-500" />
+                      </div>
+                      <h3 className="text-2xl font-bold text-spiritual-zen-charcoal mb-2">
+                        Cancel Registration
+                      </h3>
+                      <p className="text-sm text-spiritual-textLight leading-relaxed">
+                        This action cannot be undone. Are you sure you want to proceed?
                       </p>
-                    )}
-                  </div>
+                    </div>
 
-                  {/* Action Buttons */}
-                  <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                    <Button
-                      onClick={handleCancelClose}
-                      variant="outline"
-                      disabled={isCancelling}
-                      className="flex-1 border-2 border-gray-200 text-spiritual-zen-charcoal hover:bg-gray-50 hover:border-gray-300 py-3 text-sm font-semibold transition-all duration-200 shadow-sm hover:shadow"
-                    >
-                      Keep Registration
-                    </Button>
-                    <Button
-                      onClick={handleCancelSubmit}
-                      disabled={isCancelling}
-                      className="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white py-3 text-sm font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed"
-                    >
-                      {isCancelling ? (
-                        <span className="flex items-center justify-center gap-2">
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          Cancelling...
+                    {/* Cancellation Reason Input */}
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-spiritual-zen-charcoal">
+                        Reason for Cancellation
+                        <span className="ml-1 text-xs font-normal text-gray-400">(Optional)</span>
+                      </label>
+                      <div className="relative">
+                        <textarea
+                          value={cancellationReason}
+                          onChange={(e) => handleReasonChange(e.target.value)}
+                          placeholder="Please share your reason for cancellation..."
+                          maxLength={100}
+                          rows={4}
+                          className={`w-full px-4 py-3 rounded-xl border-2 transition-all duration-200 text-sm resize-none bg-gray-50/50 placeholder:text-gray-400 focus:bg-white ${cancellationError
+                            ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-100'
+                            : 'border-gray-200 focus:border-spiritual-zen-forest focus:ring-4 focus:ring-spiritual-zen-forest/10'
+                            }`}
+                        />
+                      </div>
+                      <div className="flex justify-end">
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-md ${cancellationReason.length === 0
+                          ? 'text-gray-400 bg-gray-100'
+                          : cancellationReason.length > 90
+                            ? 'text-red-600 bg-red-50'
+                            : 'text-spiritual-textLight bg-spiritual-zen-mist/50'
+                          }`}>
+                          {cancellationReason.length}/100
                         </span>
-                      ) : (
-                        <span className="flex items-center justify-center gap-2">
-                          <XCircle className="w-4 h-4" />
-                          Confirm Cancellation
-                        </span>
+                      </div>
+                      {cancellationError && (
+                        <p className="text-xs text-red-600 flex items-center gap-1.5">
+                          <AlertCircle className="w-3.5 h-3.5" />
+                          {cancellationError}
+                        </p>
                       )}
-                    </Button>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                      <Button
+                        onClick={handleCancelClose}
+                        variant="outline"
+                        disabled={isCancelling}
+                        className="flex-1 border-2 border-gray-200 text-spiritual-zen-charcoal hover:bg-gray-50 hover:border-gray-300 py-3 text-sm font-semibold"
+                      >
+                        Keep Registration
+                      </Button>
+                      <Button
+                        onClick={handleCancelSubmit}
+                        disabled={isCancelling}
+                        className="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white py-3 text-sm font-semibold shadow-lg hover:shadow-xl transition-all"
+                      >
+                        {isCancelling ? 'Cancelling...' : 'Confirm Cancellation'}
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </Card>
+                </Card>
+              </motion.div>
             </div>
-          </div>
-        )}
+          )}
+        </AnimatePresence>
+
+        {/* Room Assignment Modal */}
+        <RoomAssignmentModal
+          isOpen={showRoomModal}
+          onClose={() => setShowRoomModal(false)}
+          hotel={data?.data?.hotel || null}
+          registration={data?.data?.registration || null}
+        />
       </div>
     </div>
   );

@@ -90,6 +90,11 @@ export default function HotelBookings() {
                 <div className="flex items-center gap-4">
                     {/* add logout button with red variant */}
                     <button
+                        onClick={() => {
+                            userStorage.removeUser();
+                            localStorage.clear();
+                            router.push('/hotel/login');
+                        }}
                         aria-label="Logout"
                         className="bg-red-500/10 text-red-500 w-10 h-10 rounded-full flex items-center justify-center" >
                         <LogoutIcon fill="currentColor" size={24} />

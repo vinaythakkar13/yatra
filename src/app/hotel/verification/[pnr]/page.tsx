@@ -38,7 +38,7 @@ export default function VerificationDetail() {
         if (!registration) return;
 
         try {
-            const result = await checkIn(registration.id).unwrap();
+            const result = await checkIn(registration.registration.id).unwrap();
             if (result.success) {
                 setIsSuccess(true);
                 toast.success("Check-In Confirmed!", { position: 'top-center' });
@@ -101,8 +101,8 @@ export default function VerificationDetail() {
                         </div>
                         <div>
                             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-0.5">Primary Guest</p>
-                            <h2 className="text-2xl font-bold text-gray-900">{registration.name}</h2>
-                            <p className="text-sm font-bold text-primary-600 tracking-wider">PNR: {registration.pnr}</p>
+                            <h2 className="text-2xl font-bold text-gray-900">{registration.registration.name}</h2>
+                            <p className="text-sm font-bold text-primary-600 tracking-wider">PNR: {registration.registration.pnr}</p>
                         </div>
                     </div>
 
@@ -111,14 +111,14 @@ export default function VerificationDetail() {
                             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1 leading-none">Total Persons</p>
                             <div className="flex items-center gap-2">
                                 <Users className="w-4 h-4 text-secondary-500" />
-                                <span className="text-lg font-bold text-gray-900">{registration.number_of_persons}</span>
+                                <span className="text-lg font-bold text-gray-900">{registration.registration.numberOfPersons}</span>
                             </div>
                         </div>
                         <div className="bg-slate-50 rounded-2xl p-4">
                             <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1 leading-none">Contact</p>
                             <div className="flex items-center gap-2">
                                 <Phone className="w-4 h-4 text-blue-500" />
-                                <span className="text-sm font-bold text-gray-900 truncate">{registration.whatsapp_number}</span>
+                                <span className="text-sm font-bold text-gray-900 truncate">{registration.registration.whatsappNumber}</span>
                             </div>
                         </div>
                     </div>
@@ -145,7 +145,7 @@ export default function VerificationDetail() {
                                         <Home className="w-6 h-6 text-green-600" />
                                     </div>
                                     <div className="flex-1">
-                                        <h4 className="font-bold text-gray-900">Room {room.roomNumber}</h4>
+                                        <h4 className="font-bold text-gray-900">Room {room.room_number}</h4>
                                         <p className="text-xs text-gray-500 font-medium">Floor {room.floor} • {registration.hotel?.name}</p>
                                     </div>
                                     <div className="text-right">
