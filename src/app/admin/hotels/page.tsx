@@ -39,6 +39,7 @@ function HotelManagement() {
   const [hotelToDelete, setHotelToDelete] = useState<any>(null);
   const [selectedYatraId, setSelectedYatraId] = useState<string | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [activeBedFilter, setActiveBedFilter] = useState<number | null>(null);
 
   // Keyboard shortcut for search
   useEffect(() => {
@@ -79,26 +80,44 @@ function HotelManagement() {
     };
   }, []);
 
+  // Reset bed filter when yatra changes
+  useEffect(() => {
+    setActiveBedFilter(null);
+  }, [selectedYatraId]);
+
   // Fetch hotels from API filtered by selected yatra ID
   const { data: hotels = [], isLoading: isLoadingHotels, refetch: refetchHotels } = useGetAllHotelsQuery(selectedYatraId);
 
   // Debounce search query to improve performance
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-  // Filter hotels based on debounced search query
+  // Filter hotels based on debounced search query AND bed configuration
   const filteredHotels = React.useMemo(() => {
-    if (!debouncedSearchQuery.trim()) {
-      return hotels;
+    let result = hotels;
+
+    // Apply Bed Configuration Filter
+    if (activeBedFilter !== null) {
+      result = result.filter((hotel: any) =>
+        hotel.rooms?.some((room: any) => {
+          const beds = room.numberOfBeds ?? room.number_of_beds ?? 0;
+          return Number(beds) === activeBedFilter;
+        })
+      );
     }
 
-    const query = debouncedSearchQuery.toLowerCase().trim();
-    return hotels.filter((hotel: any) =>
-      hotel.name?.toLowerCase().includes(query) ||
-      hotel.address?.toLowerCase().includes(query) ||
-      hotel.managerName?.toLowerCase().includes(query) ||
-      hotel.hotelType?.toLowerCase().includes(query)
-    );
-  }, [hotels, debouncedSearchQuery]);
+    // Apply Search Query Filter
+    if (debouncedSearchQuery.trim()) {
+      const query = debouncedSearchQuery.toLowerCase().trim();
+      result = result.filter((hotel: any) =>
+        hotel.name?.toLowerCase().includes(query) ||
+        hotel.address?.toLowerCase().includes(query) ||
+        hotel.managerName?.toLowerCase().includes(query) ||
+        hotel.hotelType?.toLowerCase().includes(query)
+      );
+    }
+
+    return result;
+  }, [hotels, debouncedSearchQuery, activeBedFilter]);
 
   // RTK Query mutation hooks
   const [createHotel, { isLoading: isCreatingHotel }] = useCreateHotelMutation();
@@ -323,7 +342,11 @@ function HotelManagement() {
 
 
       {/* Statistics Section */}
-      <HotelStats hotels={filteredHotels} />
+      <HotelStats
+        hotels={hotels}
+        activeBedFilter={activeBedFilter}
+        onBedFilterChange={setActiveBedFilter}
+      />
 
       <div className='flex justify-end items-center gap-4 my-4'>
         <Button
