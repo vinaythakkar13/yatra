@@ -172,7 +172,7 @@ export default function HotelBookings() {
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: index * 0.03 }}
                                 className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md hover:border-slate-200 transition-all cursor-pointer group flex flex-col justify-between gap-6"
-                                onClick={() => router.push(`/hotel/verification/${guest.pnr}`)}
+                            // onClick={() => router.push(`/hotel/verification/${guest.pnr}`)}
                             >
                                 <div className="flex items-start justify-between">
                                     <div className="flex items-center gap-3">
