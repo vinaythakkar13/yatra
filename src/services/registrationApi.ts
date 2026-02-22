@@ -232,6 +232,11 @@ export interface YatraDetails {
   updatedAt: string;
 }
 
+export interface RoomInfo {
+  room_number: string;
+  floor: string;
+}
+
 export interface RegistrationByPnrResponse {
   success: boolean;
   message?: string;
@@ -272,6 +277,7 @@ export interface RegistrationByPnrResponse {
     yatra: YatraDetails;
     hotel: Hotel | null;
     room: Room | null;
+    assignedRooms: RoomInfo[];
   };
 }
 
@@ -543,6 +549,7 @@ export const registrationApi = baseApi.injectEndpoints({
         yatra: YatraDetails;
         hotel: Hotel | null;
         room: Room | null;
+        assignedRooms: RoomInfo[];
       };
       message?: string;
       error?: string;
@@ -564,12 +571,13 @@ export const registrationApi = baseApi.injectEndpoints({
           yatra: YatraDetails;
           hotel: Hotel | null;
           room: Room | null;
+          assignedRooms: RoomInfo[];
         };
         message?: string;
         error?: string;
       } => {
         if (response.success && response.data) {
-          const { registration, persons, yatra, hotel, room } = response.data;
+          const { registration, persons, yatra, hotel, room, assignedRooms } = response.data;
 
           const frontendRegistration: FrontendRegistrationDetails = {
             id: registration.id,
@@ -586,12 +594,14 @@ export const registrationApi = baseApi.injectEndpoints({
             returnDate: formatDate(registration.return_date),
             ticketImages: registration.ticket_images || [],
             yatraId: yatra.id,
-            roomStatus: room ? 'Assigned' : 'Pending',
+            roomStatus: (room || (assignedRooms && assignedRooms.length > 0)) ? 'Assigned' : 'Pending',
             documentStatus: registration.document_status || 'pending',
             createdAt: registration.created_at,
             splitPnr: registration.split_pnr || null,
             originalPnr: registration.original_pnr || null,
-            assignedRooms: room ? [{ id: room.id, room_number: room.roomNumber, floor: room.floor }] : [],
+            assignedRooms: (assignedRooms && assignedRooms.length > 0)
+              ? assignedRooms.map((r, idx) => ({ id: `room-${idx}`, room_number: r.room_number, floor: r.floor }))
+              : room ? [{ id: room.id, room_number: room.roomNumber, floor: room.floor }] : [],
             cancellationReason: registration.cancellation_reason || null,
             rejectionReason: registration.rejection_reason || null,
           };
@@ -620,6 +630,7 @@ export const registrationApi = baseApi.injectEndpoints({
               },
               hotel: hotel,
               room: room,
+              assignedRooms: assignedRooms.map((r, idx) => ({ id: `room-${idx}`, room_number: r.room_number, floor: r.floor })) || [],
             },
             message: response.message,
           };
@@ -721,6 +732,23 @@ export const registrationApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Registration'],
     }),
+
+    /**
+     * Update Allotment Status for Yatra
+     * PATCH /registrations/yatra/:yatraId/room-status
+     */
+    updateAllotmentStatus: builder.mutation<{
+      success: boolean;
+      message?: string;
+      error?: string;
+    }, { yatraId: string; status: string }>({
+      query: ({ yatraId, status }) => ({
+        url: `/registrations/yatra/${yatraId}/room-status`,
+        method: 'PATCH',
+        body: { status },
+      }),
+      invalidatesTags: ['Registration'],
+    }),
   }),
 });
 
@@ -736,4 +764,5 @@ export const {
   useSplitRegistrationMutation,
   useApproveDocumentMutation,
   useRejectDocumentMutation,
+  useUpdateAllotmentStatusMutation,
 } = registrationApi;

@@ -25,6 +25,7 @@ interface CardProps {
   onCancelClick?: () => void;
   showRebookButton?: boolean;
   onRebookClick?: () => void;
+  cardChildWrapperClassName?: string;
 }
 
 /**
@@ -70,6 +71,7 @@ export default function Card({
   onCancelClick,
   showRebookButton = false,
   onRebookClick,
+  cardChildWrapperClassName = '',
 }: CardProps) {
   return (
     <div
@@ -122,7 +124,7 @@ export default function Card({
         </div>
       )}
 
-      {/* Decorative gradient overlay */}  
+      {/* Decorative gradient overlay */}
       {(title || subtitle || hotelAddress || floorNumber || mobileNumber || phoneNumber) && (
         <div className="mb-4 border-b border-gradient-to-r from-gray-200 via-primary-200 to-gray-200 pb-4">
           <div className="flex items-start justify-between gap-3">
@@ -137,12 +139,12 @@ export default function Card({
                   {subtitle}
                 </p>
               )}
-              
+
               {/* Contact information */}
               {(mobileNumber || phoneNumber) && (
                 <div className="flex items-center gap-2 mt-2 text-xs sm:text-sm text-gray-700">
                   <Phone className="w-4 h-4 text-primary-600 flex-shrink-0" />
-                  <a 
+                  <a
                     href={`tel:${mobileNumber || phoneNumber}`}
                     className="hover:text-primary-600 transition-colors"
                     onClick={(e) => e.stopPropagation()}
@@ -151,7 +153,7 @@ export default function Card({
                   </a>
                 </div>
               )}
-              
+
               {/* Hotel-specific information */}
               {hotelAddress && (
                 <div className="flex items-start gap-2 mt-2 text-xs sm:text-sm text-gray-700">
@@ -159,7 +161,7 @@ export default function Card({
                   <span className="flex-1">{hotelAddress}</span>
                 </div>
               )}
-              
+
               {hotelMapLink && (
                 <a
                   href={hotelMapLink}
@@ -173,7 +175,7 @@ export default function Card({
                 </a>
               )}
             </div>
-            
+
             {floorNumber !== undefined && (
               <div className="flex-shrink-0 bg-gradient-to-br from-primary-500 to-primary-600 text-white px-3 py-2 rounded-lg shadow-lg">
                 <div className="flex items-center gap-1.5">
@@ -188,9 +190,9 @@ export default function Card({
           </div>
         </div>
       )}
-      
-      <div className="card-content">{children}</div>
-      
+
+      <div className={`card-content ${cardChildWrapperClassName || ''} `}>{children}</div>
+
       {/* Cancel/Rebook Buttons */}
       {(showCancelButton || showRebookButton) && (
         <div className="mt-4 pt-4 border-t border-gray-200">
@@ -224,7 +226,7 @@ export default function Card({
           </div>
         </div>
       )}
-      
+
       {footer && (
         <div className="mt-4 pt-4 border-t border-gray-200">
           {footer}
