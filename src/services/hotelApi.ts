@@ -143,6 +143,17 @@ export interface GenerateCredentialsResponse {
   };
 }
 
+export interface RoomAllottedData {
+  registration_id: string;
+  pnr: string;
+  name: string;
+  number_of_traveller: number;
+  assigned_rooms: {
+    room_number: string;
+    floor: string;
+  }[];
+}
+
 /**
  * Hotel API Slice
  * Extends the base API with hotel endpoints
@@ -302,6 +313,18 @@ export const hotelApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Registration', 'Hotel'],
     }),
+
+    /**
+     * Get Room Allotted Data Endpoint
+     * GET /hotels/room-allotted-data
+     */
+    getRoomAllottedData: builder.query<RoomAllottedData[], void>({
+      query: () => ({
+        url: '/hotels/room-allotted-data',
+        method: 'GET',
+      }),
+      providesTags: ['Registration', 'Hotel'],
+    }),
   }),
 });
 
@@ -317,6 +340,7 @@ export const {
   useUnassignRoomMutation,
   useGenerateHotelCredentialsMutation,
   useHotelCheckInMutation,
+  useGetRoomAllottedDataQuery,
 } = hotelApi;
 
 /**

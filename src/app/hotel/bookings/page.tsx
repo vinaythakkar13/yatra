@@ -19,32 +19,32 @@ import {
 } from 'lucide-react';
 import { userStorage } from '@/utils/storage';
 import LogoutIcon from '@/components/ui/svg/LogoutIcon';
+import { toast } from 'react-toastify';
+import { useGetRoomAllottedDataQuery, RoomAllottedData } from '@/services/hotelApi';
 
-// Dummy data for the initial implementation
+// Dummy data for the event info (until API provides it)
 const DUMMY_EVENT = {
     name: "Chardham Yatra 2026",
     dateRange: "May 15 - June 01",
-    totalGuests: 250,
-    checkedIn: 142
 };
 
-const DUMMY_GUESTS = [
-    { id: '1', pnr: 'PNR789234', name: 'Alok Sharma', status: 'checked_in', initials: 'AS', avatarColor: 'bg-blue-50 text-blue-600' },
-    { id: '2', pnr: 'PNR123456', name: 'Rajesh Kumar', status: 'pending', initials: 'RK', avatarColor: 'bg-slate-100 text-slate-600' },
-    { id: '3', pnr: 'PNR456789', name: 'Suresh Patel', status: 'pending', initials: 'SP', avatarColor: 'bg-slate-900 text-white' },
-    { id: '4', pnr: 'PNR334455', name: 'Meera Iyer', status: 'checked_in', initials: 'MI', avatarColor: 'bg-blue-50 text-blue-600' },
-    { id: '5', pnr: 'PNR102938', name: 'Vikram Singh', status: 'checked_in', initials: 'VS', avatarColor: 'bg-blue-50 text-blue-600' },
-    { id: '6', pnr: 'PNR556677', name: 'Anita Desai', status: 'pending', initials: 'AD', avatarColor: 'bg-slate-100 text-slate-600' },
-    { id: '7', pnr: 'PNR882233', name: 'Rohan Mehta', status: 'checked_in', initials: 'RM', avatarColor: 'bg-blue-50 text-blue-600' },
-    { id: '8', pnr: 'PNR190011', name: 'Sita Ram', status: 'checked_in', initials: 'SR', avatarColor: 'bg-blue-50 text-blue-600' },
-    { id: '9', pnr: 'PNR221144', name: 'Priya Verma', status: 'pending', initials: 'PV', avatarColor: 'bg-slate-100 text-slate-600' },
-];
+interface GuestCardProps {
+    guest: RoomAllottedData;
+    index: number;
+    isSelected: boolean;
+    isSelectionMode: boolean;
+    onToggleSelect: (id: string) => void;
+}
 
 export default function HotelBookings() {
     const router = useRouter();
     const [searchTerm, setSearchTerm] = useState('');
     const [activeFilter, setActiveFilter] = useState<'all' | 'pending' | 'arrived'>('all');
-    const [hotelUser, setHotelUser] = useState<any>(null);
+    const [hotelUser, setHotelUser] = useState<any>(null); // TODO: Replace any with proper user type
+    const [selectedGuests, setSelectedGuests] = useState<string[]>([]);
+    const [isSelectionMode, setIsSelectionMode] = useState(false);
+
+    const { data: guests = [], isLoading, error } = useGetRoomAllottedDataQuery();
 
     useEffect(() => {
         const user = userStorage.getUser();
@@ -54,14 +54,41 @@ export default function HotelBookings() {
         setHotelUser(user);
     }, [router]);
 
-    const filteredGuests = DUMMY_GUESTS.filter(guest => {
+    const filteredGuests = guests.filter((guest: RoomAllottedData) => {
         const matchesSearch = guest.pnr.toLowerCase().includes(searchTerm.toLowerCase()) ||
             guest.name.toLowerCase().includes(searchTerm.toLowerCase());
 
-        const rtkStatus = guest.status === 'checked_in' ? 'arrived' : 'pending';
-        const matchesFilter = activeFilter === 'all' || rtkStatus === activeFilter;
+        // For now status is simulated as arrived if there are assigned rooms, otherwise pending
+        // Real status should come from registration_status or similar if needed
+        const status = guest.assigned_rooms.length > 0 ? 'arrived' : 'pending';
+        const matchesFilter = activeFilter === 'all' || status === activeFilter;
         return matchesSearch && matchesFilter;
     });
+
+    const toggleGuestSelection = (id: string) => {
+        setSelectedGuests(prev =>
+            prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+        );
+    };
+
+    const handleBulkCheckIn = () => {
+        console.log('Bulk check-in for:', selectedGuests);
+        // Simulation: Update status in local storage or state
+        toast.success(`Successfully checked in ${selectedGuests.length} guests!`);
+        setSelectedGuests([]);
+        setIsSelectionMode(false);
+    };
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-12 h-12 border-4 border-[#0F4C5C]/20 border-t-[#0F4C5C] rounded-full animate-spin"></div>
+                    <p className="font-bold text-slate-500">Loading guests...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-[#F8FAFC] flex flex-col">
@@ -88,7 +115,14 @@ export default function HotelBookings() {
                 </div>
 
                 <div className="flex items-center gap-4">
-                    {/* add logout button with red variant */}
+                    <button
+                        onClick={() => setIsSelectionMode(!isSelectionMode)}
+                        className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${isSelectionMode
+                            ? 'bg-[#0F4C5C] text-white'
+                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                    >
+                        {isSelectionMode ? 'Cancel Selection' : 'Bulk Select'}
+                    </button>
                     <button
                         onClick={() => {
                             userStorage.removeUser();
@@ -96,7 +130,7 @@ export default function HotelBookings() {
                             router.push('/hotel/login');
                         }}
                         aria-label="Logout"
-                        className="bg-red-500/10 text-red-500 w-10 h-10 rounded-full flex items-center justify-center" >
+                        className="bg-red-500/10 text-red-500 w-10 h-10 rounded-full flex items-center justify-center transition-colors hover:bg-red-500/20" >
                         <LogoutIcon fill="currentColor" size={24} />
                     </button>
                 </div>
@@ -127,12 +161,14 @@ export default function HotelBookings() {
                     <div className="flex flex-col sm:flex-row items-center gap-6 w-full md:w-auto relative z-10">
                         <div className="flex items-center justify-center gap-10 w-full sm:w-auto py-4 sm:py-0 border-y sm:border-y-0 sm:border-l border-white/10 sm:pl-8">
                             <div className="text-center space-y-0.5 sm:space-y-1">
-                                <p className="text-[9px] sm:text-[10px] font-bold text-white/40 tracking-widest uppercase">Total Guests</p>
-                                <p className="text-xl sm:text-3xl font-black tabular-nums">{DUMMY_EVENT.totalGuests}</p>
+                                <p className="text-[9px] sm:text-[10px] font-bold text-white/40 tracking-widest uppercase">Total Registered</p>
+                                <p className="text-xl sm:text-3xl font-black tabular-nums">{guests.length}</p>
                             </div>
                             <div className="text-center space-y-0.5 sm:space-y-1">
-                                <p className="text-[9px] sm:text-[10px] font-bold text-white/40 tracking-widest uppercase">Checked In</p>
-                                <p className="text-xl sm:text-3xl font-black tabular-nums text-[#4ADE80] drop-shadow-[0_0_8px_rgba(74,222,128,0.3)]">{DUMMY_EVENT.checkedIn}</p>
+                                <p className="text-[9px] sm:text-[10px] font-bold text-white/40 tracking-widest uppercase">Arrived</p>
+                                <p className="text-xl sm:text-3xl font-black tabular-nums text-[#4ADE80] drop-shadow-[0_0_8px_rgba(74,222,128,0.3)]">
+                                    {guests.filter((g: RoomAllottedData) => g.assigned_rooms.length > 0).length}
+                                </p>
                             </div>
                         </div>
 
@@ -158,47 +194,18 @@ export default function HotelBookings() {
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">GUEST MANIFEST</h3>
-                        <div className="flex items-center gap-2 text-slate-400 text-[10px] font-bold">
-                            Showing {filteredGuests.length} of {DUMMY_EVENT.totalGuests}
-                            <MoreHorizontal className="w-4 h-4 cursor-pointer hover:text-slate-600 transition-colors" />
-                        </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-                        {filteredGuests.map((guest, index) => (
-                            <motion.div
-                                key={guest.id}
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ delay: index * 0.03 }}
-                                className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md hover:border-slate-200 transition-all cursor-pointer group flex flex-col justify-between gap-6"
-                            // onClick={() => router.push(`/hotel/verification/${guest.pnr}`)}
-                            >
-                                <div className="flex items-start justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm shadow-sm ${guest.avatarColor}`}>
-                                            {guest.initials}
-                                        </div>
-                                        <div className="space-y-0.5">
-                                            <h4 className="font-bold text-slate-800 group-hover:text-[#0F4C5C] transition-colors">{guest.name}</h4>
-                                            <p className="text-[10px] font-bold text-slate-400 tracking-wider">#{guest.pnr}</p>
-                                        </div>
-                                    </div>
-                                    <div className={`mt-1 p-1 rounded-full ${guest.status === 'checked_in' ? 'bg-green-50 text-green-500' : 'bg-orange-50 text-orange-500'}`}>
-                                        {guest.status === 'checked_in' ? <CheckCircle2 className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center justify-between">
-                                    <span className={`text-[10px] font-black uppercase tracking-widest ${guest.status === 'checked_in' ? 'text-[#34D399]' : 'text-orange-400'}`}>
-                                        {guest.status === 'checked_in' ? 'CHECKED IN' : 'PENDING'}
-                                    </span>
-                                    <span className="text-slate-200 flex items-center">
-                                        <div className="w-4 h-[2px] bg-slate-100 rounded-full"></div>
-                                        <div className="w-2 h-[2px] bg-slate-100 rounded-full ml-1"></div>
-                                    </span>
-                                </div>
-                            </motion.div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 xxl:grid-cols-5 gap-6">
+                        {filteredGuests.map((guest: RoomAllottedData, index: number) => (
+                            <GuestCard
+                                key={guest.registration_id}
+                                guest={guest}
+                                index={index}
+                                isSelected={selectedGuests.includes(guest.registration_id)}
+                                isSelectionMode={isSelectionMode}
+                                onToggleSelect={toggleGuestSelection}
+                            />
                         ))}
                     </div>
                 </div>
@@ -214,6 +221,120 @@ export default function HotelBookings() {
                 <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                 <Camera className="w-8 h-8 relative z-10" />
             </motion.button>
-        </div >
+
+            {/* Floating Bulk Action Bar */}
+            <AnimatePresence>
+                {isSelectionMode && selectedGuests.length > 0 && (
+                    <motion.div
+                        initial={{ y: 100, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: 100, opacity: 0 }}
+                        className="fixed bottom-28 left-1/2 -translate-x-1/2 z-[60] bg-white border border-slate-200 shadow-2xl rounded-2xl p-4 flex items-center gap-6 min-w-[300px]"
+                    >
+                        <div className="px-4 py-2 bg-slate-100 rounded-xl">
+                            <span className="text-xs font-black text-slate-500 uppercase tracking-widest">
+                                {selectedGuests.length} Guests Selected
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setSelectedGuests([])}
+                                className="px-4 py-2 text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                                Clear All
+                            </button>
+                            <button
+                                onClick={handleBulkCheckIn}
+                                className="px-6 py-2 bg-[#0F4C5C] text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-[#0F4C5C]/20"
+                            >
+                                Bulk Check-in
+                            </button>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+}
+
+function GuestCard({ guest, index, isSelected, isSelectionMode, onToggleSelect }: GuestCardProps) {
+    const initials = guest.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+    const hasRooms = guest.assigned_rooms.length > 0;
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.05 }}
+            onClick={() => isSelectionMode && onToggleSelect(guest.registration_id)}
+            className={`relative bg-white rounded-2xl p-5 border transition-all duration-300 group flex flex-col gap-6 shadow-sm overflow-hidden ${isSelected
+                ? 'border-[#0F4C5C] ring-2 ring-[#0F4C5C]/10 shadow-lg'
+                : 'border-slate-100 hover:border-[#0F4C5C]/30 hover:shadow-md'
+                } ${isSelectionMode ? 'cursor-pointer' : ''}`}
+        >
+            {/* Selection Overlay */}
+            {isSelectionMode && (
+                <div className={`absolute top-4 right-4 w-5 h-5 rounded-full border-2 transition-all flex items-center justify-center ${isSelected ? 'bg-[#0F4C5C] border-[#0F4C5C]' : 'border-slate-200 bg-white'
+                    }`}>
+                    {isSelected && <CheckCircle2 className="w-3 h-3 text-white" />}
+                </div>
+            )}
+
+            <div className="flex items-start justify-between">
+                <div className="flex items-center gap-4">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-sm shadow-inner transition-colors ${hasRooms ? 'bg-green-50 text-green-600' : 'bg-slate-50 text-slate-400'
+                        }`}>
+                        {initials}
+                    </div>
+                    <div className="space-y-1">
+                        <h4 className="font-black text-slate-800 tracking-tight leading-none group-hover:text-[#0F4C5C] transition-colors">
+                            {guest.name}
+                        </h4>
+                        <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">#{guest.pnr}</span>
+                            <span className="w-1 h-1 bg-slate-200 rounded-full"></span>
+                            <span className="text-[10px] font-bold text-slate-400 tracking-widest uppercase">{guest.number_of_traveller} PAXS</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-0.5">
+                        <span className="text-[9px] font-black text-slate-300 uppercase tracking-[0.15em]">Assigned Rooms</span>
+                        <div className="flex flex-wrap gap-1.5">
+                            {hasRooms ? (
+                                guest.assigned_rooms.map((room, idx) => (
+                                    <span key={idx} className="inline-flex items-center px-2 py-0.5 bg-slate-900 text-white text-[9px] font-black rounded-lg uppercase tracking-tighter">
+                                        R-{room.room_number} <span className="mx-1 text-white/30">|</span> F-{room.floor}
+                                    </span>
+                                ))
+                            ) : (
+                                <span className="text-[10px] font-bold text-orange-400/80 italic">Not Assigned</span>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                <div className="pt-2 border-t border-slate-50 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                        <div className={`w-2 h-2 rounded-full ${hasRooms ? 'bg-green-400 animate-pulse' : 'bg-orange-400'}`}></div>
+                        <span className={`text-[10px] font-black uppercase tracking-[0.1em] ${hasRooms ? 'text-green-500' : 'text-orange-400'}`}>
+                            {hasRooms ? 'ARRIVED' : 'PENDING'}
+                        </span>
+                    </div>
+                    <MoreHorizontal className="w-4 h-4 text-slate-300 hover:text-slate-500 transition-colors cursor-pointer" />
+                </div>
+            </div>
+
+            {/* Subtle background pattern for sacred feel */}
+            <div className="absolute -bottom-6 -right-6 w-16 h-16 opacity-[0.03] pointer-events-none">
+                <svg viewBox="0 0 100 100" fill="currentColor">
+                    <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="2" fill="none" />
+                    <circle cx=" 50" cy="50" r="30" stroke="currentColor" strokeWidth="2" fill="none" />
+                </svg>
+            </div>
+        </motion.div>
     );
 }
