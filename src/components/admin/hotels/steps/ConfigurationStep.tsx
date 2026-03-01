@@ -121,7 +121,7 @@ const ConfigurationStep: React.FC<ConfigurationStepProps> = ({
                                                 handleNumberOfRoomsChange(floorIndex, val);
                                             }}
                                             min={1}
-                                            max={30}
+                                            max={100}
                                             variant="admin"
                                         />
                                     )}

@@ -67,10 +67,12 @@ const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ control, register, errors
                                 { value: 'B', label: 'Type B (Standard)' },
                                 { value: 'C', label: 'Type C (Budget)' },
                                 { value: 'D', label: 'Type D (Dormitory)' },
+                                { value: 'TBS', label: 'TBS' },
                             ]}
                             value={field.value}
                             onChange={field.onChange}
                             variant="admin"
+                            searchable={false}
                         />
                     )}
                 />

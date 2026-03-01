@@ -271,8 +271,6 @@ export default function RegistrationForm({ initialPnr = '', yatraDetails, isAdmi
   // Fetch Indian states from API
   const { data: statesData, isLoading: isLoadingStates } = useGetIndianStatesQuery();
 
-  console.log("statesData", statesData);
-
   const { fields, append, remove } = useFieldArray({
     control,
     name: 'persons',

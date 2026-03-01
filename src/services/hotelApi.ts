@@ -16,7 +16,7 @@ import { Hotel, APIHotel } from '@/types';
 export interface CreateHotelRequest {
   name: string;
   address: string;
-  hotelType: 'A' | 'B' | 'C' | 'D';
+  hotelType: 'A' | 'B' | 'C' | 'D' | "TBS";
   managerName: string;
   managerContact: string;
   hasElevator: boolean;
@@ -78,7 +78,7 @@ export interface UpdateHotelRequest {
   yatra?: string;
   name?: string;
   address?: string;
-  hotelType?: 'A' | 'B' | 'C' | 'D';
+  hotelType?: 'A' | 'B' | 'C' | 'D' | "TBS";
   managerName?: string;
   managerContact?: string;
   hasElevator?: boolean;

@@ -72,7 +72,6 @@ export default function HotelBookings() {
     };
 
     const handleBulkCheckIn = () => {
-        console.log('Bulk check-in for:', selectedGuests);
         // Simulation: Update status in local storage or state
         toast.success(`Successfully checked in ${selectedGuests.length} guests!`);
         setSelectedGuests([]);

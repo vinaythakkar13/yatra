@@ -53,7 +53,7 @@ export interface Hotel {
   name: string;
   address?: string;
   mapLink?: string;
-  hotelType: 'A' | 'B' | 'C' | 'D';
+  hotelType: 'A' | 'B' | 'C' | 'D' | "TBS";
   managerName: string;
   managerContact: string;
   numberOfDays: number;

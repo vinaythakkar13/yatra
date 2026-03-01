@@ -46,7 +46,7 @@ export interface HotelFormData {
   address: string;
   mapLink?: string;
   distanceFromBhavan?: number;
-  hotelType: "A" | "B" | "C" | "D";
+  hotelType: "A" | "B" | "C" | "D" | "TBS";
   visitingCardImage?: File[];
   managerName: string;
   managerContact: string;

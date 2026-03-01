@@ -56,7 +56,7 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
     const [selectedYatraId, setSelectedYatraId] = useState<string | undefined>(undefined);
     const [hasElevatorOnly, setHasElevatorOnly] = useState(false);
     const [radiusSort, setRadiusSort] = useState<'asc' | 'desc'>('asc');
-    const [hotelType, setHotelType] = useState<'all' | 'A' | 'B' | 'C' | 'D'>('all');
+    const [hotelType, setHotelType] = useState<'all' | 'A' | 'B' | 'C' | 'D' | "TBS">('all');
     const [isSameHotel, setIsSameHotel] = useState(false);
     const [assignRoom, { isLoading: isAssigning }] = useAssignRoomMutation();
 
@@ -478,6 +478,7 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
                                             { label: 'Type B', value: 'B' },
                                             { label: 'Type C', value: 'C' },
                                             { label: 'Type D', value: 'D' },
+                                            { label: 'TBS', value: 'TBS' },
                                         ] as const).map((option) => (
                                             <label
                                                 key={option.value}
