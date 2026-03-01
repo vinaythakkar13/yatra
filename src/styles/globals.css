@@ -37,6 +37,11 @@
   html {
     scroll-behavior: smooth;
   }
+
+  /* Global fix for overlay elements in space-y containers */
+  .fixed, .absolute {
+    margin-top: 0 !important;
+  }
 }
 
 @layer components {

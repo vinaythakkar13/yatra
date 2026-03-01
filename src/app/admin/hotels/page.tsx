@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Hotel as HotelIcon, Search, X } from 'lucide-react';
+import { Plus, Hotel as HotelIcon, Search, X, FileText } from 'lucide-react';
 import { toast } from 'react-toastify';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import HotelStats from '@/components/admin/hotels/HotelStats';
 import HotelList from '@/components/admin/hotels/HotelList';
 import AddHotelModal, { HotelFormData } from '@/components/admin/hotels/AddHotelModal';
+import ExportReportModal from '@/components/admin/hotels/ExportReportModal';
 import {
   useCreateHotelMutation,
   useUpdateHotelMutation,
@@ -35,6 +36,7 @@ function HotelManagement() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
   const [editingHotel, setEditingHotel] = useState<any>(null);
   const [hotelToDelete, setHotelToDelete] = useState<any>(null);
   const [selectedYatraId, setSelectedYatraId] = useState<string | undefined>(undefined);
@@ -358,6 +360,15 @@ function HotelManagement() {
           <span className="text-sm md:text-base font-semibold">Add Hotel</span>
         </Button>
 
+        <Button
+          variant="outline"
+          onClick={() => setShowExportModal(true)}
+          className="w-full sm:w-auto border-heritage-primary text-heritage-primary hover:bg-heritage-highlight py-2.5 px-6"
+        >
+          <FileText className="w-5 h-5 mr-2" />
+          <span className="text-sm md:text-base font-semibold">Export Report</span>
+        </Button>
+
         {/* Search Section */}
         {hotels.length > 0 && (
           <div className="">
@@ -464,6 +475,13 @@ function HotelManagement() {
           </div>
         </div>
       </Modal>
+
+      {/* Export Report Modal */}
+      <ExportReportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        hotels={hotels}
+      />
     </div>
   );
 }

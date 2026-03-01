@@ -56,14 +56,14 @@ export default function Modal({
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
-      document.body.style.paddingRight = '0px'; // Prevent layout shift
+      document.body.style.height = '100%';
     } else {
-      document.body.style.overflow = 'unset';
-      document.body.style.paddingRight = '0px';
+      document.body.style.overflow = '';
+      document.body.style.height = '';
     }
     return () => {
-      document.body.style.overflow = 'unset';
-      document.body.style.paddingRight = '0px';
+      document.body.style.overflow = '';
+      document.body.style.height = '';
     };
   }, [isOpen]);
 
@@ -92,7 +92,7 @@ export default function Modal({
   // Modal content to be rendered via Portal
   const modalContent = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 !mt-0"
       role="dialog"
       aria-modal="true"
       aria-labelledby={title ? 'modal-title' : undefined}
