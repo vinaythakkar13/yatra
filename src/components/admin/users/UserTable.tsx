@@ -69,7 +69,7 @@ const TICKET_BADGE_CONFIG: Record<
 };
 
 
-const TicketBadge = ({ type }: { type: string }) => {
+export const TicketBadge = ({ type }: { type: string }) => {
     const badge = TICKET_BADGE_CONFIG[type];
     if (!badge) return null;
 

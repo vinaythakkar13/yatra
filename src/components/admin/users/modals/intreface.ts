@@ -130,7 +130,11 @@ export type AccentColor =
 export interface DemographyCard {
     title: string;
     description: string;
-    Icon: React.ElementType; // Changed from React.FC<React.SVGProps<SVGSVGElement>> to be more generic for Lucide icons
-    accent: AccentColor;
+    accent: string;
+    Icon: any;
     users: number;
+    sub?: {
+        males: number;
+        females: number;
+    };
 }

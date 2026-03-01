@@ -14,13 +14,15 @@ import {
     CheckCircle2,
     X,
     SlidersHorizontal,
-    ArrowUpDown
+    ArrowUpDown,
+    Search
 } from 'lucide-react';
 import { useGetAllHotelsQuery, useAssignRoomMutation, RoomAssignmentItem } from '@/services/hotelApi';
 import { yatraStorage } from '@/utils/storage';
 import { APIHotel as Hotel, APIHotelRoom as RoomEntry } from '@/types';
 import { Person, DemographyCard } from './intreface';
 import { Registration } from '@/services/registrationApi';
+import { TicketBadge } from '../UserTable';
 
 interface AssignRoomModalProps {
     isOpen: boolean;
@@ -58,6 +60,7 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
     const [radiusSort, setRadiusSort] = useState<'asc' | 'desc'>('asc');
     const [hotelType, setHotelType] = useState<'all' | 'A' | 'B' | 'C' | 'D' | "TBS">('all');
     const [isSameHotel, setIsSameHotel] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
     const [assignRoom, { isLoading: isAssigning }] = useAssignRoomMutation();
 
     useEffect(() => {
@@ -99,6 +102,13 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
             });
         }
 
+        if (searchTerm.trim()) {
+            const term = searchTerm.toLowerCase().trim();
+            result = result.filter((hotel: Hotel) =>
+                hotel.name.toLowerCase().includes(term)
+            );
+        }
+
         result.sort((a: Hotel, b: Hotel) => {
             const aDistance = Number(a.distance_from_bhavan ?? 0);
             const bDistance = Number(b.distance_from_bhavan ?? 0);
@@ -106,7 +116,7 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
         });
 
         return result;
-    }, [hotels, hasElevatorOnly, hotelType, radiusSort]);
+    }, [hotels, hasElevatorOnly, hotelType, radiusSort, searchTerm]);
 
     const selectedHotelData: Hotel | undefined = useMemo(
         () => hotels.find((hotel: Hotel) => hotel.id === selectedHotel),
@@ -134,15 +144,25 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
             description: 'Priority handling for senior travelers.',
             accent: 'blue',
             Icon: Users,
-            users: selectedUser?.persons?.filter((p) => (p?.age >= 60 && p?.gender === 'male')).length || 0,
-
+            users: selectedUser?.persons?.filter((p) => p?.age >= 60).length || 0,
+            sub: {
+                males: selectedUser?.persons?.filter((p) => p?.age >= 60 && p?.gender === 'male').length || 0,
+                females: selectedUser?.persons?.filter((p) => p?.age >= 60 && p?.gender === 'female').length || 0,
+            },
+        },
+        {
+            title: 'Males (40+)',
+            description: 'Middle-aged male travelers.',
+            accent: 'cyan',
+            Icon: User,
+            users: selectedUser?.persons?.filter((p) => p?.age >= 40 && p?.gender === 'male').length || 0,
         },
         {
             title: 'Females (40+)',
             description: 'Standard safety protocol groups.',
             accent: 'rose',
             Icon: User,
-            users: selectedUser?.persons?.filter((p) => (p?.age >= 40 && p?.gender === 'female')).length || 0,
+            users: selectedUser?.persons?.filter((p) => p?.age >= 40 && p?.gender === 'female').length || 0,
         },
         {
             title: 'Medical/Disability',
@@ -152,19 +172,12 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
             users: selectedUser?.persons?.filter((p) => p?.is_handicapped).length || 0,
         },
         {
-            title: 'Single Parents',
-            description: 'Guardians with children under 5.',
-            accent: 'amber',
-            Icon: UserCheck,
-            users: selectedUser?.persons?.filter((p) => p?.age < 5).length || 0,
-        },
-        {
             title: 'Total Travelers',
             description: 'Overall group size for room allocation.',
             accent: 'gray',
             Icon: Users,
             users: selectedUser ? selectedUser?.persons?.length : 0,
-        }
+        },
     ];
 
     const roomsByFloor = allRoomsForHotel.reduce((acc: Record<string, RoomEntry[]>, room: RoomEntry) => {
@@ -238,6 +251,10 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
                     <h2 className="text-xl font-bold text-gray-900">
                         {isReassigning ? 'Reassign Room' : 'Assign Room'}
+                        {/* ticket type here with badge */}
+                        <span className='pl-2'>
+                            {selectedUser?.ticket_type ? <TicketBadge type={selectedUser?.ticket_type} /> : 'N/A'}
+                        </span>
                     </h2>
                     <button
                         onClick={handleClose}
@@ -278,8 +295,8 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
                     </div>
                 </div>
 
-                {/* Content Area - Scrollable */}
-                <div className="flex-1 overflow-y-auto px-6 py-5">
+                {/* Content Area - Scrollable for Step 1, Fixed-Height for Step 2 */}
+                <div className={`flex-1 flex flex-col min-h-0 px-6 py-5 ${currentStep === 1 ? 'overflow-y-auto' : 'overflow-hidden'}`}>
                     {/* Step 1: Registration Details */}
                     {currentStep === 1 && (
                         <div className="space-y-5">
@@ -402,15 +419,16 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
 
                     {/* Step 2: Hotel Assignment */}
                     {currentStep === 2 && (
-                        <div className="space-y-4">
+                        <div className="space-y-4 flex flex-col h-full min-h-0">
                             {/* Demography */}
                             <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-                                {demographyCards.map(({ title, description, Icon, accent, users }) => {
+                                {demographyCards.map((card) => {
+                                    const { title, Icon, accent, users, sub } = card;
                                     if (users === 0) return null;
                                     return (
                                         <div
                                             key={title}
-                                            className={`rounded-xl border p-4 bg-white shadow-sm transition-all ${accent === 'blue'
+                                            className={`rounded-xl border p-4 bg-white shadow-sm transition-all flex flex-col justify-between ${accent === 'blue'
                                                 ? 'border-blue-200 hover:border-blue-400'
                                                 : accent === 'rose'
                                                     ? 'border-rose-200 hover:border-rose-400'
@@ -420,40 +438,77 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
                                                             'border-amber-200 hover:border-amber-400'
                                                 }`}
                                         >
-                                            <div className='flex justify-start gap-4'>
-                                                <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${accent === 'blue'
-                                                    ? 'bg-blue-50 text-blue-600'
-                                                    : accent === 'rose'
-                                                        ? 'bg-rose-50 text-rose-600'
-                                                        : accent === 'green'
-                                                            ? 'bg-emerald-50 text-emerald-600' :
-                                                            accent === 'gray' ? 'bg-gray-50 text-gray-600'
-                                                                : 'bg-amber-50 text-amber-600'
-                                                    }`}
-                                                >
-                                                    <Icon className="w-5 h-5" />
+                                            <div>
+                                                <div className='flex justify-between items-start mb-2'>
+                                                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${accent === 'blue'
+                                                        ? 'bg-blue-50 text-blue-600'
+                                                        : accent === 'rose'
+                                                            ? 'bg-rose-50 text-rose-600'
+                                                            : accent === 'green'
+                                                                ? 'bg-emerald-50 text-emerald-600' :
+                                                                accent === 'gray' ? 'bg-gray-50 text-gray-600'
+                                                                    : 'bg-amber-50 text-amber-600'
+                                                        }`}
+                                                    >
+                                                        <Icon className="w-5 h-5" />
+                                                    </div>
+                                                    <span className={`text-xl font-bold ${accent === 'blue' ? 'text-blue-700' : accent === 'rose' ? 'text-rose-700' : accent === 'green' ? 'text-emerald-700' : accent === 'gray' ? 'text-gray-700' : 'text-amber-700'}`}>
+                                                        {users}
+                                                    </span>
                                                 </div>
-                                                <span className={`inline-flex items-center justify-center text-base font-semibold rounded-sm ${accent === 'blue' ? 'text-blue-800' : accent === 'rose' ? 'text-rose-800' : accent === 'green' ? ' text-emerald-800' : accent === 'gray' ? 'text-gray-700' : 'text-amber-800'}`}>
-                                                    {accent === 'blue' ? 'Seniors' : accent === 'rose' ? 'Females' : accent === 'green' ? 'Medical/Disability' : accent === 'gray' ? 'Travellers' : 'Single Parents'}: {accent === 'blue' ? demographyCards[0].users : accent === 'rose' ? demographyCards[1].users : accent === 'green' ? demographyCards[2].users : accent === 'gray' ? demographyCards[4].users : demographyCards[3].users}
-                                                </span>
+                                                <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">{title}</p>
                                             </div>
-                                            <p className="mt-3 text-sm font-semibold text-gray-900">{title}</p>
-                                            {/* <p className="text-xs text-gray-500 mt-1">{description}</p> */}
+
+                                            {sub && (
+                                                <div className="mt-3 pt-2 border-t border-gray-100 flex items-center gap-3">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                                        <span className="text-[10px] font-bold text-blue-600">MEN: {sub.males}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-pink-500" />
+                                                        <span className="text-[10px] font-bold text-pink-600">WOMEN: {sub.females}</span>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     )
                                 })}
                             </div>
 
                             {/* Hotel Listing + Layout */}
-                            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+                            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 flex-1 min-h-0">
                                 {/* Left Panel */}
-                                <div className="lg:col-span-2 bg-white border border-gray-200 rounded-xl p-4">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <p className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                                <div className="lg:col-span-2 bg-white border border-gray-200 rounded-xl p-4 flex flex-col h-full min-h-0 overflow-hidden">
+                                    <div className="flex items-center justify-between mb-4 gap-3">
+                                        <p className="text-sm font-semibold text-gray-900 flex items-center gap-2 flex-shrink-0">
                                             <SlidersHorizontal className="w-4 h-4 text-orange-600" />
                                             Filters
                                         </p>
-                                        <span className="text-xs text-gray-400">{filteredHotels.length} hotels</span>
+
+                                        {/* Search Box */}
+                                        <div className="relative flex-1 max-w-full">
+                                            <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+                                                <Search className="h-3.5 w-3.5 text-gray-400" />
+                                            </div>
+                                            <input
+                                                type="text"
+                                                className="block w-full pl-8 pr-8 py-1.5 border border-gray-200 rounded-lg text-[11px] bg-gray-50 placeholder-gray-400 font-medium focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500 transition-all"
+                                                placeholder="Search hotel..."
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                            />
+                                            {searchTerm && (
+                                                <button
+                                                    onClick={() => setSearchTerm('')}
+                                                    className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                                                >
+                                                    <X className="h-3.5 w-3.5" />
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        <span className="text-xs text-gray-400 flex-shrink-0">{filteredHotels.length} hotels</span>
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-2 mb-3">
@@ -501,7 +556,7 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
                                     </div>
 
                                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Hotel Listing</p>
-                                    <div className="space-y-2 max-h-[360px] overflow-y-auto pr-2">
+                                    <div className="space-y-2 flex-1 overflow-y-auto pr-2">
                                         {filteredHotels.map((hotel: Hotel) => {
                                             const isSelected = selectedHotel === hotel.id;
                                             const typeLabel = (hotel.hotel_type || '').toString().toUpperCase();
@@ -533,7 +588,7 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
                                 </div>
 
                                 {/* Right Panel */}
-                                <div className="lg:col-span-3 bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl p-5 text-white">
+                                <div className="lg:col-span-3 bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl p-5 text-white overflow-y-auto h-full">
                                     {!selectedHotel && (
                                         <div className="h-full flex items-center justify-center text-center text-sm text-slate-300">
                                             Select a hotel on the left to preview its layout.
