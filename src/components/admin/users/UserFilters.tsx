@@ -26,6 +26,8 @@ interface UserFiltersProps {
     isRefreshing?: boolean;
     documentApprovalStatus: string;
     setDocumentApprovalStatus: (value: string) => void;
+    roomAssignmentStatus: string;
+    setRoomAssignmentStatus: (value: string) => void;
 }
 
 const UserFilters: React.FC<UserFiltersProps> = ({
@@ -48,8 +50,10 @@ const UserFilters: React.FC<UserFiltersProps> = ({
     isRefreshing = false,
     documentApprovalStatus,
     setDocumentApprovalStatus,
+    roomAssignmentStatus,
+    setRoomAssignmentStatus,
 }) => {
-    const hasActiveFilters = searchTerm || filterState || filterMode !== 'general' || filterDate || ticketType || documentApprovalStatus;
+    const hasActiveFilters = searchTerm || filterState || filterMode !== 'general' || filterDate || ticketType || documentApprovalStatus || roomAssignmentStatus;
 
     const filterModeOptions = [
         { value: 'all', label: 'All Registrations' },
@@ -76,15 +80,32 @@ const UserFilters: React.FC<UserFiltersProps> = ({
         { value: 'rejected', label: 'Rejected' },
     ];
 
+    const roomAssignmentOptions = [
+        { value: '', label: 'All Room Status' },
+        { value: 'assigned', label: 'Assigned' },
+        { value: 'non_assigned', label: 'Not Assigned' },
+    ];
+
     return (
         <Card className="mb-6 bg-white/70 backdrop-blur-md border-white/40 shadow-glass font-inter">
             <div className="flex flex-col gap-4">
                 {/* Top Row - New Registration Button */}
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center gap-3">
                     <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-heritage-textDark">
                             Total: {totalCount} registrations
                         </span>
+                    </div>
+
+                    {/* search box here */}
+                    <div className="flex-1 lg:min-w-[300px]">
+                        <Input
+                            placeholder="Search by name, PNR, or contact..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            leftIcon={<Search className="w-5 h-5 text-gray-400" />}
+                            className="h-11 bg-white/50 border-white/40 focus:bg-white transition-all focus:border-heritage-primary !focus:ring-0 focus:outline-none"
+                        />
                     </div>
 
                     {onNewRegistration && (
@@ -99,17 +120,9 @@ const UserFilters: React.FC<UserFiltersProps> = ({
                 </div>
 
                 {/* Filters Row */}
-                <div className="flex flex-col lg:flex-row gap-3 items-stretch">
+                <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:justify-end">
                     {/* Search Box */}
-                    <div className="flex-1 lg:min-w-[300px]">
-                        <Input
-                            placeholder="Search by name, PNR, or contact..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            leftIcon={<Search className="w-5 h-5 text-gray-400" />}
-                            className="h-11 bg-white/50 border-white/40 focus:bg-white transition-all"
-                        />
-                    </div>
+
 
                     {/* Registration Type Filter */}
                     <div className="flex-1 lg:max-w-[220px]">
@@ -164,6 +177,19 @@ const UserFilters: React.FC<UserFiltersProps> = ({
                         />
                     </div>
 
+                    {/* Room Assignment Filter */}
+                    <div className="flex-1 lg:max-w-[180px]">
+                        <SelectDropdown
+                            options={roomAssignmentOptions}
+                            value={roomAssignmentStatus}
+                            onChange={setRoomAssignmentStatus}
+                            placeholder="Room Assignment"
+                            searchable={false}
+                            clearable={false}
+                            className="h-11 border-heritage-gold/30 focus:border-heritage-primary focus:ring-2 focus:ring-heritage-primary/20 hover:border-heritage-gold/50"
+                        />
+                    </div>
+
                     {/* Refresh Button */}
                     <Button
                         variant="outline"
@@ -186,6 +212,7 @@ const UserFilters: React.FC<UserFiltersProps> = ({
                                 setFilterDate(null);
                                 setTicketType('');
                                 setDocumentApprovalStatus('');
+                                setRoomAssignmentStatus('');
                             }}
                             className="lg:min-w-[120px] h-11 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
                         >

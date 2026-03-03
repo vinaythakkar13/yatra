@@ -408,8 +408,9 @@ export const registrationApi = baseApi.injectEndpoints({
       ticketType?: string;
       state?: string;
       documentStatus?: string;
+      roomAssignmentStatus?: string;
     }>({
-      query: ({ yatraId, pnr, page, limit, search, filterMode, ticketType, state, documentStatus }) => {
+      query: ({ yatraId, pnr, page, limit, search, filterMode, ticketType, state, documentStatus, roomAssignmentStatus }) => {
         const params: Record<string, string | number> = {};
         if (yatraId) params.yatraId = yatraId;
         if (pnr) params.pnr = pnr;
@@ -420,6 +421,7 @@ export const registrationApi = baseApi.injectEndpoints({
         if (ticketType) params.ticketType = ticketType;
         if (state) params.state = state;
         if (documentStatus) params.documentStatus = documentStatus;
+        if (roomAssignmentStatus) params.roomAssignmentStatus = roomAssignmentStatus;
 
         return {
           url: '/registrations',

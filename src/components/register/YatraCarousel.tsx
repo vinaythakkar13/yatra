@@ -135,18 +135,20 @@ export default function YatraCarousel({ yatras }: YatraCarouselProps) {
 
                   {/* Action Buttons */}
                   <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 md:gap-6 justify-center items-center">
-                    <button
-                      onClick={() => {
-                        router.push(`/register?yatraId=${yatra.id}`);
-                      }}
-                      className="group relative bg-spiritual-zen-forest hover:bg-spiritual-zen-charcoal text-white rounded-full px-5 sm:px-6 md:px-10 lg:px-12 py-2 sm:py-3 md:py-4 uppercase tracking-wider text-xs md:text-sm lg:text-base font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden whitespace-nowrap border-2 border-spiritual-zen-forest w-full sm:w-auto"
-                    >
-                      <span className="relative z-10 flex items-center justify-center gap-2">
-                        <Ticket className="w-4 h-4 md:w-5 md:h-5" />
-                        Register Now
-                      </span>
-                      <span className="absolute inset-0 bg-gradient-to-r from-spiritual-zen-forest to-spiritual-zen-charcoal opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    </button>
+                    {isRegistrationOpen(yatra) && (
+                      <button
+                        onClick={() => {
+                          router.push(`/register?yatraId=${yatra.id}`);
+                        }}
+                        className="group relative bg-spiritual-zen-forest hover:bg-spiritual-zen-charcoal text-white rounded-full px-5 sm:px-6 md:px-10 lg:px-12 py-2 sm:py-3 md:py-4 uppercase tracking-wider text-xs md:text-sm lg:text-base font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden whitespace-nowrap border-2 border-spiritual-zen-forest w-full sm:w-auto"
+                      >
+                        <span className="relative z-10 flex items-center justify-center gap-2">
+                          <Ticket className="w-4 h-4 md:w-5 md:h-5" />
+                          Register Now
+                        </span>
+                        <span className="absolute inset-0 bg-gradient-to-r from-spiritual-zen-forest to-spiritual-zen-charcoal opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                      </button>
+                    )}
 
                     <button
                       onClick={() => router.push('/history')}

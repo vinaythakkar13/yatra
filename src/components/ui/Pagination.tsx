@@ -19,10 +19,32 @@ const Pagination: React.FC<PaginationProps> = ({
     itemsPerPage,
     className = '',
 }) => {
+    const [jumpPage, setJumpPage] = React.useState<string>(currentPage.toString());
+
+    // Update jumpPage when currentPage changes from outside
+    React.useEffect(() => {
+        setJumpPage(currentPage.toString());
+    }, [currentPage]);
+
     const startItem = (currentPage - 1) * itemsPerPage + 1;
     const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
     if (totalPages <= 1) return null;
+
+    const handleJump = () => {
+        const pageNum = parseInt(jumpPage);
+        if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= totalPages) {
+            onPageChange(pageNum);
+        } else {
+            setJumpPage(currentPage.toString());
+        }
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            handleJump();
+        }
+    };
 
     // Page builder: always show 1, last, current-1, current, current+1 with "..."
     const getPageNumbers = () => {
@@ -59,6 +81,23 @@ const Pagination: React.FC<PaginationProps> = ({
             </div>
 
             <div className="flex items-center gap-2">
+
+
+                {/* Jump to Page Input */}
+                <div className="flex items-center gap-2 mr-2 pr-3 border-r border-kesari-dark/20">
+                    <span className="text-xs font-semibold text-kesari-dark/80 whitespace-nowrap hidden md:inline">Jump to:</span>
+                    <input
+                        type="number"
+                        min="1"
+                        max={totalPages}
+                        value={jumpPage}
+                        onChange={(e) => setJumpPage(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        onBlur={handleJump}
+                        className="w-12 h-9 px-1.5 text-center text-sm font-bold bg-white/60 border-2 border-kesari-light/40 rounded-lg text-kesari-dark outline-none focus:border-kesari-dark focus:ring-1 focus:ring-kesari-dark shadow-sm transition-all duration-300 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                </div>
+
                 {/* Previous Button */}
                 <Button
                     variant="outline"
@@ -81,8 +120,8 @@ const Pagination: React.FC<PaginationProps> = ({
                                 key={page}
                                 onClick={() => onPageChange(page as number)}
                                 className={`h-9 w-9 flex items-center justify-center rounded-lg text-sm font-semibold transition-all duration-300 ease-in-out transform hover:scale-105 ${currentPage === page
-                                        ? 'bg-gradient-to-br from-kesari-light to-kesari-dark text-white shadow-lg shadow-kesari-dark/30 scale-105'
-                                        : 'bg-white/60 text-kesari-darker border-2 border-kesari-light/40 hover:bg-kesari-light/20 hover:border-kesari-dark hover:text-kesari-dark hover:shadow-md'
+                                    ? 'bg-gradient-to-br from-kesari-light to-kesari-dark text-white shadow-lg shadow-kesari-dark/30 scale-105'
+                                    : 'bg-white/60 text-kesari-darker border-2 border-kesari-light/40 hover:bg-kesari-light/20 hover:border-kesari-dark hover:text-kesari-dark hover:shadow-md'
                                     }`}
                             >
                                 {page}
@@ -100,6 +139,7 @@ const Pagination: React.FC<PaginationProps> = ({
                 >
                     <ChevronRight className="w-4 h-4" />
                 </Button>
+
             </div>
         </div>
     );

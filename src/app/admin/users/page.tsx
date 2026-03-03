@@ -82,6 +82,7 @@ function UserManagement() {
   const [filterDate, setFilterDate] = useState<Date | null>(null);
   const [ticketType, setTicketType] = useState('');
   const [documentApprovalStatus, setDocumentApprovalStatus] = useState('');
+  const [roomAssignmentStatus, setRoomAssignmentStatus] = useState('');
 
 
   // Pagination State (must be before API query)
@@ -92,7 +93,7 @@ function UserManagement() {
   // Reset pagination when searching, yatra changes, or filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedYatraId, debouncedSearchTerm, filterMode, filterState, filterDate, ticketType, documentApprovalStatus]);
+  }, [selectedYatraId, debouncedSearchTerm, filterMode, filterState, filterDate, ticketType, documentApprovalStatus, roomAssignmentStatus]);
 
   // Fetch registrations from API with pagination, search, and filters
   const {
@@ -111,7 +112,8 @@ function UserManagement() {
       filterMode: filterMode,
       ticketType: ticketType,
       state: filterState,
-      documentStatus: documentApprovalStatus
+      documentStatus: documentApprovalStatus,
+      roomAssignmentStatus: roomAssignmentStatus
     },
     { skip: !selectedYatraId } // Skip query if no yatraId
   );
@@ -525,6 +527,8 @@ function UserManagement() {
         isRefreshing={isRefreshing}
         documentApprovalStatus={documentApprovalStatus}
         setDocumentApprovalStatus={setDocumentApprovalStatus}
+        roomAssignmentStatus={roomAssignmentStatus}
+        setRoomAssignmentStatus={setRoomAssignmentStatus}
       />
 
       {/* Users Table */}
