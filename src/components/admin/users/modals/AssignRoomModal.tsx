@@ -650,54 +650,64 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
                                                 </div>
                                             ) : (
                                                 <div className="space-y-3">
-                                                    {sortedFloors.map((floor) => {
-                                                        return (
-                                                            <div key={floor} className="flex items-start gap-3">
-                                                                <div className="text-xs font-semibold text-slate-300 w-12 pt-1">FLR {floor}</div>
-                                                                <div className="grid grid-cols-5 gap-3 flex-1">
-                                                                    {roomsByFloor[floor]
-                                                                        .sort((a, b) => {
-                                                                            const ra = Number(a.room_number);
-                                                                            const rb = Number(b.room_number);
-                                                                            if (!isNaN(ra) && !isNaN(rb)) return ra - rb;
-                                                                            return a.room_number.localeCompare(b.room_number);
-                                                                        })
-                                                                        .map((room: RoomEntry) => {
-                                                                            const isRoomSelected = selectedRooms.includes(room.room_number);
-                                                                            const isAlreadyAssigned = userAssignedRoomNumbers.includes(room.room_number);
-                                                                            const isOccupied = room.is_occupied;
+                                                    {sortedFloors.map((floor) => (
+                                                        <div key={floor} className="flex items-start gap-3">
+                                                            <div className="text-xs font-semibold text-slate-300 w-12 pt-1">FLR {floor}</div>
+                                                            <div className="grid grid-cols-5 gap-3 flex-1">
+                                                                {roomsByFloor[floor]
+                                                                    .sort((a, b) => {
+                                                                        const ra = Number(a.room_number);
+                                                                        const rb = Number(b.room_number);
+                                                                        if (!isNaN(ra) && !isNaN(rb)) return ra - rb;
+                                                                        return a.room_number.localeCompare(b.room_number);
+                                                                    })
+                                                                    .map((room: RoomEntry) => {
+                                                                        const isRoomSelected = selectedRooms.includes(room.room_number);
+                                                                        const isAlreadyAssigned = userAssignedRoomNumbers.includes(room.room_number);
+                                                                        const isOccupied = room.is_occupied;
 
-                                                                            return (
-                                                                                <button
-                                                                                    key={room.room_number}
-                                                                                    onClick={() => !isOccupied && handleRoomToggle(room.room_number)}
-                                                                                    disabled={isOccupied && !isAlreadyAssigned} // Allow toggle if it's already assigned (for re-selection)
-                                                                                    className={`rounded-lg border px-2 py-2.5 flex flex-col items-center justify-center gap-1 transition-all shadow-sm ${isAlreadyAssigned
-                                                                                        ? 'bg-orange-600 border-orange-500 text-white shadow-orange-900/40 transform scale-105 ring-2 ring-orange-400 ring-offset-2 ring-offset-slate-900'
-                                                                                        : isOccupied
-                                                                                            ? 'bg-red-900/20 border-red-800/30 text-red-300/60 cursor-not-allowed'
-                                                                                            : isRoomSelected
-                                                                                                ? 'bg-yellow-600 border-yellow-500 text-white shadow-yellow-900/20'
-                                                                                                : 'bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-750 hover:border-slate-500 cursor-pointer'
-                                                                                        }`}
-                                                                                >
-                                                                                    <div className="flex items-center gap-1">
-                                                                                        {isAlreadyAssigned && <CheckCircle2 className="w-3 h-3 text-orange-200" />}
-                                                                                        <div className="text-sm font-bold tracking-wide leading-none">{room.room_number}</div>
-                                                                                    </div>
-                                                                                    <div className={`flex items-center gap-1 text-[10px] uppercase font-semibold ${isAlreadyAssigned ? 'text-orange-100' : isOccupied ? 'text-red-400/50' : isRoomSelected ? 'text-amber-100' : 'text-slate-400'}`}>
+                                                                        return (
+                                                                            <button
+                                                                                key={room.room_number}
+                                                                                onClick={() => !isOccupied && handleRoomToggle(room.room_number)}
+                                                                                disabled={isOccupied && !isAlreadyAssigned}
+                                                                                className={`relative rounded-xl border p-2 flex flex-col items-center justify-center gap-1.5 transition-all duration-200 overflow-hidden group ${isAlreadyAssigned
+                                                                                    ? 'bg-gradient-to-br from-orange-500 to-orange-700 border-orange-400 text-white shadow-lg shadow-orange-950/50 scale-105 ring-2 ring-orange-400 ring-offset-2 ring-offset-slate-900 z-10'
+                                                                                    : isOccupied
+                                                                                        ? 'bg-slate-800/40 border-slate-700/50 text-slate-500 cursor-not-allowed grayscale'
+                                                                                        : isRoomSelected
+                                                                                            ? 'bg-gradient-to-br from-amber-400 to-amber-600 border-amber-300 text-white shadow-lg shadow-amber-950/40 ring-2 ring-amber-400/50 ring-offset-1 ring-offset-slate-900'
+                                                                                            : 'bg-slate-800/80 border-slate-700 text-slate-100 hover:bg-slate-700 hover:border-slate-500 cursor-pointer hover:-translate-y-0.5 shadow-sm'
+                                                                                    }`}
+                                                                            >
+                                                                                <div className="flex items-center gap-1.5">
+                                                                                    {isAlreadyAssigned && <CheckCircle2 className="w-3.5 h-3.5 text-orange-100" />}
+                                                                                    <span className="text-sm font-black tracking-wider leading-none">{room.room_number}</span>
+                                                                                </div>
+
+                                                                                <div className="flex flex-col items-center gap-0.5">
+                                                                                    <div className={`flex items-center gap-1 text-[11px] uppercase font-bold tracking-tight ${isAlreadyAssigned || isRoomSelected ? 'text-white/90' : isOccupied ? 'text-slate-600' : 'text-slate-400'}`}>
                                                                                         <BedIcon className="w-3 h-3" />
                                                                                         <span>{room?.number_of_beds || 0} Beds</span>
                                                                                     </div>
-                                                                                    {isAlreadyAssigned && (
-                                                                                        <div className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-orange-400 rounded-full border-2 border-slate-900 shadow-sm" />
-                                                                                    )}
-                                                                                </button>
-                                                                            );
-                                                                        })}
-                                                                </div>
-                                                            </div>)
-                                                    })}
+
+                                                                                    <div className={`text-[10px] font-black ${isAlreadyAssigned || isRoomSelected ? 'text-white' : isOccupied ? 'text-slate-600' : 'text-emerald-400'}`}>
+                                                                                        ₹{room.charge_per_day || 0}
+                                                                                    </div>
+                                                                                </div>
+
+                                                                                {isAlreadyAssigned && (
+                                                                                    <div className="absolute top-1 right-1 w-2 h-2 bg-white rounded-full animate-pulse shadow-sm shadow-white/50" />
+                                                                                )}
+                                                                                {!isOccupied && !isRoomSelected && !isAlreadyAssigned && (
+                                                                                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-slate-700/50 blur-md group-hover:bg-orange-500/20 transition-colors" />
+                                                                                )}
+                                                                            </button>
+                                                                        );
+                                                                    })}
+                                                            </div>
+                                                        </div>
+                                                    ))}
                                                 </div>
                                             )}
                                         </>

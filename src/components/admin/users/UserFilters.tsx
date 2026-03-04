@@ -64,9 +64,9 @@ const UserFilters: React.FC<UserFiltersProps> = ({
     const ticketTypeOptions = [
         { value: '', label: 'All Tickets' },
         { value: 'FLIGHT', label: 'FLIGHT' },
-        { value: 'FIRST AC', label: 'FIRST AC' },
-        { value: 'SECOND AC', label: 'SECOND AC' },
-        { value: 'THIRD AC', label: 'THIRD AC' },
+        { value: 'FIRST_AC', label: 'FIRST AC' },
+        { value: 'SECOND_AC', label: 'SECOND AC' },
+        { value: 'THIRD_AC', label: 'THIRD AC' },
         { value: 'SLEEPER', label: 'SLEEPER' },
         { value: 'WL', label: 'WL' },
         { value: 'GENERAL', label: 'GENERAL' },
