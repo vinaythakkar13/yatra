@@ -56,6 +56,7 @@ export interface HotelFormData {
   checkInTime: string;
   checkOutTime: string;
   hasElevator: boolean;
+  strict_rule: boolean;
   totalFloors: number;
   floors: FloorData[];
   advance_paid_amount?: number;
@@ -115,6 +116,7 @@ const AddHotelModal: React.FC<AddHotelModalProps> = ({
       checkInTime: "12:00",
       checkOutTime: "11:00",
       hasElevator: false,
+      strict_rule: false,
       totalFloors: 1,
       floors: [
         {
@@ -188,6 +190,7 @@ const AddHotelModal: React.FC<AddHotelModalProps> = ({
           checkInTime: initialData.checkInTime || initialData.check_in_time || "12:00",
           checkOutTime: initialData.checkOutTime || initialData.check_out_time || "11:00",
           hasElevator: Boolean(initialData.hasElevator || initialData.has_elevator),
+          strict_rule: Boolean(initialData.strict_rule || initialData.strictRule),
           totalFloors:
             initialData.totalFloors || initialData.total_floors || initialData.floors?.length || 1,
           floors:
@@ -248,6 +251,7 @@ const AddHotelModal: React.FC<AddHotelModalProps> = ({
           checkInTime: "12:00",
           checkOutTime: "11:00",
           hasElevator: false,
+          strict_rule: false,
           totalFloors: 1,
           floors: [
             {

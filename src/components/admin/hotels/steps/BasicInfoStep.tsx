@@ -152,9 +152,10 @@ const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ control, register, errors
                 </div>
             </div>
 
-            {/* Has Elevator Checkbox */}
-            <div className="flex-1">
-                <div className="mt-2 p-4 rounded-xl bg-heritage-highlight/20 border border-heritage-gold/20">
+            {/* Checkboxes Row */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Has Elevator Checkbox */}
+                <div className="p-4 rounded-xl bg-heritage-highlight/20 border border-heritage-gold/20">
                     <label className="flex items-center gap-3 cursor-pointer group">
                         <div className="relative">
                             <input
@@ -183,6 +184,40 @@ const BasicInfoStep: React.FC<BasicInfoStepProps> = ({ control, register, errors
                                 Has Elevator
                             </span>
                             <p className="text-xs text-heritage-text/60">Check if the hotel has elevator facilities</p>
+                        </div>
+                    </label>
+                </div>
+
+                {/* Strict Rules Checkbox */}
+                <div className="p-4 rounded-xl bg-heritage-highlight/20 border border-heritage-gold/20">
+                    <label className="flex items-center gap-3 cursor-pointer group">
+                        <div className="relative">
+                            <input
+                                type="checkbox"
+                                {...register('strict_rule')}
+                                className="peer sr-only"
+                            />
+                            <div className="w-6 h-6 rounded-md border-2 border-heritage-primary/40 bg-white transition-all duration-200 peer-checked:bg-gradient-to-br peer-checked:from-heritage-primary peer-checked:to-heritage-secondary peer-checked:border-heritage-primary group-hover:border-heritage-primary/60 peer-focus:ring-2 peer-focus:ring-heritage-primary/30 peer-focus:ring-offset-2">
+                                <svg
+                                    className={`w-full h-full text-white opacity-0 peer-checked:opacity-100 transition-all duration-200  ${watch('strict_rule') ? 'opacity-100 scale-100' : 'scale-0 opacity-0'}`}
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={3}
+                                        d="M5 13l4 4L19 7"
+                                    />
+                                </svg>
+                            </div>
+                        </div>
+                        <div className="flex-1">
+                            <span className="text-sm font-semibold text-heritage-textDark group-hover:text-heritage-primary transition-colors">
+                                Strict Rules
+                            </span>
+                            <p className="text-xs text-heritage-text/60">Enforce strict rules for this hotel</p>
                         </div>
                     </label>
                 </div>

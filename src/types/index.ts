@@ -62,6 +62,7 @@ export interface Hotel {
   checkInTime: string;
   checkOutTime: string;
   hasElevator: boolean;
+  strict_rule: boolean;
   totalFloors: number;
   floors: FloorConfig[];
   rooms: Room[];
@@ -163,6 +164,7 @@ export interface APIHotel {
   check_in_time: string;
   check_out_time: string;
   has_elevator: boolean;
+  strict_rule: boolean;
   total_floors: number;
   floors: APIFloor[];
   rooms: APIHotelRoom[];

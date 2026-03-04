@@ -86,6 +86,19 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
         }
     }, [isOpen, selectedUser, selectedHotel, setSelectedHotel]);
 
+    // Prevent background scroll when modal is open
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [isOpen]);
+
     const { data: hotels = [] } = useGetAllHotelsQuery(selectedYatraId);
 
     const filteredHotels = useMemo(() => {
@@ -572,11 +585,18 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
                                                 >
                                                     <div className="flex items-center justify-between">
                                                         <div>
-                                                            <p className="text-base font-bold text-gray-900">{hotel.name}</p>
+                                                            <div className="flex items-center gap-2">
+                                                                <p className="text-base font-bold text-gray-900">{hotel.name}</p>
+                                                                {hotel.strict_rule && (
+                                                                    <span className="px-1.5 py-0.5 bg-red-100 text-red-700 text-[9px] font-black uppercase tracking-tighter rounded border border-red-200">
+                                                                        Strict Rules
+                                                                    </span>
+                                                                )}
+                                                            </div>
                                                             <p className="text-xs text-gray-700 mt-0.5">
                                                                 {hotel.has_elevator ? 'Elevator' : 'No elevator'}
-                                                                {typeLabel ? `${typeLabel}` : ''}
-                                                                {distance !== undefined && distance !== null ? ` � ${distance} km` : ''}
+                                                                {typeLabel ? ` • ${typeLabel}` : ''}
+                                                                {distance !== undefined && distance !== null ? ` • ${distance} km` : ''}
                                                             </p>
                                                         </div>
                                                         <HotelIcon className={`w-4 h-4 ${isSelected ? 'text-orange-600' : 'text-gray-400'}`} />
@@ -599,9 +619,16 @@ const AssignRoomModal: React.FC<AssignRoomModalProps> = ({
                                         <>
                                             <div className="flex items-start justify-between mb-4">
                                                 <div>
-                                                    <p className="text-lg font-semibold">
-                                                        {selectedHotelData?.name || 'Selected Hotel'}
-                                                    </p>
+                                                    <div className="flex items-center gap-3">
+                                                        <p className="text-lg font-semibold">
+                                                            {selectedHotelData?.name || 'Selected Hotel'}
+                                                        </p>
+                                                        {selectedHotelData?.strict_rule && (
+                                                            <span className="px-2 py-0.5 bg-red-500/20 text-red-400 text-[10px] font-black uppercase tracking-wider rounded border border-red-500/40">
+                                                                Strict Rules
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                     <p className="text-xs text-slate-300 mt-0.5">{selectedHotelData?.address || 'No address available'}</p>
                                                 </div>
                                                 <div className="text-right">

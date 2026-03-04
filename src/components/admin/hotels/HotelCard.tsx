@@ -161,7 +161,7 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onEdit, onDelete }) => {
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2">
               {/* Stats Row with Pills */}
               <div className="flex flex-wrap items-center gap-2 border-r border-heritage-text/10 pr-3 last:border-0 last:pr-0">
 
@@ -232,6 +232,31 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onEdit, onDelete }) => {
                 </Button>
               </div>
             </div>
+          </div>
+
+          {/* Room Configuration Stats - Moved to new line */}
+          <div className="flex flex-wrap items-center gap-3 mb-4 px-1 pt-3 border-t border-heritage-gold/10">
+            <span className="text-[10px] font-bold text-heritage-text/40 uppercase tracking-widest mr-1">Configuration</span>
+            {Object.entries(
+              (hotel.rooms || []).reduce((acc: Record<number, number>, room) => {
+                const beds = room.number_of_beds || 0;
+                acc[beds] = (acc[beds] || 0) + 1;
+                return acc;
+              }, {})
+            )
+              .sort(([a], [b]) => Number(a) - Number(b))
+              .map(([beds, count]) => (
+                <div key={beds} className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl bg-heritage-gold/5 border border-heritage-gold/20 hover:border-heritage-gold/40 transition-colors">
+                  <div className="flex items-center gap-1 px-1.5 py-1 rounded-lg bg-heritage-highlight/40 text-heritage-primary">
+                    <BedDouble className="w-3.5 h-3.5" />
+                    <span className="text-xs font-bold">{beds}</span>
+                  </div>
+                  <div className="flex flex-col items-start">
+                    <span className="text-[8px] font-bold text-heritage-text/50 uppercase tracking-widest leading-none mb-0.5">Rooms</span>
+                    <span className="text-sm font-black text-heritage-textDark leading-none">{count}</span>
+                  </div>
+                </div>
+              ))}
           </div>
 
           {/* Secondary Info Row with Better Contrast */}

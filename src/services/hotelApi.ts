@@ -20,6 +20,7 @@ export interface CreateHotelRequest {
   managerName: string;
   managerContact: string;
   hasElevator: boolean;
+  strict_rule: boolean;
   // Optional fields that might be needed
   mapLink?: string;
   distanceFromBhavan?: number;
@@ -82,6 +83,7 @@ export interface UpdateHotelRequest {
   managerName?: string;
   managerContact?: string;
   hasElevator?: boolean;
+  strict_rule?: boolean;
   totalFloors?: number;
   floors?: FloorRequest[];
   rooms?: RoomRequest[];
@@ -361,6 +363,7 @@ export function transformHotelFormDataToApiPayload(
     managerName: formData.managerName,
     managerContact: formData.managerContact,
     hasElevator: formData.hasElevator,
+    strict_rule: formData.strict_rule,
     ...(yatraId && !isUpdate && { yatra: yatraId })
   };
 
