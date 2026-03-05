@@ -222,14 +222,14 @@ export interface Room {
 export interface YatraDetails {
   id: string;
   name: string;
-  bannerImage?: string;
+  banner_image?: string;
   description?: string;
-  startDate: string;
-  endDate: string;
-  registrationStartDate: string;
-  registrationEndDate: string;
-  createdAt: string;
-  updatedAt: string;
+  start_date: string;
+  end_date: string;
+  registration_start_date: string;
+  registration_end_date: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface RoomInfo {
@@ -580,7 +580,7 @@ export const registrationApi = baseApi.injectEndpoints({
       } => {
         if (response.success && response.data) {
           const { registration, persons, yatra, hotel, room, assignedRooms } = response.data;
-
+          console.log('Yatra: ', yatra)
           const frontendRegistration: FrontendRegistrationDetails = {
             id: registration.id,
             pnr: registration.pnr,
@@ -621,14 +621,14 @@ export const registrationApi = baseApi.injectEndpoints({
               yatra: {
                 id: yatra.id,
                 name: yatra.name,
-                bannerImage: yatra.bannerImage,
+                banner_image: yatra.banner_image,
                 description: yatra.description || undefined,
-                startDate: yatra.startDate,
-                endDate: yatra.endDate,
-                registrationStartDate: yatra.registrationStartDate,
-                registrationEndDate: yatra.registrationEndDate,
-                createdAt: yatra.createdAt,
-                updatedAt: yatra.updatedAt,
+                start_date: yatra.start_date,
+                end_date: yatra.end_date,
+                registration_start_date: yatra.registration_start_date,
+                registration_end_date: yatra.registration_end_date,
+                created_at: yatra.created_at,
+                updated_at: yatra.updated_at,
               },
               hotel: hotel,
               room: room,

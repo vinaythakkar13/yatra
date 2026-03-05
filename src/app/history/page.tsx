@@ -71,6 +71,8 @@ export default function HistoryPage() {
   const [fetchRegistration, { data, isLoading, isError, error }] = useLazyGetRegistrationByPnrQuery();
   const [cancelRegistration, { isLoading: isCancelling }] = useCancelRegistrationMutation();
 
+  console.log('data: ', data?.data?.yatra)
+
   const handlePnrChange = (value: string) => {
     setPnr(value);
     setPnrError('');
@@ -358,7 +360,7 @@ export default function HistoryPage() {
                         <p className="text-xs font-semibold text-spiritual-textLight uppercase tracking-wide mb-0.5">Yatra</p>
                         <p className="text-base font-bold text-spiritual-zen-charcoal truncate">{data.data.yatra.name}</p>
                         <p className="text-xs text-spiritual-textLight">
-                          {formatDate(data.data.yatra.startDate)} - {formatDate(data.data.yatra.endDate)}
+                          {formatDate(data.data.yatra.start_date)} - {formatDate(data.data.yatra.end_date)}
                         </p>
                       </div>
                     </div>
