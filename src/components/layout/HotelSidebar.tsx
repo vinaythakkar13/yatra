@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -24,6 +24,11 @@ export default function HotelSidebar() {
     const pathname = usePathname();
     const router = useRouter();
     const [isOpen, setIsOpen] = useState(false);
+    const [hotelUser, setHotelUser] = useState<any>(null);
+
+    useEffect(() => {
+        setHotelUser(userStorage.getUser());
+    }, []);
 
     const handleLogout = () => {
         userStorage.removeUser();
@@ -51,7 +56,7 @@ export default function HotelSidebar() {
                 {/* Logo Section */}
                 <div className="p-6 border-b border-white/10 flex items-center gap-4">
                     <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-[#0F4C5C] font-black shrink-0">
-                        G
+                        {hotelUser?.name?.charAt(0) || ''}
                     </div>
                     <span className={`font-black tracking-tighter text-xl whitespace-nowrap overflow-hidden transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'lg:opacity-0'}`}>
                         YATRA GUEST

@@ -13,16 +13,27 @@ export interface HotelLoginRequest {
     password: string;
 }
 
+export interface HotelUser {
+    id: string;
+    login_id: string;
+    name: string;
+    role?: string;
+    start_date?: string;
+    end_date?: string;
+    yatra?: {
+        id: string;
+        name: string;
+        start_date: string;
+        end_date: string;
+    };
+}
+
 export interface HotelLoginResponse {
     success: boolean;
     message: string;
     data: {
         token: string;
-        hotel: {
-            id: string;
-            name: string;
-            login_id: string;
-        }
+        hotel: HotelUser;
     };
 }
 
@@ -46,7 +57,7 @@ export const hotelAuthApi = baseApi.injectEndpoints({
                         // Store tokens and hotel user data
                         tokenStorage.setAccessToken(data.data.token);
                         // We use a custom "hotel" role for hotel staff
-                        userStorage.setUser({ ...data.data.hotel, role: 'hotel_staff' });
+                        userStorage.setUser({ ...data.data.hotel, role: data.data.hotel.role || 'hotel' });
                     }
                 } catch (error) {
                     console.error('[Hotel Auth API] Login failed:', error);

@@ -21,11 +21,7 @@ import LogoutIcon from '@/components/ui/svg/LogoutIcon';
 import { toast } from 'react-toastify';
 import { useGetRoomAllottedDataQuery, RoomAllottedData } from '@/services/hotelApi';
 
-// Dummy data for the event info (until API provides it)
-const DUMMY_EVENT = {
-    name: "Chardham Yatra 2026",
-    dateRange: "May 15 - June 01",
-};
+import { HotelUser } from '@/services/hotelAuthApi';
 
 interface GuestCardProps {
     guest: RoomAllottedData;
@@ -39,7 +35,7 @@ export default function HotelBookings() {
     const router = useRouter();
     const [searchTerm, setSearchTerm] = useState('');
     const [activeFilter, setActiveFilter] = useState<'all' | 'pending' | 'arrived'>('all');
-    const [hotelUser, setHotelUser] = useState<any>(null); // TODO: Replace any with proper user type
+    const [hotelUser, setHotelUser] = useState<HotelUser | null>(null);
     const [selectedGuests, setSelectedGuests] = useState<string[]>([]);
     const [isSelectionMode, setIsSelectionMode] = useState(false);
 
@@ -94,10 +90,7 @@ export default function HotelBookings() {
             <header className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between sticky top-0 z-50">
                 <div className="flex items-center flex-1">
                     <div className="flex items-center gap-2">
-                        <div className="w-10 h-10 bg-[#0F4C5C] rounded-lg flex items-center justify-center text-white font-bold text-xl">
-                            G
-                        </div>
-                        <span className="font-bold text-slate-800 text-lg hidden sm:block">Ganga View Grand</span>
+                        <span className="font-bold text-slate-800 text-lg hidden sm:block">{hotelUser?.name || 'Hotel Portal'}</span>
                     </div>
 
                     <div className="relative flex-1 max-w-2xl px-4">
@@ -139,31 +132,34 @@ export default function HotelBookings() {
 
                     <div className="flex flex-col md:flex-row items-center gap-4 sm:gap-6 w-full md:w-auto text-center md:text-left relative z-10">
                         <div className="space-y-0.5 sm:space-y-1">
-                            <h2 className="text-lg sm:text-2xl font-black tracking-tight drop-shadow-sm">Chardham Yatra 2026</h2>
+                            <h2 className="text-lg sm:text-2xl font-black tracking-tight drop-shadow-sm">{hotelUser?.yatra?.name || 'Chardham Yatra'}</h2>
                         </div>
 
-                        <div className="bg-white/5 backdrop-blur-md px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl flex items-center gap-2 text-xs sm:text-sm border border-white/10 shadow-inner">
-                            <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white/60" />
-                            <span className="font-semibold text-white/90">{DUMMY_EVENT.dateRange}</span>
-                        </div>
+                        {hotelUser?.yatra ? (
+                            <div className="bg-white/5 backdrop-blur-md px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl flex items-center gap-2 text-xs sm:text-sm border border-white/10 shadow-inner">
+                                <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white/60" />
+                                <span className="font-semibold text-white/90">
+                                    {new Date(hotelUser.yatra.start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(hotelUser.yatra.end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                </span>
+                            </div>
+                        ) : (
+                            <div className="bg-white/5 backdrop-blur-md px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl flex items-center gap-2 text-xs sm:text-sm border border-white/10 shadow-inner">
+                                <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white/60" />
+                                <span className="font-semibold text-white/90">Dates Not Available</span>
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex flex-col sm:flex-row items-center gap-6 w-full md:w-auto relative z-10">
                         <div className="flex items-center justify-center gap-10 w-full sm:w-auto py-4 sm:py-0 border-y sm:border-y-0 sm:border-l border-white/10 sm:pl-8">
                             <div className="text-center space-y-0.5 sm:space-y-1">
-                                <p className="text-[9px] sm:text-[10px] font-bold text-white/40 tracking-widest uppercase">Total Registered</p>
+                                <p className="text-[9px] sm:text-[10px] font-bold text-white/40 tracking-widest uppercase">Total Assignments</p>
                                 <p className="text-xl sm:text-3xl font-black tabular-nums">{guests.length}</p>
-                            </div>
-                            <div className="text-center space-y-0.5 sm:space-y-1">
-                                <p className="text-[9px] sm:text-[10px] font-bold text-white/40 tracking-widest uppercase">Arrived</p>
-                                <p className="text-xl sm:text-3xl font-black tabular-nums text-[#4ADE80] drop-shadow-[0_0_8px_rgba(74,222,128,0.3)]">
-                                    {guests.filter((g: RoomAllottedData) => g.assigned_rooms.length > 0).length}
-                                </p>
                             </div>
                         </div>
 
                         {/* Segmented Filter */}
-                        <div className="bg-black/20 backdrop-blur-md p-1 sm:p-1.5 rounded-2xl flex w-full sm:w-auto gap-1 border border-white/5 shadow-2xl">
+                        {/* <div className="bg-black/20 backdrop-blur-md p-1 sm:p-1.5 rounded-2xl flex w-full sm:w-auto gap-1 border border-white/5 shadow-2xl">
                             {(['all', 'pending', 'arrived'] as const).map((filter) => (
                                 <button
                                     key={filter}
@@ -176,7 +172,7 @@ export default function HotelBookings() {
                                     {filter}
                                 </button>
                             ))}
-                        </div>
+                        </div> */}
                     </div>
                 </motion.div>
 
@@ -285,9 +281,9 @@ function GuestCard({ guest, index, isSelected, isSelectionMode, onToggleSelect }
             {/* Name + meta */}
             <div>
                 <p className="text-base font-semibold text-slate-900 leading-snug truncate">{guest.name}</p>
-                <p className="text-xs text-slate-400 mt-1">
+                {/* <p className="text-xs text-slate-400 mt-1">
                     {guest.pnr} &nbsp;·&nbsp; {guest.number_of_traveller} guests
-                </p>
+                </p> */}
             </div>
 
             {/* Divider */}
