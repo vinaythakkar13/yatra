@@ -264,6 +264,7 @@ export interface RegistrationByPnrResponse {
       split_pnr?: string;
       original_pnr?: string;
       ticketType: string | null;
+      check_in_status: 'not_checked_in' | 'checked_in' | 'checked_out';
     };
     persons: Array<{
       id: string;
@@ -354,6 +355,7 @@ export interface FrontendRegistrationDetails {
     city: string;
     state: string;
   };
+  check_in_status: 'not_checked_in' | 'checked_in' | 'checked_out';
   arrivalDate: string;
   returnDate: string;
   ticketImages: string[];
@@ -580,7 +582,7 @@ export const registrationApi = baseApi.injectEndpoints({
       } => {
         if (response.success && response.data) {
           const { registration, persons, yatra, hotel, room, assignedRooms } = response.data;
-          console.log('Yatra: ', yatra)
+
           const frontendRegistration: FrontendRegistrationDetails = {
             id: registration.id,
             pnr: registration.pnr,
@@ -606,6 +608,7 @@ export const registrationApi = baseApi.injectEndpoints({
               : room ? [{ id: room.id, room_number: room.roomNumber, floor: room.floor }] : [],
             cancellationReason: registration.cancellation_reason || null,
             rejectionReason: registration.rejection_reason || null,
+            check_in_status: registration.check_in_status,
           };
 
           return {

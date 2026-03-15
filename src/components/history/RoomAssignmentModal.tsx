@@ -7,7 +7,7 @@ import { formatDate } from '@/utils/dateUtils';
 import { createPortal } from 'react-dom';
 
 interface RoomInfo {
-    id: string;
+    id?: string;
     room_number: string;
     floor: string;
 }
@@ -24,10 +24,12 @@ interface RoomAssignmentModalProps {
         mapLink?: string;
     } | null;
     registration: {
+        registrationId: string;
         pnr: string;
         arrivalDate: string;
         numberOfPersons: number;
         assignedRooms: RoomInfo[];
+        check_in_status: 'not_checked_in' | 'checked_in' | 'checked_out';
     } | null;
 }
 
@@ -155,7 +157,7 @@ const RoomAssignmentModal: React.FC<RoomAssignmentModalProps> = ({
                             <div className="space-y-1.5 mb-5">
                                 {registration.assignedRooms.map((room) => (
                                     <div
-                                        key={room.id}
+                                        key={room.id ?? room.room_number}
                                         className="bg-heritage-highlight/10 border border-heritage-highlight rounded-xl px-3 py-2 flex items-center justify-between"
                                     >
                                         <div className="flex items-center gap-3">
@@ -181,12 +183,18 @@ const RoomAssignmentModal: React.FC<RoomAssignmentModalProps> = ({
                                 <div className="relative flex-shrink-0">
                                     <div className="bg-white p-2.5 rounded-2xl border border-heritage-highlight shadow-sm">
                                         <QRCodeSVG
-                                            value={`PNR:${registration.pnr}|HOTEL:${hotel.name}`}
+                                            value={JSON.stringify({
+                                                origin: 'DGNST',
+                                                pnr: registration.pnr,
+                                                action: registration.check_in_status === 'checked_in' ? 'check_out' : 'check_in',
+                                            })}
                                             size={75}
                                             level="M"
                                         />
                                     </div>
-                                    <p className="text-[7px] font-black text-heritage-primary uppercase tracking-widest text-center mt-1.5">Check-In QR</p>
+                                    <p className="text-[7px] font-black text-heritage-primary uppercase tracking-widest text-center mt-1.5">
+                                        {registration.check_in_status === 'checked_in' ? 'Check-Out QR' : 'Check-In QR'}
+                                    </p>
                                 </div>
 
                                 {/* Info Right */}

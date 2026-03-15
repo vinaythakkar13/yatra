@@ -12,6 +12,7 @@ export interface DashboardStats {
     totalPeople: number;
     allottedRegistrations: number;
     pendingAllotment: number;
+    pendingPeoplestobealloted: number;
     cancelledRegistrations: number;
     availableRooms: number;
     availableBeds: number;

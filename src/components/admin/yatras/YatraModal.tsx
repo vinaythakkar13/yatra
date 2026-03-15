@@ -266,7 +266,7 @@ const YatraModal: React.FC<YatraModalProps> = ({ isOpen, onClose, onSubmit, edit
                                 if (!selectedDate) return 'Invalid start date';
                                 const today = new Date();
                                 today.setHours(0, 0, 0, 0);
-                                if (selectedDate < today) {
+                                if (!editingYatra && selectedDate < today) {
                                     return 'Start date cannot be in the past';
                                 }
                                 return true;
@@ -290,7 +290,7 @@ const YatraModal: React.FC<YatraModalProps> = ({ isOpen, onClose, onSubmit, edit
                                         setValue('startDate', '', { shouldValidate: true });
                                     }
                                 }}
-                                minDate={new Date()}
+                                minDate={editingYatra ? undefined : new Date()}
                                 required
                                 error={errors.startDate?.message}
                                 variant="admin"
@@ -310,7 +310,7 @@ const YatraModal: React.FC<YatraModalProps> = ({ isOpen, onClose, onSubmit, edit
                                 if (!selectedDate) return 'Invalid end date';
                                 const today = new Date();
                                 today.setHours(0, 0, 0, 0);
-                                if (selectedDate < today) {
+                                if (!editingYatra && selectedDate < today) {
                                     return 'End date cannot be in the past';
                                 }
                                 if (startDateValue) {
@@ -342,7 +342,7 @@ const YatraModal: React.FC<YatraModalProps> = ({ isOpen, onClose, onSubmit, edit
                                         setValue('endDate', '', { shouldValidate: true });
                                     }
                                 }}
-                                minDate={startDateValue ? safeParseDate(startDateValue) || new Date() : new Date()}
+                                minDate={startDateValue ? safeParseDate(startDateValue) || undefined : (editingYatra ? undefined : new Date())}
                                 required
                                 error={errors.endDate?.message}
                                 variant="admin"
@@ -366,7 +366,7 @@ const YatraModal: React.FC<YatraModalProps> = ({ isOpen, onClose, onSubmit, edit
                                     if (!selectedDate) return 'Invalid registration start date';
                                     const today = new Date();
                                     today.setHours(0, 0, 0, 0);
-                                    if (selectedDate < today) {
+                                    if (!editingYatra && selectedDate < today) {
                                         return 'Registration start date cannot be in the past';
                                     }
                                     return true;
@@ -390,7 +390,7 @@ const YatraModal: React.FC<YatraModalProps> = ({ isOpen, onClose, onSubmit, edit
                                             setValue('registerStartDate', '', { shouldValidate: true });
                                         }
                                     }}
-                                    minDate={new Date()}
+                                    minDate={editingYatra ? undefined : new Date()}
                                     maxDate={startDateValue ? (() => {
                                         const maxDate = safeParseDate(startDateValue);
                                         if (!maxDate) return undefined;
@@ -416,7 +416,7 @@ const YatraModal: React.FC<YatraModalProps> = ({ isOpen, onClose, onSubmit, edit
                                     if (!selectedDate) return 'Invalid registration end date';
                                     const today = new Date();
                                     today.setHours(0, 0, 0, 0);
-                                    if (selectedDate < today) {
+                                    if (!editingYatra && selectedDate < today) {
                                         return 'Registration end date cannot be in the past';
                                     }
                                     // Validate that register end date is after register start date
@@ -426,11 +426,11 @@ const YatraModal: React.FC<YatraModalProps> = ({ isOpen, onClose, onSubmit, edit
                                             return 'Registration end date must be after start date';
                                         }
                                     }
-                                    // Validate that register end date is before yatra start date
+                                    // Validate that register end date is on or before yatra start date
                                     if (startDateValue) {
                                         const yatraStartDate = safeParseDate(startDateValue);
-                                        if (yatraStartDate && selectedDate >= yatraStartDate) {
-                                            return 'Registration end date must be before yatra start date';
+                                        if (yatraStartDate && selectedDate > yatraStartDate) {
+                                            return 'Registration end date cannot be after yatra start date';
                                         }
                                     }
                                     return true;
@@ -454,11 +454,11 @@ const YatraModal: React.FC<YatraModalProps> = ({ isOpen, onClose, onSubmit, edit
                                             setValue('registerEndDate', '', { shouldValidate: true });
                                         }
                                     }}
-                                    minDate={registerStartDateValue ? safeParseDate(registerStartDateValue) || new Date() : new Date()}
+                                    minDate={registerStartDateValue ? safeParseDate(registerStartDateValue) || undefined : (editingYatra ? undefined : new Date())}
                                     maxDate={startDateValue ? (() => {
                                         const maxDate = safeParseDate(startDateValue);
                                         if (!maxDate) return undefined;
-                                        maxDate.setDate(maxDate.getDate() - 1);
+                                        maxDate.setDate(maxDate.getDate());
                                         return maxDate;
                                     })() : undefined}
                                     required

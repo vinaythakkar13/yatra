@@ -33,9 +33,10 @@ interface DashboardStatsProps {
     stats: {
         totalRegistrations: number;
         totalPeople: number;
+        cancelledRegistrations: number;
         allottedRegistrations: number;
         pendingAllotment: number;
-        cancelledRegistrations: number;
+        pendingPeoplestobealloted: number;
         availableRooms: number;
         availableBeds: number;
     };
@@ -60,6 +61,13 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, userRole }) => {
                 description="Count across all entries"
             />
             <StatCard
+                title="Cancelled"
+                value={stats?.cancelledRegistrations}
+                icon={UserMinus}
+                color="bg-heritage-secondary"
+                description="Withdrawals"
+            />
+            <StatCard
                 title="Allotted"
                 value={stats?.allottedRegistrations}
                 icon={CheckCircle2}
@@ -74,12 +82,13 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, userRole }) => {
                 description="Waitlisted for rooms"
             />
             <StatCard
-                title="Cancelled"
-                value={stats?.cancelledRegistrations}
-                icon={UserMinus}
-                color="bg-heritage-secondary"
-                description="Withdrawals"
+                title="Pending Waitlist"
+                value={stats?.pendingPeoplestobealloted}
+                icon={Users}
+                color="bg-heritage-maroon"
+                description="People to be allotted"
             />
+
             {userRole !== 'staff' && (
                 <>
                     <StatCard

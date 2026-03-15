@@ -248,36 +248,6 @@ function UserManagement() {
     });
   };
 
-  const handleBedClick = (roomNumber: string, bedIndex: number) => {
-    const bedKey = `${roomNumber}-${bedIndex}`;
-    const existingAssignment = bedAssignments[bedKey];
-
-    if (existingAssignment) {
-      setBedAssignments(prev => {
-        const updated = { ...prev };
-        delete updated[bedKey];
-        return updated;
-      });
-      toast.info(`Bed ${bedIndex + 1} unassigned`, { position: 'top-center' });
-    } else {
-      if (totalSelectedBeds >= totalPassengers) {
-        toast.warning(`All passengers already assigned. Unassign a bed first.`, { position: 'top-center' });
-        return;
-      }
-      setCurrentBedSelection({ roomNumber, bedIndex });
-      setShowPassengerModal(true);
-    }
-  };
-
-  const handlePassengerSelect = (passenger: any) => {
-    if (!currentBedSelection) return;
-    const bedKey = `${currentBedSelection.roomNumber}-${currentBedSelection.bedIndex}`;
-    setBedAssignments(prev => ({ ...prev, [bedKey]: passenger }));
-    setShowPassengerModal(false);
-    setCurrentBedSelection(null);
-    toast.success(`✓ ${passenger.name} assigned to Bed ${currentBedSelection.bedIndex + 1}`, { position: 'top-center' });
-  };
-
   const handleUnassignClick = (registration: any) => {
     setUserToUnassign(registration);
     setShowUnassignModal(true);

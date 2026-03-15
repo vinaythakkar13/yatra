@@ -89,124 +89,60 @@ const UserFilters: React.FC<UserFiltersProps> = ({
     ];
 
     return (
-        <Card className="mb-6 bg-white/70 backdrop-blur-md border-white/40 shadow-glass font-inter">
-            <div className="flex flex-col gap-4">
-                {/* Top Row - New Registration Button */}
-                <div className="flex justify-between items-center gap-3">
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-heritage-textDark">
-                            Total: {totalCount} registrations
-                        </span>
+        <Card className="mb-4 bg-white/80 backdrop-blur-md border border-heritage-text/10 shadow-sm rounded-xl font-inter !p-0">
+            {/* Top Toolbar */}
+            <div className="p-3 md:px-4 md:py-3 border-b border-heritage-text/10 bg-gradient-to-r from-heritage-highlight/20 to-transparent flex flex-wrap justify-between items-center gap-3">
+                <div className="flex items-center gap-3">
+                    <div className="bg-white p-1.5 text-heritage-primary rounded-lg shadow-sm border border-heritage-text/10 hidden sm:block">
+                        <UserPlus className="w-4 h-4 flex-shrink-0" />
                     </div>
-
-                    {/* search box here */}
-                    <div className="flex-1 lg:min-w-[300px]">
-                        <Input
-                            placeholder="Search by name, PNR, or contact..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            leftIcon={<Search className="w-5 h-5 text-gray-400" />}
-                            className="h-11 bg-white/50 border-white/40 focus:bg-white transition-all focus:border-heritage-primary !focus:ring-0 focus:outline-none"
-                        />
+                    <div>
+                        <h2 className="text-sm font-bold text-heritage-textDark leading-tight">Yatra Registrations</h2>
+                        <p className="text-[10px] font-medium text-heritage-text/60">Total: {totalCount} users</p>
                     </div>
-
-                    {onNewRegistration && (
-                        <Button
-                            onClick={onNewRegistration}
-                            className="bg-heritage-primary hover:bg-heritage-secondary text-white"
-                        >
-                            <UserPlus className="w-4 h-4 mr-2" />
-                            New Registration
-                        </Button>
-                    )}
                 </div>
 
-                {/* Filters Row */}
-                <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:justify-end">
-                    {/* Search Box */}
-
-
-                    {/* Registration Type Filter */}
-                    <div className="flex-1 lg:max-w-[220px]">
-                        <SelectDropdown
-                            options={filterModeOptions}
-                            value={filterMode}
-                            onChange={(val: any) => setFilterMode(val)}
-                            placeholder="Registration Type"
-                            searchable={false}
-                            clearable={false}
-                            className="h-11 border-heritage-gold/30 focus:border-heritage-primary focus:ring-2 focus:ring-heritage-primary/20 hover:border-heritage-gold/50"
+                <div className="flex items-center gap-2 flex-1 sm:flex-none justify-end">
+                    <div className="w-full sm:w-[250px] md:w-[300px] relative">
+                        <Input
+                            placeholder="Search name, PNR, contact..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            leftIcon={<Search className="w-4 h-4 text-heritage-text/40" />}
+                            className="h-9 text-sm bg-white border-heritage-text/10 focus:border-heritage-primary rounded-lg w-full shadow-sm"
                         />
                     </div>
-
-                    {/* State Filter */}
-                    <div className="flex-1 lg:max-w-[180px]">
-                        <SelectDropdown
-                            options={stateOptions}
-                            value={filterState}
-                            onChange={setFilterState}
-                            placeholder={isLoadingStates ? "Loading states..." : "State"}
-                            searchable
-                            clearable
-                            disabled={isLoadingStates}
-                            className="h-11"
-                        />
-                    </div>
-
-                    {/* Ticket Type Filter */}
-                    <div className="flex-1 lg:max-w-[180px]">
-                        <SelectDropdown
-                            options={ticketTypeOptions}
-                            value={ticketType}
-                            onChange={setTicketType}
-                            placeholder="Ticket Type"
-                            searchable={false}
-                            clearable={false}
-                            className="h-11 border-heritage-gold/30 focus:border-heritage-primary focus:ring-2 focus:ring-heritage-primary/20 hover:border-heritage-gold/50"
-                        />
-                    </div>
-
-                    {/* Document Approval Status Filter */}
-                    <div className="flex-1 lg:max-w-[180px]">
-                        <SelectDropdown
-                            options={documentApprovalStatusOptions}
-                            value={documentApprovalStatus}
-                            onChange={setDocumentApprovalStatus}
-                            placeholder="Document Status"
-                            searchable={false}
-                            clearable={false}
-                            className="h-11 border-heritage-gold/30 focus:border-heritage-primary focus:ring-2 focus:ring-heritage-primary/20 hover:border-heritage-gold/50"
-                        />
-                    </div>
-
-                    {/* Room Assignment Filter */}
-                    <div className="flex-1 lg:max-w-[180px]">
-                        <SelectDropdown
-                            options={roomAssignmentOptions}
-                            value={roomAssignmentStatus}
-                            onChange={setRoomAssignmentStatus}
-                            placeholder="Room Assignment"
-                            searchable={false}
-                            clearable={false}
-                            className="h-11 border-heritage-gold/30 focus:border-heritage-primary focus:ring-2 focus:ring-heritage-primary/20 hover:border-heritage-gold/50"
-                        />
-                    </div>
-
-                    {/* Refresh Button */}
-                    <Button
-                        variant="outline"
+                    <button
                         onClick={onRefresh}
                         title="Refresh Data"
                         disabled={isRefreshing}
-                        className="h-11 border-heritage-gold/30 text-heritage-primary hover:bg-heritage-primary/5 min-w-[44px] px-2 shadow-sm"
+                        className="h-9 w-9 border border-heritage-text/10 text-heritage-primary hover:bg-heritage-primary/5 rounded-lg flex-shrink-0 flex items-center justify-center bg-white shadow-sm transition-colors"
                     >
-                        <RefreshCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
-                    </Button>
-
-                    {/* Clear Filters Button */}
-                    {hasActiveFilters && (
+                        <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    </button>
+                    {onNewRegistration && (
                         <Button
-                            variant="outline"
+                            onClick={onNewRegistration}
+                            className="bg-heritage-primary hover:bg-heritage-secondary text-white h-9 px-3 rounded-lg shadow-sm text-sm font-semibold flex-shrink-0"
+                        >
+                            <UserPlus className="w-4 h-4 sm:mr-2" />
+                            <span className="hidden sm:inline">New Registration</span>
+                        </Button>
+                    )}
+                </div>
+            </div>
+
+            {/* Filters Area */}
+            <div className="p-3 md:px-4 md:py-3 bg-white/40">
+                <div className="flex items-center justify-between mb-2.5">
+                    <div className="flex items-center gap-2">
+                        <Filter className="w-3.5 h-3.5 text-heritage-primary/80" />
+                        <h3 className="text-[10px] font-bold text-heritage-text/60 uppercase tracking-widest">
+                            Refine Results {hasActiveFilters && <span className="text-heritage-primary ml-1">({filteredCount} matches)</span>}
+                        </h3>
+                    </div>
+                    {hasActiveFilters && (
+                        <button
                             onClick={() => {
                                 setSearchTerm('');
                                 setFilterState('');
@@ -216,25 +152,61 @@ const UserFilters: React.FC<UserFiltersProps> = ({
                                 setDocumentApprovalStatus('');
                                 setRoomAssignmentStatus('');
                             }}
-                            className="lg:min-w-[120px] h-11 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
+                            className="text-[10px] font-bold text-red-500 hover:text-red-600 transition-colors uppercase tracking-wider flex items-center gap-1 bg-red-50 px-2 py-0.5 rounded"
                         >
-                            <X className="w-4 h-4 mr-1" />
-                            Clear All
-                        </Button>
+                            <X className="w-3 h-3" /> Clear
+                        </button>
                     )}
                 </div>
 
-                {/* Results Count */}
-                {hasActiveFilters && (
-                    <div className="pt-3 border-t border-gray-200/50">
-                        <div className="flex items-center gap-2">
-                            <Filter className="w-4 h-4 text-heritage-primary" />
-                            <span className="text-sm font-medium text-heritage-text/70">
-                                Showing {filteredCount} of {totalCount} registrations
-                            </span>
-                        </div>
-                    </div>
-                )}
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-2.5">
+                    <SelectDropdown
+                        options={filterModeOptions}
+                        value={filterMode}
+                        onChange={(val: any) => setFilterMode(val)}
+                        placeholder="Registration Type"
+                        searchable={false}
+                        clearable={false}
+                        className="h-8 min-h-[32px] text-xs border-heritage-text/10 focus:border-heritage-primary focus:ring-1 hover:border-heritage-primary/30 rounded-lg shadow-sm bg-white"
+                    />
+                    <SelectDropdown
+                        options={stateOptions}
+                        value={filterState}
+                        onChange={setFilterState}
+                        placeholder={isLoadingStates ? "Loading states..." : "All States"}
+                        searchable
+                        clearable
+                        disabled={isLoadingStates}
+                        className="h-8 min-h-[32px] text-xs border-heritage-text/10 focus:border-heritage-primary focus:ring-1 hover:border-heritage-primary/30 rounded-lg shadow-sm bg-white"
+                    />
+                    <SelectDropdown
+                        options={ticketTypeOptions}
+                        value={ticketType}
+                        onChange={setTicketType}
+                        placeholder="All Tickets"
+                        searchable={false}
+                        clearable={false}
+                        className="h-8 min-h-[32px] text-xs border-heritage-text/10 focus:border-heritage-primary focus:ring-1 hover:border-heritage-primary/30 rounded-lg shadow-sm bg-white"
+                    />
+                    <SelectDropdown
+                        options={documentApprovalStatusOptions}
+                        value={documentApprovalStatus}
+                        onChange={setDocumentApprovalStatus}
+                        placeholder="Document Status"
+                        searchable={false}
+                        clearable={false}
+                        className="h-8 min-h-[32px] text-xs border-heritage-text/10 focus:border-heritage-primary focus:ring-1 hover:border-heritage-primary/30 rounded-lg shadow-sm bg-white"
+                    />
+                    <SelectDropdown
+                        options={roomAssignmentOptions}
+                        value={roomAssignmentStatus}
+                        onChange={setRoomAssignmentStatus}
+                        placeholder="Room Assignment"
+                        searchable={false}
+                        clearable={false}
+                        className="h-8 min-h-[32px] text-xs border-heritage-text/10 focus:border-heritage-primary focus:ring-1 hover:border-heritage-primary/30 rounded-lg shadow-sm bg-white"
+                    />
+                </div>
             </div>
         </Card>
     );

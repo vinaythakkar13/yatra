@@ -341,8 +341,6 @@ function HotelManagement() {
       </div>
 
 
-
-
       {/* Statistics Section */}
       <HotelStats
         hotels={hotels}

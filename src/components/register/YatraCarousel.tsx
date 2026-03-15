@@ -135,7 +135,7 @@ export default function YatraCarousel({ yatras }: YatraCarouselProps) {
 
                   {/* Action Buttons */}
                   <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 md:gap-6 justify-center items-center">
-                    {isRegistrationOpen(yatra) && (
+                    {!isRegistrationOpen(yatra) && (
                       <button
                         onClick={() => {
                           router.push(`/register?yatraId=${yatra.id}`);

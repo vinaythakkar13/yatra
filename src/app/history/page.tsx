@@ -71,8 +71,6 @@ export default function HistoryPage() {
   const [fetchRegistration, { data, isLoading, isError, error }] = useLazyGetRegistrationByPnrQuery();
   const [cancelRegistration, { isLoading: isCancelling }] = useCancelRegistrationMutation();
 
-  console.log('data: ', data?.data?.yatra)
-
   const handlePnrChange = (value: string) => {
     setPnr(value);
     setPnrError('');
@@ -268,21 +266,16 @@ export default function HistoryPage() {
                   {/* Left Accent Bar */}
                   <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-12 bg-sky-500 rounded-r-lg " />
 
-                  <div className="flex items-center justify-between w-full pl-2 w-full">
-                    <div className="flex items-center gap-4">
+                  <div className="flex flex-col md:flex-row items-center justify-between w-full pl-2 w-full gap-2">
+                    <div className="flex flex-col md:flex-row items-center gap-4">
                       {/* Icon Container */}
-                      <div className="w-11 h-11 bg-sky-50 rounded-full flex items-center justify-center">
-                        <Key className="w-5 h-5 text-sky-600" />
-                      </div>
-
-                      {/* Title & Badge */}
-                      <div className="flex items-center gap-3">
+                      <div className='flex flex-row items-center gap-3'>
+                        <div className="w-11 h-11 bg-sky-50 rounded-full flex items-center justify-center">
+                          <Key className="w-5 h-5 text-sky-600" />
+                        </div>
                         <h3 className="text-[17px] font-bold text-slate-800">
                           Room Assignment Confirmed
                         </h3>
-                        <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-700 text-[11px] font-bold rounded-full">
-                          Success
-                        </span>
                       </div>
                     </div>
 
@@ -822,7 +815,14 @@ export default function HistoryPage() {
           isOpen={showRoomModal}
           onClose={() => setShowRoomModal(false)}
           hotel={data?.data?.hotel || null}
-          registration={data?.data?.registration || null}
+          registration={data?.data?.registration ? {
+            registrationId: data.data.registration.id,
+            pnr: data.data.registration.pnr,
+            arrivalDate: data.data.registration.arrivalDate,
+            numberOfPersons: data.data.registration.numberOfPersons,
+            assignedRooms: data.data.assignedRooms || [],
+            check_in_status: data.data.registration.check_in_status ?? 'not_checked_in',
+          } : null}
         />
       </div>
     </div>

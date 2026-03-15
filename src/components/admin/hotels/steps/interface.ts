@@ -38,6 +38,8 @@ export interface HotelRoom {
     assigned_to_user_id: string | null;
     created_at: string;
     updated_at: string;
+    pnr_no: string | null;
+    assigned_user_name: string | null;
 }
 
 export interface Hotel {

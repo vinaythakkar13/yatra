@@ -150,6 +150,7 @@ export interface RoomAllottedData {
   pnr: string;
   name: string;
   number_of_traveller: number;
+  check_in_status?: 'checked_in' | 'checked_out' | 'not_checked_in';
   assigned_rooms: {
     room_number: string;
     floor: string;
@@ -317,6 +318,32 @@ export const hotelApi = baseApi.injectEndpoints({
     }),
 
     /**
+     * Hotel Check-Out Endpoint
+     * POST /hotels/check-out/:registrationId
+     */
+    hotelCheckOut: builder.mutation<{ success: boolean; message: string }, string>({
+      query: (registrationId) => ({
+        url: `/hotels/check-out/${registrationId}`,
+        method: 'POST',
+      }),
+      invalidatesTags: ['Registration', 'Hotel'],
+    }),
+
+    /**
+     * Hotel Check-In / Check-Out via QR Endpoint
+     * POST /hotels/check-in-out
+     * Body: { pnr, type: 'check_in' | 'check_out' }
+     */
+    hotelCheckInOut: builder.mutation<{ success: boolean; message: string }, { pnr: string; type: 'check_in' | 'check_out' }>({
+      query: (body) => ({
+        url: '/hotels/check-in-out',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Registration', 'Hotel'],
+    }),
+
+    /**
      * Get Room Allotted Data Endpoint
      * GET /hotels/room-allotted-data
      */
@@ -325,6 +352,9 @@ export const hotelApi = baseApi.injectEndpoints({
         url: '/hotels/room-allotted-data',
         method: 'GET',
       }),
+      transformResponse: (response: { success: boolean; message: string; data: RoomAllottedData[] }) => {
+        return response?.data || [];
+      },
       providesTags: ['Registration', 'Hotel'],
     }),
   }),
@@ -342,6 +372,8 @@ export const {
   useUnassignRoomMutation,
   useGenerateHotelCredentialsMutation,
   useHotelCheckInMutation,
+  useHotelCheckOutMutation,
+  useHotelCheckInOutMutation,
   useGetRoomAllottedDataQuery,
 } = hotelApi;
 

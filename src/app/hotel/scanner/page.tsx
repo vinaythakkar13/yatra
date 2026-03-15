@@ -5,23 +5,17 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     X,
-    Trash2,
-    Image as ImageIcon,
     Keyboard,
     Loader2,
-    AlertCircle,
     RefreshCw,
     Zap,
     ZapOff,
     Upload,
-    RotateCcw,
     SwitchCamera
 } from 'lucide-react';
 import { Html5Qrcode, Html5QrcodeScannerState } from 'html5-qrcode';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
 import { toast } from 'react-toastify';
-import { useLazyGetRegistrationByPnrQuery } from '@/services/registrationApi';
+import { useHotelCheckInOutMutation } from '@/services/hotelApi';
 
 export default function QRScanner() {
     const router = useRouter();
@@ -35,7 +29,7 @@ export default function QRScanner() {
     const [availableCameras, setAvailableCameras] = useState<{ id: string; label: string }[]>([]);
     const [currentCameraIndex, setCurrentCameraIndex] = useState(0);
 
-    const [verifyPnr] = useLazyGetRegistrationByPnrQuery();
+    const [checkInOut] = useHotelCheckInOutMutation();
 
     const scannerRef = useRef<Html5Qrcode | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -244,21 +238,51 @@ export default function QRScanner() {
 
     const onScanFailure = () => { /* silent */ };
 
-    const processScanResult = async (pnr: string) => {
+    const processScanResult = async (decodedText: string) => {
         if (isProcessing) return;
         setIsProcessing(true);
+
+        // Stop the camera immediately so the user stops scanning
+        await stopScannerCleanly();
+
         try {
-            const result = await verifyPnr(pnr.trim()).unwrap();
-            if (result.success) {
-                await stopScannerCleanly(); // ← important: release camera before navigation
-                router.push(`/hotel/verification/${pnr.trim()}`);
+            // ── Try to parse structured QR payload ──────────────────
+            let parsed: { origin?: string; pnr: string; action: 'check_in' | 'check_out' } | null = null;
+            try {
+                const obj = JSON.parse(decodedText.trim());
+                if (obj?.pnr && obj?.action) parsed = obj;
+            } catch {
+                // not JSON
+            }
+
+            if (parsed) {
+                // ── Validate origin before calling API ───────────────
+                if (parsed.origin !== 'DGNST') {
+                    toast.error('Incorrect QR Code', { position: 'top-center' });
+                    return;
+                }
+
+                const { pnr, action } = parsed;
+                const result = await checkInOut({ pnr, type: action }).unwrap();
+
+                if (result.success) {
+                    toast.success(
+                        result.message,
+                        { position: 'top-center' }
+                    );
+                    router.push('/hotel/bookings');
+                } else {
+                    toast.error(result.message || 'Action failed');
+                }
             } else {
-                toast.error("Invalid QR or PNR not found");
+                // ── Non-JSON / plain text — invalid for direct action ─
+                toast.error('Incorrect QR Code', { position: 'top-center' });
             }
         } catch (err: any) {
-            toast.error(err?.data?.message || "Verification failed");
+            toast.error(err?.data?.message || err?.message || 'Scan failed. Please try again.', { position: 'top-center' });
         } finally {
             setIsProcessing(false);
+            router.push('/hotel/bookings');
         }
     };
 
@@ -353,7 +377,53 @@ export default function QRScanner() {
                         </div>
                     </div>
                 </div>
-                {/* Processing Overlay – unchanged */}
+
+                {/* Processing Overlay */}
+                <AnimatePresence>
+                    {isProcessing && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#2D3139]/90 backdrop-blur-xl"
+                        >
+                            <div className="relative">
+                                {/* Outer ring pulse */}
+                                <motion.div
+                                    animate={{
+                                        scale: [1, 1.2, 1],
+                                        opacity: [0.3, 0.6, 0.3]
+                                    }}
+                                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                                    className="absolute inset-0 rounded-full bg-[#00E5FF]/20 blur-xl"
+                                />
+
+                                {/* Loader icon container */}
+                                <div className="relative z-10 w-24 h-24 bg-white/10 rounded-3xl border border-white/20 shadow-2xl flex items-center justify-center backdrop-blur-md mb-6">
+                                    <Loader2 className="w-10 h-10 text-[#00E5FF] animate-spin" />
+                                </div>
+                            </div>
+
+                            <motion.h3
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.2 }}
+                                className="text-xl font-bold text-white tracking-wide mb-2"
+                            >
+                                Fetching Details
+                            </motion.h3>
+
+                            <motion.p
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.3 }}
+                                className="text-sm font-medium text-slate-400 max-w-[250px] text-center leading-relaxed"
+                            >
+                                Validating sacred pass and preparing accommodation details...
+                            </motion.p>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 {/* Action Buttons – only show Switch when useful */}
                 <div className="flex items-center gap-6 mt-16 px-4">
@@ -405,6 +475,52 @@ export default function QRScanner() {
 
             {/* ... rest of your JSX (branding footer, manual sidebar, error screen) remains exactly the same ... */}
 
+            {/* Processing Overlay - Moved to top level for full screen coverage */}
+            <AnimatePresence>
+                {isProcessing && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-[#2D3139]/90 backdrop-blur-xl"
+                    >
+                        <div className="relative">
+                            {/* Outer ring pulse */}
+                            <motion.div
+                                animate={{
+                                    scale: [1, 1.2, 1],
+                                    opacity: [0.3, 0.6, 0.3]
+                                }}
+                                transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                                className="absolute inset-0 rounded-full bg-[#00E5FF]/20 blur-xl"
+                            />
+
+                            {/* Loader icon container */}
+                            <div className="relative z-10 w-24 h-24 bg-white/10 rounded-3xl border border-white/20 shadow-2xl flex items-center justify-center backdrop-blur-md mb-6">
+                                <Loader2 className="w-10 h-10 text-[#00E5FF] animate-spin" />
+                            </div>
+                        </div>
+
+                        <motion.h3
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.2 }}
+                            className="text-xl font-bold text-white tracking-wide mb-2"
+                        >
+                            Fetching Details
+                        </motion.h3>
+
+                        <motion.p
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.3 }}
+                            className="text-sm font-medium text-slate-400 max-w-[250px] text-center leading-relaxed"
+                        >
+                            Validating sacred pass and preparing accommodation details...
+                        </motion.p>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

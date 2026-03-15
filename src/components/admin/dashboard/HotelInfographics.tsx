@@ -97,10 +97,10 @@ const HotelInfographics: React.FC<HotelInfographicsProps> = ({ hotelAvailability
                     <table className="w-full text-left">
                         <thead>
                             <tr className="text-xs uppercase tracking-wider text-heritage-text/50 border-b border-white/40">
-                                <th className="pb-3 font-bold">Hotel Name</th>
-                                <th className="pb-3 font-bold text-center">Rooms (Avail/Total)</th>
-                                <th className="pb-3 font-bold text-center">Beds (Avail/Total)</th>
-                                <th className="pb-3 font-bold text-right">Status</th>
+                                <th className="pb-3 pt-3 pl-2 font-bold">Hotel Name</th>
+                                <th className="pb-3 pt-3 font-bold text-center">Rooms (Avail/Total)</th>
+                                <th className="pb-3 pt-3 font-bold text-center">Beds (Avail/Total)</th>
+                                <th className="pb-3 pt-3 pr-2 font-bold text-right">Status</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/20">
@@ -130,9 +130,17 @@ const HotelInfographics: React.FC<HotelInfographicsProps> = ({ hotelAvailability
                                         </div>
                                     </td>
                                     <td className="py-4 text-right">
-                                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${hotel.availableRooms > 5 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                        <span className={`px-2 py-1 rounded-full text-xs font-bold ${hotel.availableRooms === 0
+                                            ? 'bg-red-100 text-red-700'
+                                            : hotel.availableRooms === hotel.totalRooms
+                                                ? 'bg-green-100 text-green-700'
+                                                : 'bg-yellow-100 text-yellow-700'
                                             }`}>
-                                            {hotel.availableRooms > 5 ? 'Stable' : 'Limited'}
+                                            {hotel.availableRooms === 0
+                                                ? 'Fully Booked'
+                                                : hotel.availableRooms === hotel.totalRooms
+                                                    ? 'All Available'
+                                                    : 'Some Available'}
                                         </span>
                                     </td>
                                 </tr>

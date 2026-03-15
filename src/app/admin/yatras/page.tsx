@@ -310,7 +310,8 @@ export default function YatrasPage() {
           <YatraTable
             yatras={yatras}
             onEdit={handleEditYatra}
-            onDelete={handleDeleteYatra}
+            onDelete={() => { }}
+          // onDelete={handleDeleteYatra}
           />
         )}
       </div>

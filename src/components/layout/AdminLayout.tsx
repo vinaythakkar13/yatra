@@ -7,19 +7,13 @@ import {
   LayoutDashboard,
   Users,
   Hotel,
-  BarChart3,
-  Calendar,
-  Bell,
-  Folder,
-  Star,
-  Settings,
+  Plane,
   LogOut,
   Loader2,
   Cloud,
   Plus,
   Menu,
   X,
-  MapPinIcon,
   LayoutGrid
 } from 'lucide-react';
 import { tokenStorage, userStorage, yatraStorage } from '@/utils/storage';
@@ -75,7 +69,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const navItems: NavItem[] = [
     {
       icon: LayoutDashboard, label: 'Dashboard', href: '/admin', exact: true,
-
     },
     { icon: Users, label: 'Users', href: '/admin/users' },
     {
@@ -88,6 +81,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       icon: LayoutGrid, label: 'Allotment', href: '/admin/allotment',
       allowedRoles: ['super_admin', 'admin']
     },
+    {
+      icon: Plane,
+      label: 'Yatras',
+      href: '/admin/yatras',
+      allowedRoles: ['super_admin', 'admin']
+    }
   ];
 
   useEffect(() => {
