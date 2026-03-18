@@ -14,7 +14,8 @@ import {
   Plus,
   Menu,
   X,
-  LayoutGrid
+  LayoutGrid,
+  CheckSquare
 } from 'lucide-react';
 import { tokenStorage, userStorage, yatraStorage } from '@/utils/storage';
 import { toast } from 'react-toastify';
@@ -71,6 +72,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       icon: LayoutDashboard, label: 'Dashboard', href: '/admin', exact: true,
     },
     { icon: Users, label: 'Users', href: '/admin/users' },
+    {
+      icon: CheckSquare,
+      label: 'User Status',
+      href: '/admin/user-status',
+      allowedRoles: ['super_admin', 'admin']
+    },
     {
       icon: Hotel,
       label: 'Hotels',

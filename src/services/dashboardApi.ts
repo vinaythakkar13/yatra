@@ -66,6 +66,30 @@ export interface GetDashboardDataResponse {
     };
 }
 
+export interface UserStatusData {
+    statistics: {
+        total: number;
+        acquired: number;
+        notAcquired: number;
+        allotted: number;
+        pendingAllotment: number;
+    };
+    data: any[];
+    pagination: {
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+    };
+}
+
+export interface GetUserStatusResponse {
+    success: boolean;
+    message?: string;
+    data: UserStatusData;
+}
+
+
 export const dashboardApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
         /**
@@ -85,10 +109,45 @@ export const dashboardApi = baseApi.injectEndpoints({
             },
             providesTags: ['Registration', 'Yatra', 'Hotel'],
         }),
+        /**
+         * Get User Status Data
+         * GET /admin/dashboard/user-status
+         * 
+         * Fetches user status checking data with filtering and pagination
+         */
+        getUserStatus: builder.query<GetUserStatusResponse['data'], {
+            yatraId: string;
+            hotelId?: string;
+            status?: string;
+            search?: string;
+            page?: number;
+            limit?: number;
+        }>({
+            query: ({ yatraId, hotelId, status, search, page, limit }) => {
+                const params: Record<string, string | number> = { yatraId };
+                if (hotelId) params.hotelId = hotelId;
+                if (status) params.status = status;
+                if (search) params.search = search;
+                if (page) params.page = page;
+                if (limit) params.limit = limit;
+
+                return {
+                    url: '/admin/dashboard/user-status',
+                    method: 'GET',
+                    params,
+                };
+            },
+            transformResponse: (response: GetUserStatusResponse) => {
+                return response.data;
+            },
+            providesTags: ['Registration', 'Hotel'],
+        }),
     }),
 });
 
 export const {
     useGetDashboardDataQuery,
     useLazyGetDashboardDataQuery,
+    useGetUserStatusQuery,
+    useLazyGetUserStatusQuery,
 } = dashboardApi;

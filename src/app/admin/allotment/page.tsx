@@ -52,11 +52,11 @@ export default function AllotmentPage() {
                             </div>
 
                             <div className="max-w-md w-full mx-auto p-6 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 space-y-2 text-center">
-                                <p className="text-white text-xl font-black uppercase">Date: {new Date().toLocaleDateString()}</p>
+                                <p className="text-white text-xl font-black uppercase">Date: {moment(new Date()).format("DD-MMM-YYYY")}</p>
                                 <div className="w-12 h-1 bg-[#4ADE80] mx-auto my-4 rounded-full" />
-                                <p className="text-slate-400 text-xs font-medium">Inaugurated By</p>
-                                <p className="text-white text-lg font-black tracking-tight">Hon. Shri Vinay Kumar Sir</p>
-                                <p className="text-[#4ADE80] text-[10px] font-black uppercase tracking-[0.2em]">(Director Technical)</p>
+                                <p className="text-slate-400 text-xs font-medium">Inauguration By</p>
+                                <p className="text-white text-lg font-black tracking-tight">Hon. Bhaisahib Jaskeeratsingh Mahirwansingh Sodi</p>
+                                {/* <p className="text-[#4ADE80] text-[10px] font-black uppercase tracking-[0.2em]">(Director Technical)</p> */}
                             </div>
 
                             <div className="mt-10">

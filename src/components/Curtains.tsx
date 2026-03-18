@@ -36,7 +36,7 @@ export default function Curtains({ children }: CurtainsProps) {
             </div>
 
             {/* Curtains */}
-            <div className="absolute inset-0 z-40 flex pointer-events-none">
+            <div className="absolute inset-0 z-10 flex pointer-events-none">
                 {/* Left Curtain */}
                 <motion.div
                     animate={isOpen ? { x: '-100%' } : { x: '0%' }}
@@ -64,7 +64,7 @@ export default function Curtains({ children }: CurtainsProps) {
                     <motion.div
                         initial={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="absolute inset-0 z-50 flex items-center justify-center bg-black/20"
+                        className="absolute inset-0 z-20 flex items-center justify-center bg-black/20"
                     >
                         <motion.button
                             onClick={() => setIsOpen(true)}
