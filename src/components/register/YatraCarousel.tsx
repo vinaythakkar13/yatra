@@ -135,7 +135,7 @@ export default function YatraCarousel({ yatras }: YatraCarouselProps) {
 
                   {/* Action Buttons */}
                   <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 md:gap-6 justify-center items-center">
-                    {/* {isRegistrationOpen(yatra) && (
+                    {isRegistrationOpen(yatra) && (
                       <button
                         onClick={() => {
                           router.push(`/register?yatraId=${yatra.id}`);
@@ -148,7 +148,7 @@ export default function YatraCarousel({ yatras }: YatraCarouselProps) {
                         </span>
                         <span className="absolute inset-0 bg-gradient-to-r from-spiritual-zen-forest to-spiritual-zen-charcoal opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                       </button>
-                    )} */}
+                    )}
 
                     <button
                       onClick={() => router.push('/history')}
