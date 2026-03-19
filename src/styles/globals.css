@@ -255,3 +255,28 @@
 #qr-reader #qr-shaded-region {
   display: none !important;
 }
+
+/* Premium Scrollbar for Modals */
+.premium-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.premium-scrollbar::-webkit-scrollbar-track {
+  background: rgba(118, 42, 37, 0.03);
+  border-radius: 10px;
+}
+
+.premium-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #eba83a 0%, #d97a32 100%);
+  border-radius: 10px;
+}
+
+.premium-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #762a25;
+}
+
+/* Firefox */
+.premium-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #eba83a rgba(118, 42, 37, 0.03);
+}

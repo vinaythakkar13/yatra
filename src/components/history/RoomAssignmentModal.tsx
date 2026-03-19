@@ -174,7 +174,7 @@ const RoomAssignmentModal: React.FC<RoomAssignmentModalProps> = ({
                             {/* ─── FRONT: Room Pass ─── */}
                             <div
                                 style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
-                                className="w-full bg-white rounded-[2rem] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.5)]"
+                                className="w-full h-full flex flex-col bg-white rounded-[2rem] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.5)]"
                             >
                                 {/* Header */}
                                 <div className="bg-heritage-primary pt-5 pb-4 px-6 text-center relative">
@@ -193,7 +193,10 @@ const RoomAssignmentModal: React.FC<RoomAssignmentModalProps> = ({
                                 </div>
 
                                 {/* Content */}
-                                <div className="bg-white px-5 py-5 overflow-y-auto scrollbar-none" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                                <div 
+                                    className="bg-white px-5 py-5 overflow-y-auto premium-scrollbar flex-1 max-h-[calc(100vh-250px)] sm:max-h-[500px] relative z-[1] touch-pan-y"
+                                    style={{ transform: 'translateZ(0)', WebkitTransform: 'translateZ(0)' }}
+                                >
                                     {/* Hotel */}
                                     <div className="text-center mb-4">
                                         <h3 className="text-lg font-bold text-heritage-textDark leading-tight mb-1">{hotel.name}</h3>
@@ -292,7 +295,7 @@ const RoomAssignmentModal: React.FC<RoomAssignmentModalProps> = ({
                                 {showPrasadam && (
                                     <button
                                         onClick={handleFlip}
-                                        className="w-full group relative overflow-hidden"
+                                        className="w-full group relative z-10 overflow-hidden"
                                         style={{
                                             background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%)',
                                         }}
@@ -323,8 +326,9 @@ const RoomAssignmentModal: React.FC<RoomAssignmentModalProps> = ({
                                         top: 0,
                                         left: 0,
                                         width: '100%',
+                                        height: '100%',
                                     }}
-                                    className="bg-white rounded-[2rem] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.5)]"
+                                    className="bg-white flex flex-col rounded-[2rem] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.5)]"
                                 >
                                     {/* Ornate golden header */}
                                     <div className="relative pt-5 pb-4 px-6 text-center overflow-hidden"
@@ -355,7 +359,10 @@ const RoomAssignmentModal: React.FC<RoomAssignmentModalProps> = ({
                                     </div>
 
                                     {/* Prasadam QR content */}
-                                    <div className="px-5 py-6 flex flex-col items-center">
+                                    <div 
+                                        className="px-5 py-6 flex flex-col items-center overflow-y-auto premium-scrollbar flex-1 max-h-[calc(100vh-250px)] sm:max-h-[500px] relative z-[1] touch-pan-y"
+                                        style={{ transform: 'translateZ(0)', WebkitTransform: 'translateZ(0)' }}
+                                    >
                                         {/* Sacred divider */}
                                         <div className="flex items-center gap-2 mb-5 w-full">
                                             <div className="flex-1 h-px bg-amber-200" />
@@ -409,7 +416,7 @@ const RoomAssignmentModal: React.FC<RoomAssignmentModalProps> = ({
                                     {/* FLIP BACK CTA — View Rooms */}
                                     <button
                                         onClick={handleFlip}
-                                        className="w-full group relative overflow-hidden"
+                                        className="w-full group relative z-10 overflow-hidden"
                                         style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%)' }}
                                     >
                                         <span className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out"
