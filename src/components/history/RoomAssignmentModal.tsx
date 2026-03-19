@@ -30,13 +30,15 @@ interface RoomAssignmentModalProps {
         assignedRooms: RoomInfo[];
         check_in_status: 'not_checked_in' | 'checked_in' | 'checked_out';
     } | null;
+    yatra: string;
 }
 
 const RoomAssignmentModal: React.FC<RoomAssignmentModalProps> = ({
     isOpen,
     onClose,
     hotel,
-    registration
+    registration,
+    yatra
 }) => {
     const [mounted, setMounted] = React.useState(false);
     const [isFlipped, setIsFlipped] = React.useState(false);
@@ -83,6 +85,9 @@ const RoomAssignmentModal: React.FC<RoomAssignmentModalProps> = ({
     const mName = h.managerName || h.manager_name;
     const mContact = h.managerContact || h.manager_contact;
     const mLink = h.mapLink || h.map_link;
+
+    // Show Prasadam QR only if yatra includes 'haridwar'
+    const showPrasadam = yatra?.toLowerCase().includes('haridwar');
 
     // Prasadam QR value
     const prasadamQRValue = JSON.stringify({
@@ -284,138 +289,142 @@ const RoomAssignmentModal: React.FC<RoomAssignmentModalProps> = ({
                                 </div>
 
                                 {/* FLIP CTA — Get Prasadam QR */}
-                                <button
-                                    onClick={handleFlip}
-                                    className="w-full group relative overflow-hidden"
-                                    style={{
-                                        background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%)',
-                                    }}
-                                >
-                                    {/* Shimmer sweep */}
-                                    <span className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out"
-                                        style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent)' }} />
+                                {showPrasadam && (
+                                    <button
+                                        onClick={handleFlip}
+                                        className="w-full group relative overflow-hidden"
+                                        style={{
+                                            background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%)',
+                                        }}
+                                    >
+                                        {/* Shimmer sweep */}
+                                        <span className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out"
+                                            style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent)' }} />
 
-                                    <div className="relative flex items-center justify-center gap-2 py-3 px-4">
-                                        <Gift className="w-4 h-4 text-white drop-shadow" />
-                                        <span className="text-[11px] font-black text-white uppercase tracking-[0.2em] drop-shadow">
-                                            Get Prasadam QR
-                                        </span>
-                                        <ChevronRight className="w-3.5 h-3.5 text-white/80 group-hover:translate-x-0.5 transition-transform" />
-                                    </div>
-                                </button>
+                                        <div className="relative flex items-center justify-center gap-2 py-3 px-4">
+                                            <Gift className="w-4 h-4 text-white drop-shadow" />
+                                            <span className="text-[11px] font-black text-white uppercase tracking-[0.2em] drop-shadow">
+                                                Get Prasadam QR
+                                            </span>
+                                            <ChevronRight className="w-3.5 h-3.5 text-white/80 group-hover:translate-x-0.5 transition-transform" />
+                                        </div>
+                                    </button>
+                                )}
                             </div>
 
                             {/* ─── BACK: Prasadam QR ─── */}
-                            <div
-                                style={{
-                                    backfaceVisibility: 'hidden',
-                                    WebkitBackfaceVisibility: 'hidden',
-                                    transform: 'rotateY(180deg)',
-                                    position: 'absolute',
-                                    top: 0,
-                                    left: 0,
-                                    width: '100%',
-                                }}
-                                className="bg-white rounded-[2rem] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.5)]"
-                            >
-                                {/* Ornate golden header */}
-                                <div className="relative pt-5 pb-4 px-6 text-center overflow-hidden"
-                                    style={{ background: 'linear-gradient(135deg, #78350f 0%, #b45309 40%, #d97706 70%, #f59e0b 100%)' }}>
-                                    {/* Decorative rings */}
-                                    <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full border-4 border-amber-300/20" />
-                                    <div className="absolute -top-3 -right-3 w-16 h-16 rounded-full border-2 border-amber-300/15" />
-                                    <div className="absolute -bottom-4 -left-4 w-20 h-20 rounded-full border-4 border-amber-300/10" />
+                            {showPrasadam && (
+                                <div
+                                    style={{
+                                        backfaceVisibility: 'hidden',
+                                        WebkitBackfaceVisibility: 'hidden',
+                                        transform: 'rotateY(180deg)',
+                                        position: 'absolute',
+                                        top: 0,
+                                        left: 0,
+                                        width: '100%',
+                                    }}
+                                    className="bg-white rounded-[2rem] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.5)]"
+                                >
+                                    {/* Ornate golden header */}
+                                    <div className="relative pt-5 pb-4 px-6 text-center overflow-hidden"
+                                        style={{ background: 'linear-gradient(135deg, #78350f 0%, #b45309 40%, #d97706 70%, #f59e0b 100%)' }}>
+                                        {/* Decorative rings */}
+                                        <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full border-4 border-amber-300/20" />
+                                        <div className="absolute -top-3 -right-3 w-16 h-16 rounded-full border-2 border-amber-300/15" />
+                                        <div className="absolute -bottom-4 -left-4 w-20 h-20 rounded-full border-4 border-amber-300/10" />
 
-                                    <button
-                                        onClick={onClose}
-                                        className="absolute top-3 right-4 p-1.5 hover:bg-white/20 rounded-full transition-colors z-10"
-                                    >
-                                        <X className="w-4 h-4 text-white/80" />
-                                    </button>
-
-                                    <div className="flex flex-col items-center relative z-10">
-                                        <motion.div
-                                            animate={{ rotate: [0, 10, -10, 0], scale: [1, 1.1, 1] }}
-                                            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                                        <button
+                                            onClick={onClose}
+                                            className="absolute top-3 right-4 p-1.5 hover:bg-white/20 rounded-full transition-colors z-10"
                                         >
-                                            <Sparkles className="w-6 h-6 text-amber-200 mb-1" />
-                                        </motion.div>
-                                        <h2 className="text-[9px] font-black text-amber-100 uppercase tracking-[0.4em]">
-                                            Prasadam Pass
-                                        </h2>
-                                    </div>
-                                </div>
+                                            <X className="w-4 h-4 text-white/80" />
+                                        </button>
 
-                                {/* Prasadam QR content */}
-                                <div className="px-5 py-6 flex flex-col items-center">
-                                    {/* Sacred divider */}
-                                    <div className="flex items-center gap-2 mb-5 w-full">
-                                        <div className="flex-1 h-px bg-amber-200" />
-                                        <span className="text-[9px] font-black text-amber-600 uppercase tracking-widest">Divine Blessing</span>
-                                        <div className="flex-1 h-px bg-amber-200" />
+                                        <div className="flex flex-col items-center relative z-10">
+                                            <motion.div
+                                                animate={{ rotate: [0, 10, -10, 0], scale: [1, 1.1, 1] }}
+                                                transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                                            >
+                                                <Sparkles className="w-6 h-6 text-amber-200 mb-1" />
+                                            </motion.div>
+                                            <h2 className="text-[9px] font-black text-amber-100 uppercase tracking-[0.4em]">
+                                                Prasadam Pass
+                                            </h2>
+                                        </div>
                                     </div>
 
-                                    {/* Big Prasadam QR */}
-                                    <div className="relative mb-4">
-                                        {/* Glowing ring around QR */}
-                                        <motion.div
-                                            className="absolute -inset-3 rounded-3xl"
-                                            animate={{ opacity: [0.4, 0.8, 0.4] }}
-                                            transition={{ duration: 2, repeat: Infinity }}
-                                            style={{ background: 'radial-gradient(ellipse, rgba(245,158,11,0.4) 0%, transparent 70%)' }}
-                                        />
-                                        <div className="relative bg-white p-4 rounded-3xl border-2 border-amber-200 shadow-[0_0_30px_rgba(245,158,11,0.25)]">
-                                            <QRCodeSVG
-                                                value={prasadamQRValue}
-                                                size={160}
-                                                level="M"
-                                                fgColor="#78350f"
+                                    {/* Prasadam QR content */}
+                                    <div className="px-5 py-6 flex flex-col items-center">
+                                        {/* Sacred divider */}
+                                        <div className="flex items-center gap-2 mb-5 w-full">
+                                            <div className="flex-1 h-px bg-amber-200" />
+                                            <span className="text-[9px] font-black text-amber-600 uppercase tracking-widest">Divine Blessing</span>
+                                            <div className="flex-1 h-px bg-amber-200" />
+                                        </div>
+
+                                        {/* Big Prasadam QR */}
+                                        <div className="relative mb-4">
+                                            {/* Glowing ring around QR */}
+                                            <motion.div
+                                                className="absolute -inset-3 rounded-3xl"
+                                                animate={{ opacity: [0.4, 0.8, 0.4] }}
+                                                transition={{ duration: 2, repeat: Infinity }}
+                                                style={{ background: 'radial-gradient(ellipse, rgba(245,158,11,0.4) 0%, transparent 70%)' }}
                                             />
-                                        </div>
-                                    </div>
-
-                                    <p className="text-[8px] font-black text-amber-700 uppercase tracking-[0.35em] mb-1 text-center">
-                                        Prasadam QR Code
-                                    </p>
-                                    <p className="text-[9px] font-medium text-amber-600/70 text-center mb-5 leading-relaxed px-4">
-                                        Present at the Prasadam counter to receive your divine offering
-                                    </p>
-
-                                    {/* PNR pill */}
-                                    <div className='flex justify-center gap-5'>
-                                        <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
-                                            <p className="text-xs font-bold text-amber-400 text-center uppercase tracking-wider mb-0.5">PNR</p>
-                                            <p className="text-md font-black text-amber-800">{registration.pnr}</p>
+                                            <div className="relative bg-white p-4 rounded-3xl border-2 border-amber-200 shadow-[0_0_30px_rgba(245,158,11,0.25)]">
+                                                <QRCodeSVG
+                                                    value={prasadamQRValue}
+                                                    size={160}
+                                                    level="M"
+                                                    fgColor="#78350f"
+                                                />
+                                            </div>
                                         </div>
 
-                                        {/* Info pills */}
-                                        <div className="flex gap-3">
-                                            <div className="bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 text-center">
-                                                <p className="text-xs font-bold text-amber-400 uppercase tracking-wider mb-0.5">Guests</p>
-                                                <p className="text-md font-black text-amber-800">{registration.numberOfPersons}</p>
+                                        <p className="text-[8px] font-black text-amber-700 uppercase tracking-[0.35em] mb-1 text-center">
+                                            Prasadam QR Code
+                                        </p>
+                                        <p className="text-[9px] font-medium text-amber-600/70 text-center mb-5 leading-relaxed px-4">
+                                            Present at the Prasadam counter to receive your divine offering
+                                        </p>
+
+                                        {/* PNR pill */}
+                                        <div className='flex justify-center gap-5'>
+                                            <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+                                                <p className="text-xs font-bold text-amber-400 text-center uppercase tracking-wider mb-0.5">PNR</p>
+                                                <p className="text-md font-black text-amber-800">{registration.pnr}</p>
+                                            </div>
+
+                                            {/* Info pills */}
+                                            <div className="flex gap-3">
+                                                <div className="bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 text-center">
+                                                    <p className="text-xs font-bold text-amber-400 uppercase tracking-wider mb-0.5">Guests</p>
+                                                    <p className="text-md font-black text-amber-800">{registration.numberOfPersons}</p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
+
+                                    {/* FLIP BACK CTA — View Rooms */}
+                                    <button
+                                        onClick={handleFlip}
+                                        className="w-full group relative overflow-hidden"
+                                        style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%)' }}
+                                    >
+                                        <span className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out"
+                                            style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)' }} />
+
+                                        <div className="relative flex items-center justify-center gap-2 py-3 px-4">
+                                            <BedDouble className="w-4 h-4 text-white/90" />
+                                            <span className="text-[11px] font-black text-white uppercase tracking-[0.2em]">
+                                                View Rooms
+                                            </span>
+                                            <ChevronRight className="w-3.5 h-3.5 text-white/70 group-hover:translate-x-0.5 transition-transform" />
+                                        </div>
+                                    </button>
                                 </div>
-
-                                {/* FLIP BACK CTA — View Rooms */}
-                                <button
-                                    onClick={handleFlip}
-                                    className="w-full group relative overflow-hidden"
-                                    style={{ background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%)' }}
-                                >
-                                    <span className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-in-out"
-                                        style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)' }} />
-
-                                    <div className="relative flex items-center justify-center gap-2 py-3 px-4">
-                                        <BedDouble className="w-4 h-4 text-white/90" />
-                                        <span className="text-[11px] font-black text-white uppercase tracking-[0.2em]">
-                                            View Rooms
-                                        </span>
-                                        <ChevronRight className="w-3.5 h-3.5 text-white/70 group-hover:translate-x-0.5 transition-transform" />
-                                    </div>
-                                </button>
-                            </div>
+                            )}
                         </motion.div>
                     </motion.div>
                 </div>

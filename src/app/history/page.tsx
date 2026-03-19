@@ -823,6 +823,7 @@ export default function HistoryPage() {
             assignedRooms: data.data.assignedRooms || [],
             check_in_status: data.data.registration.check_in_status ?? 'not_checked_in',
           } : null}
+          yatra={data?.data?.yatra?.name || ''}
         />
       </div>
     </div>

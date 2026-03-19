@@ -105,11 +105,11 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ isOpen, onClose, us
                         </h3>
                         <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-4">
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-                                <div>
+                                <div className='flex-1 min-w-0'>
                                     <h4 className="text-base font-bold text-blue-900 mb-1">{hotel.name}</h4>
                                     <div className="flex items-center gap-1.5 text-sm text-blue-700/80">
                                         <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-                                        <span className="truncate">{hotel.address}</span>
+                                        <span className="break-all">{hotel.address}</span>
                                     </div>
                                 </div>
                                 {hotel.manager_name && (
