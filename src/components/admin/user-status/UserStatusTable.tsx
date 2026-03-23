@@ -1,7 +1,9 @@
 import React from 'react';
-import { RefreshCw, Phone } from 'lucide-react';
+import { RefreshCw, Phone, Eye } from 'lucide-react';
 import Table from '@/components/ui/Table';
 import HouseMedicalXmarkIcon from '@/components/ui/svg/HouseMedicalXmarkIcon';
+import Modal from '@/components/ui/Modal';
+import Button from '@/components/ui/Button';
 
 interface UserStatusTableProps {
     data: any[];
@@ -16,6 +18,8 @@ const UserStatusTable: React.FC<UserStatusTableProps> = ({
     isLoading = false,
     userRole,
 }) => {
+    const [viewRoomsData, setViewRoomsData] = React.useState<{ rooms: any[], name: string } | null>(null);
+
     const columns = [
         {
             key: 'pnr',
@@ -49,6 +53,49 @@ const UserStatusTable: React.FC<UserStatusTableProps> = ({
                     {row.numberOfPersons || 0}
                 </span>
             ),
+        },
+        {
+            key: 'hotel',
+            header: 'Hotel',
+            render: (row: any) => {
+                return (
+                    <span className="font-semibold text-heritage-textDark italic">
+                        {row.hotelName || <span className="text-gray-400 font-normal">Not Assigned</span>}
+                    </span>
+                );
+            },
+        },
+        {
+            key: 'rooms',
+            header: 'Rooms',
+            render: (row: any) => {
+                const rooms = row.assignedRooms || [];
+                if (rooms.length === 0) return <span className="text-gray-400 italic text-sm">None</span>;
+
+                if (rooms.length > 2) {
+                    return (
+                        <button
+                            onClick={() => setViewRoomsData({ rooms, name: row.name })}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-heritage-primary/10 text-heritage-primary border border-heritage-primary/20 hover:bg-heritage-primary/20 transition-all shadow-sm"
+                        >
+                            <Eye className="w-3.5 h-3.5" />
+                            View {rooms.length} Rooms
+                        </button>
+                    );
+                }
+
+                return (
+                    <div className="flex flex-col gap-1.5 min-w-[120px]">
+                        <div className="flex flex-wrap gap-1">
+                            {rooms.map((room: any, idx: number) => (
+                                <span key={idx} className="text-[10px] bg-white text-heritage-textDark px-1.5 py-0.5 rounded border border-heritage-gold/30 shadow-sm font-medium whitespace-nowrap">
+                                    R: {room.roomName} <span className="text-heritage-gold mx-0.5">|</span> F: {room.floorName}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+                );
+            },
         },
         {
             key: 'roomStatus',
@@ -105,6 +152,36 @@ const UserStatusTable: React.FC<UserStatusTableProps> = ({
                     emptyMessage="No registrations found"
                 />
             </div>
+
+            {/* View Rooms Modal */}
+            <Modal
+                isOpen={!!viewRoomsData}
+                onClose={() => setViewRoomsData(null)}
+                title={`Assigned Rooms - ${viewRoomsData?.name}`}
+                variant="admin"
+                size="md"
+                footer={
+                    <Button variant="outline" onClick={() => setViewRoomsData(null)}>
+                        Close
+                    </Button>
+                }
+            >
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-1">
+                    {viewRoomsData?.rooms.map((room, idx) => (
+                        <div 
+                            key={idx} 
+                            className="bg-white border border-heritage-gold/30 rounded-xl p-3 shadow-sm hover:shadow-md transition-shadow flex flex-col items-center justify-center text-center"
+                        >
+                            <span className="text-[10px] uppercase tracking-wider text-heritage-gold font-bold mb-1">
+                                Floor {room.floorName}
+                            </span>
+                            <span className="text-lg font-bold text-heritage-textDark">
+                                Room {room.roomName}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            </Modal>
         </div>
     );
 };
