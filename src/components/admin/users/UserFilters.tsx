@@ -72,6 +72,7 @@ const UserFilters: React.FC<UserFiltersProps> = ({
         { value: 'GENERAL', label: 'GENERAL' },
         { value: 'BUS', label: 'BUS' },
         { value: 'TBS', label: 'TBS' },
+        { value: 'TATKAAL', label: 'TATKAAL' },
         { value: 'Not added', label: 'Not Added' },
     ];
 

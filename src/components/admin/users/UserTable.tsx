@@ -65,6 +65,11 @@ const TICKET_BADGE_CONFIG: Record<
         label: 'RAC',
         icon: <Train className="w-3 h-3" />,
         className: 'bg-yellow-100 text-yellow-800 flex items-center gap-1.5'
+    },
+    TATKAAL: {
+        label: 'Tatkaal',
+        icon: <Train className="w-3 h-3" />,
+        className: 'bg-yellow-100 text-yellow-800 flex items-center gap-1.5'
     }
 };
 

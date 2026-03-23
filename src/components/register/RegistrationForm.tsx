@@ -18,7 +18,7 @@ import { BsWhatsapp } from 'react-icons/bs';
 import DatePicker from '../ui/DatePicker';
 import { Yatra } from '@/types';
 import { useUploadBase64Mutation } from '@/services/cloudinaryApi';
-import { useCreateRegistrationMutation, CreateRegistrationRequest, useSplitRegistrationMutation, SplitRegistrationRequest } from '@/services/registrationApi';
+import { useCreateRegistrationMutation, CreateRegistrationRequest } from '@/services/registrationApi';
 import { toast } from 'react-toastify';
 import AnimatedSuccessIcon from '@/components/ui/AnimatedSuccessIcon';
 
@@ -42,6 +42,7 @@ interface RegistrationFormData {
   ticketImages: File[];
   isFlight: boolean;
   flightPnr?: string;
+  tatkaal: boolean;
 }
 
 interface RegistrationFormProps {
@@ -198,7 +199,6 @@ export function buildRegistrationPayload(
 
   return {
     pnr: formData.isFlight ? (formData.flightPnr || '').toUpperCase() : formData.pnr,
-    ticketType: formData.isFlight ? 'FLIGHT' : undefined,
     name: formData.name,
     whatsappNumber: formData.whatsappNumber,
     numberOfPersons: formData.numberOfPersons,
@@ -215,6 +215,8 @@ export function buildRegistrationPayload(
     arrivalDate: formData.arrivalDate ? formatDateForAPI(formData.arrivalDate) : '',
     returnDate: formData.returnDate ? formatDateForAPI(formData.returnDate) : '',
     ticketImages: ticketImageUrls,
+    ...(formData.isFlight && { ticketType: 'FLIGHT' }),
+    ...(formData.tatkaal && { ticketType: 'TATKAAL' }),
     ...(yatraId && { yatraId }),
   };
 }
@@ -245,7 +247,6 @@ export default function RegistrationForm({ initialPnr = '', yatraDetails, isAdmi
   // API hooks
   const [uploadBase64] = useUploadBase64Mutation();
   const [createRegistration, { isLoading: isCreatingRegistration }] = useCreateRegistrationMutation();
-  const [splitRegistration, { isLoading: isSplitRegistration }] = useSplitRegistrationMutation();
 
 
   const {
@@ -255,16 +256,21 @@ export default function RegistrationForm({ initialPnr = '', yatraDetails, isAdmi
     formState: { errors },
     setValue,
     setFocus,
+    reset,
   } = useForm<RegistrationFormData>({
     defaultValues: {
       pnr: initialPnr,
+      name: '',
       whatsappNumber: '',
+      boardingCity: '',
+      boardingState: '',
       numberOfPersons: 1,
       persons: [{ name: '', age: 0, gender: 'male', isHandicapped: false }],
       arrivalDate: null,
       returnDate: null,
       isFlight: false,
       flightPnr: '',
+      tatkaal: false,
     },
   });
 
@@ -425,26 +431,8 @@ export default function RegistrationForm({ initialPnr = '', yatraDetails, isAdmi
         })),
       };
 
-      // Step 4: Call registration API (use split registration for admin mode)
-      let result;
-      if (isAdminMode) {
-        // For admin mode, use split registration API with additional fields
-        const splitPayload: SplitRegistrationRequest = {
-          originalPnr: apiPayload.pnr,
-          name: apiPayload.name,
-          whatsappNumber: apiPayload.whatsappNumber,
-          numberOfPersons: apiPayload.numberOfPersons,
-          yatraId: apiPayload.yatraId!,
-          persons: apiPayload.persons,
-          boardingPoint: apiPayload.boardingPoint,
-          arrivalDate: apiPayload.arrivalDate,
-          returnDate: apiPayload.returnDate,
-          ticketImages: uploadedImageUrls,
-        };
-        result = await splitRegistration(splitPayload).unwrap();
-      } else {
-        result = await createRegistration(apiPayload).unwrap();
-      }
+      // Step 4: Call registration API (always use createRegistration as per user request)
+      const result = await createRegistration(apiPayload).unwrap();
 
       if (result.success) {
         // Store in local context for backward compatibility
@@ -474,9 +462,10 @@ export default function RegistrationForm({ initialPnr = '', yatraDetails, isAdmi
             yatraName: yatraDetails?.name,
             arrivalDate: apiPayload.arrivalDate,
             returnDate: apiPayload.returnDate,
-            split_pnr: result?.data?.internalPnr || ""
           };
           toast.success('Registration created successfully!');
+          reset(); // Clear form
+          setTicketImages([]); // Clear ticket images state
           onSuccess?.(registrationData);
         } else {
           // Show success modal for regular users
@@ -630,34 +619,65 @@ export default function RegistrationForm({ initialPnr = '', yatraDetails, isAdmi
             </div>
           </div>
 
-          <Controller
-            name="isFlight"
-            control={control}
-            render={({ field }) => (
-              <label className="flex items-center gap-3 cursor-pointer group bg-white p-3 rounded-lg border border-spiritual-zen-accent/20 hover:border-spiritual-zen-forest/40 transition-all">
-                <div className="relative">
-                  <input
-                    type="checkbox"
-                    checked={field.value}
-                    onChange={(e) => field.onChange(e.target.checked)}
-                    className="sr-only"
-                  />
-                  <div className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center ${field.value
-                    ? 'bg-gradient-to-br from-spiritual-zen-forest to-spiritual-zen-accent border-spiritual-zen-forest'
-                    : 'border-spiritual-zen-accent/30 bg-white group-hover:border-spiritual-zen-forest/50'
-                    }`}>
-                    {field.value && (
-                      <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
-                    )}
+          {isAdminMode ? (
+            <Controller
+              name="tatkaal"
+              control={control}
+              render={({ field }) => (
+                <label className="flex items-center gap-3 cursor-pointer group bg-white p-3 rounded-lg border border-spiritual-zen-accent/20 hover:border-spiritual-zen-forest/40 transition-all">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={field.value}
+                      onChange={(e) => field.onChange(e.target.checked)}
+                      className="sr-only"
+                    />
+                    <div className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center ${field.value
+                      ? 'bg-gradient-to-br from-spiritual-zen-forest to-spiritual-zen-accent border-spiritual-zen-forest'
+                      : 'border-spiritual-zen-accent/30 bg-white group-hover:border-spiritual-zen-forest/50'
+                      }`}>
+                      {field.value && (
+                        <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
+                      )}
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-spiritual-zen-charcoal">Flight Ticket</span>
-                  <span className="text-xl">✈️</span>
-                </div>
-              </label>
-            )}
-          />
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-spiritual-zen-charcoal">Tatkaal</span>
+                    <span className="text-xl">⚡</span>
+                  </div>
+                </label>
+              )}
+            />
+          ) : (
+            <Controller
+              name="isFlight"
+              control={control}
+              render={({ field }) => (
+                <label className="flex items-center gap-3 cursor-pointer group bg-white p-3 rounded-lg border border-spiritual-zen-accent/20 hover:border-spiritual-zen-forest/40 transition-all">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={field.value}
+                      onChange={(e) => field.onChange(e.target.checked)}
+                      className="sr-only"
+                    />
+                    <div className={`w-5 h-5 rounded border-2 transition-all duration-200 flex items-center justify-center ${field.value
+                      ? 'bg-gradient-to-br from-spiritual-zen-forest to-spiritual-zen-accent border-spiritual-zen-forest'
+                      : 'border-spiritual-zen-accent/30 bg-white group-hover:border-spiritual-zen-forest/50'
+                      }`}>
+                      {field.value && (
+                        <Check className="w-3.5 h-3.5 text-white" strokeWidth={3} />
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-spiritual-zen-charcoal">Flight Ticket</span>
+                    <span className="text-xl">✈️</span>
+                  </div>
+                </label>
+              )}
+            />
+          )}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -1222,21 +1242,21 @@ export default function RegistrationForm({ initialPnr = '', yatraDetails, isAdmi
           type="button"
           variant="outline"
           onClick={() => isAdminMode ? onCancel?.() : router.push('/')}
-          disabled={isSubmitting || isCreatingRegistration || isSplitRegistration}
+          disabled={isSubmitting || isCreatingRegistration}
           className="w-full sm:w-auto border border-spiritual-zen-accent/30 text-spiritual-zen-charcoal hover:bg-spiritual-zen-mist/50 text-sm py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Cancel
         </Button>
         <Button
           type="submit"
-          isLoading={isSubmitting || isCreatingRegistration || isSplitRegistration}
-          disabled={isSubmitting || isCreatingRegistration || isSplitRegistration}
+          isLoading={isSubmitting || isCreatingRegistration}
+          disabled={isSubmitting || isCreatingRegistration}
           className="w-full sm:w-auto bg-gradient-to-r from-spiritual-zen-forest to-spiritual-zen-accent text-white hover:shadow-lg transition-all duration-300 text-sm py-2.5 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isSubmitting || isCreatingRegistration || isSplitRegistration ? (
+          {isSubmitting || isCreatingRegistration ? (
             <span className="flex items-center gap-2">
               <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-              {isSubmitting && !(isCreatingRegistration || isSplitRegistration) ? 'Uploading images...' : 'Submitting registration...'}
+              {isSubmitting && !isCreatingRegistration ? 'Uploading images...' : 'Submitting registration...'}
             </span>
           ) : (
             <span className="flex items-center gap-2">

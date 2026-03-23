@@ -30,6 +30,7 @@ export interface CreateRegistrationRequest {
   returnDate: string; // ISO 8601 format
   ticketImages: string[]; // Array of image URLs
   yatraId: string; // Yatra ID
+  ticketType?: string;
 }
 
 export interface SplitRegistrationRequest {
@@ -52,6 +53,7 @@ export interface SplitRegistrationRequest {
   arrivalDate: string; // ISO 8601 format
   returnDate: string; // ISO 8601 format
   ticketImages: string[]; // Array of image URLs
+  tatkaal?: boolean;
 }
 
 export interface CreateRegistrationResponse {
