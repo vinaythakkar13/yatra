@@ -33,6 +33,13 @@ interface RoomAssignmentModalProps {
     yatra: string;
 }
 
+function formatGoogleMapsUrl(url: string) {
+    if (url.startsWith("google.com/maps")) {
+        return "https://www." + url;
+    }
+    return url;
+}
+
 const RoomAssignmentModal: React.FC<RoomAssignmentModalProps> = ({
     isOpen,
     onClose,
@@ -78,7 +85,7 @@ const RoomAssignmentModal: React.FC<RoomAssignmentModalProps> = ({
     const h = hotel as any;
     const mName = h.managerName || h.manager_name;
     const mContact = h.managerContact || h.manager_contact;
-    const mLink = h.mapLink || h.map_link;
+    const mLink = formatGoogleMapsUrl(h.mapLink || h.map_link);
 
     // Show Prasadam QR only if yatra includes 'haridwar'
     const showPrasadam = yatra?.toLowerCase().includes('haridwar');
