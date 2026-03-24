@@ -1,6 +1,6 @@
 import React, { forwardRef } from 'react';
 import ReactDatePicker from 'react-datepicker';
-import { Calendar as CalendarIcon } from 'lucide-react';
+import { Calendar as CalendarIcon, X } from 'lucide-react';
 
 interface DatePickerProps {
   label?: string;
@@ -114,7 +114,7 @@ const DatePicker = forwardRef<any, DatePickerProps>(
             adjustDateOnChange={true}
             fixedHeight={true}
             className={`
-              w-full px-3 py-2 sm:px-4 sm:py-2.5 pl-10 sm:pl-11 rounded-lg border-2 transition-all duration-200 bg-white text-sm sm:text-base
+              w-full px-3 py-2 sm:px-4 sm:py-2.5 pl-10 sm:pl-11 pr-9 sm:pr-10 rounded-lg border-2 transition-all duration-200 bg-white text-sm sm:text-base
               ${error
                 ? 'border-red-500 focus:border-red-600 focus:ring-2 focus:ring-red-200'
                 : isAdmin
@@ -130,12 +130,29 @@ const DatePicker = forwardRef<any, DatePickerProps>(
             popperClassName="custom-datepicker-popper"
             showPopperArrow={false}
             popperPlacement={popperPlacement}
+            isClearable={false}
           />
 
           {/* Calendar Icon */}
           <div className="absolute inset-y-0 left-0 pl-2.5 sm:pl-3 flex items-center pointer-events-none">
             <CalendarIcon className={`w-4 h-4 sm:w-5 sm:h-5 ${isAdmin ? 'text-heritage-text/60' : 'text-gray-400'}`} />
           </div>
+
+          {/* Custom Clear Button */}
+          {value && !disabled && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onChange?.(null);
+              }}
+              className="absolute inset-y-0 right-0 pr-2.5 sm:pr-3 flex items-center text-gray-400 hover:text-red-500 transition-colors z-10"
+              title="Clear date"
+            >
+              <X className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isAdmin ? 'text-heritage-text/40' : 'text-gray-400'}`} />
+            </button>
+          )}
         </div>
 
         {error && (

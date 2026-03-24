@@ -13,8 +13,12 @@ interface UserFiltersProps {
     setFilterState: (value: string) => void;
     filterMode: 'all' | 'general' | 'cancelled';
     setFilterMode: (value: 'all' | 'general' | 'cancelled') => void;
-    filterDate: Date | null;
-    setFilterDate: (date: Date | null) => void;
+    arrivalDate: Date | null;
+    setArrivalDate: (date: Date | null) => void;
+    returnDate: Date | null;
+    setReturnDate: (date: Date | null) => void;
+    numPeople: string;
+    setNumPeople: (value: string) => void;
     stateOptions: { value: string; label: string }[];
     ticketType: string;
     setTicketType: (value: string) => void;
@@ -37,8 +41,12 @@ const UserFilters: React.FC<UserFiltersProps> = ({
     setFilterState,
     filterMode,
     setFilterMode,
-    filterDate,
-    setFilterDate,
+    arrivalDate,
+    setArrivalDate,
+    returnDate,
+    setReturnDate,
+    numPeople,
+    setNumPeople,
     stateOptions,
     ticketType,
     setTicketType,
@@ -53,7 +61,7 @@ const UserFilters: React.FC<UserFiltersProps> = ({
     roomAssignmentStatus,
     setRoomAssignmentStatus,
 }) => {
-    const hasActiveFilters = searchTerm || filterState || filterMode !== 'general' || filterDate || ticketType || documentApprovalStatus || roomAssignmentStatus;
+    const hasActiveFilters = searchTerm || filterState || filterMode !== 'general' || arrivalDate || returnDate || numPeople || ticketType || documentApprovalStatus || roomAssignmentStatus;
 
     const filterModeOptions = [
         { value: 'all', label: 'All Registrations' },
@@ -88,6 +96,30 @@ const UserFilters: React.FC<UserFiltersProps> = ({
         { value: 'assigned', label: 'Assigned' },
         { value: 'non_assigned', label: 'Not Assigned' },
     ];
+
+    const handleArrivalDateChange = (date: Date | null) => {
+        setArrivalDate(date);
+        // If arrival date is cleared, or if arrival date is now after return date, clear return date
+        if (!date || (returnDate && date > returnDate)) {
+            setReturnDate(null);
+        }
+    };
+
+    const handleNumPeopleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        // Allow only digits
+        const numericValue = value.replace(/[^0-9]/g, '');
+        if (numericValue === '' || parseInt(numericValue) <= 60) {
+            setNumPeople(numericValue);
+        }
+    };
+
+    const handleKeyDownNumPeople = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        // Prevent 'e', '+', '-', '.'
+        if (['e', 'E', '+', '-', '.'].includes(e.key)) {
+            e.preventDefault();
+        }
+    };
 
     return (
         <Card className="mb-4 bg-white/80 backdrop-blur-md border border-heritage-text/10 shadow-sm rounded-xl font-inter !p-0">
@@ -148,7 +180,9 @@ const UserFilters: React.FC<UserFiltersProps> = ({
                                 setSearchTerm('');
                                 setFilterState('');
                                 setFilterMode('general');
-                                setFilterDate(null);
+                                setArrivalDate(null);
+                                setReturnDate(null);
+                                setNumPeople('');
                                 setTicketType('');
                                 setDocumentApprovalStatus('');
                                 setRoomAssignmentStatus('');
@@ -160,53 +194,86 @@ const UserFilters: React.FC<UserFiltersProps> = ({
                     )}
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-2.5">
-                    <SelectDropdown
-                        options={filterModeOptions}
-                        value={filterMode}
-                        onChange={(val: any) => setFilterMode(val)}
-                        placeholder="Registration Type"
-                        searchable={false}
-                        clearable={false}
-                        className="h-8 min-h-[32px] text-xs border-heritage-text/10 focus:border-heritage-primary focus:ring-1 hover:border-heritage-primary/30 rounded-lg shadow-sm bg-white"
-                    />
-                    <SelectDropdown
-                        options={stateOptions}
-                        value={filterState}
-                        onChange={setFilterState}
-                        placeholder={isLoadingStates ? "Loading states..." : "All States"}
-                        searchable
-                        clearable
-                        disabled={isLoadingStates}
-                        className="h-8 min-h-[32px] text-xs border-heritage-text/10 focus:border-heritage-primary focus:ring-1 hover:border-heritage-primary/30 rounded-lg shadow-sm bg-white"
-                    />
-                    <SelectDropdown
-                        options={ticketTypeOptions}
-                        value={ticketType}
-                        onChange={setTicketType}
-                        placeholder="All Tickets"
-                        searchable={false}
-                        clearable={false}
-                        className="h-8 min-h-[32px] text-xs border-heritage-text/10 focus:border-heritage-primary focus:ring-1 hover:border-heritage-primary/30 rounded-lg shadow-sm bg-white"
-                    />
-                    <SelectDropdown
-                        options={documentApprovalStatusOptions}
-                        value={documentApprovalStatus}
-                        onChange={setDocumentApprovalStatus}
-                        placeholder="Document Status"
-                        searchable={false}
-                        clearable={false}
-                        className="h-8 min-h-[32px] text-xs border-heritage-text/10 focus:border-heritage-primary focus:ring-1 hover:border-heritage-primary/30 rounded-lg shadow-sm bg-white"
-                    />
-                    <SelectDropdown
-                        options={roomAssignmentOptions}
-                        value={roomAssignmentStatus}
-                        onChange={setRoomAssignmentStatus}
-                        placeholder="Room Assignment"
-                        searchable={false}
-                        clearable={false}
-                        className="h-8 min-h-[32px] text-xs border-heritage-text/10 focus:border-heritage-primary focus:ring-1 hover:border-heritage-primary/30 rounded-lg shadow-sm bg-white"
-                    />
+                <div className="space-y-3">
+                    {/* Filter Row 1 */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        <SelectDropdown
+                            options={filterModeOptions}
+                            value={filterMode}
+                            onChange={(val: any) => setFilterMode(val)}
+                            placeholder="Registration Type"
+                            searchable={false}
+                            clearable={false}
+                            variant="admin"
+                        />
+                        <SelectDropdown
+                            options={stateOptions}
+                            value={filterState}
+                            onChange={setFilterState}
+                            placeholder={isLoadingStates ? "Loading states..." : "All States"}
+                            searchable
+                            clearable
+                            disabled={isLoadingStates}
+                            variant="admin"
+                        />
+                        <SelectDropdown
+                            options={ticketTypeOptions}
+                            value={ticketType}
+                            onChange={setTicketType}
+                            placeholder="All Tickets"
+                            searchable={false}
+                            clearable={false}
+                            variant="admin"
+                        />
+                        <SelectDropdown
+                            options={documentApprovalStatusOptions}
+                            value={documentApprovalStatus}
+                            onChange={setDocumentApprovalStatus}
+                            placeholder="Document Status"
+                            searchable={false}
+                            clearable={false}
+                            variant="admin"
+                        />
+                    </div>
+
+                    {/* Filter Row 2 */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        <SelectDropdown
+                            options={roomAssignmentOptions}
+                            value={roomAssignmentStatus}
+                            onChange={setRoomAssignmentStatus}
+                            placeholder="Room Assignment"
+                            searchable={false}
+                            clearable={false}
+                            variant="admin"
+                        />
+                        <DatePicker
+                            value={arrivalDate}
+                            onChange={handleArrivalDateChange}
+                            placeholder="Arrival Date"
+                            variant="admin"
+                            className="!h-10 !py-0 text-sm border-heritage-gold/30"
+                        />
+                        <DatePicker
+                            value={returnDate}
+                            onChange={setReturnDate}
+                            minDate={arrivalDate || undefined}
+                            placeholder="Return Date"
+                            variant="admin"
+
+                            className="!h-10 !py-0 text-sm border-heritage-gold/30"
+                        />
+                        <Input
+                            type="text"
+                            placeholder="Number of People (Max 60)"
+                            value={numPeople}
+                            onChange={handleNumPeopleChange}
+                            onKeyDown={handleKeyDownNumPeople}
+                            variant="admin"
+                            className="!h-10 !py-0 text-sm border-heritage-gold/30"
+                            rightIcon={<span className="text-[10px] font-bold text-heritage-text/40 mr-2 uppercase tracking-tighter">Pax</span>}
+                        />
+                    </div>
                 </div>
             </div>
         </Card>

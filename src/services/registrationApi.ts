@@ -413,8 +413,11 @@ export const registrationApi = baseApi.injectEndpoints({
       state?: string;
       documentStatus?: string;
       roomAssignmentStatus?: string;
+      arrivalDate?: string;
+      returnDate?: string;
+      numPeople?: string;
     }>({
-      query: ({ yatraId, pnr, page, limit, search, filterMode, ticketType, state, documentStatus, roomAssignmentStatus }) => {
+      query: ({ yatraId, pnr, page, limit, search, filterMode, ticketType, state, documentStatus, roomAssignmentStatus, arrivalDate, returnDate, numPeople }) => {
         const params: Record<string, string | number> = {};
         if (yatraId) params.yatraId = yatraId;
         if (pnr) params.pnr = pnr;
@@ -426,6 +429,9 @@ export const registrationApi = baseApi.injectEndpoints({
         if (state) params.state = state;
         if (documentStatus) params.documentStatus = documentStatus;
         if (roomAssignmentStatus) params.roomAssignmentStatus = roomAssignmentStatus;
+        if (arrivalDate) params.arrivalDate = arrivalDate;
+        if (returnDate) params.returnDate = returnDate;
+        if (numPeople) params.numPeople = numPeople;
 
         return {
           url: '/registrations',

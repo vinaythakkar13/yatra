@@ -79,7 +79,9 @@ function UserManagement() {
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const [filterState, setFilterState] = useState('');
   const [filterMode, setFilterMode] = useState<'all' | 'general' | 'cancelled'>('general');
-  const [filterDate, setFilterDate] = useState<Date | null>(null);
+  const [arrivalDate, setArrivalDate] = useState<Date | null>(null);
+  const [returnDate, setReturnDate] = useState<Date | null>(null);
+  const [numPeople, setNumPeople] = useState('');
   const [ticketType, setTicketType] = useState('');
   const [documentApprovalStatus, setDocumentApprovalStatus] = useState('');
   const [roomAssignmentStatus, setRoomAssignmentStatus] = useState('');
@@ -93,7 +95,16 @@ function UserManagement() {
   // Reset pagination when searching, yatra changes, or filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedYatraId, debouncedSearchTerm, filterMode, filterState, filterDate, ticketType, documentApprovalStatus, roomAssignmentStatus]);
+  }, [selectedYatraId, debouncedSearchTerm, filterMode, filterState, arrivalDate, returnDate, numPeople, ticketType, documentApprovalStatus, roomAssignmentStatus]);
+
+  // Helper to format date to YYYY-MM-DD in local time to avoid UTC shifts
+  const formatLocalDate = (date: Date | null) => {
+    if (!date) return '';
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
 
   // Fetch registrations from API with pagination, search, and filters
   const {
@@ -113,7 +124,10 @@ function UserManagement() {
       ticketType: ticketType,
       state: filterState,
       documentStatus: documentApprovalStatus,
-      roomAssignmentStatus: roomAssignmentStatus
+      roomAssignmentStatus: roomAssignmentStatus,
+      arrivalDate: formatLocalDate(arrivalDate),
+      returnDate: formatLocalDate(returnDate),
+      numPeople: numPeople || undefined
     },
     { skip: !selectedYatraId } // Skip query if no yatraId
   );
@@ -484,8 +498,12 @@ function UserManagement() {
         setFilterState={setFilterState}
         filterMode={filterMode}
         setFilterMode={setFilterMode}
-        filterDate={filterDate}
-        setFilterDate={setFilterDate}
+        arrivalDate={arrivalDate}
+        setArrivalDate={setArrivalDate}
+        returnDate={returnDate}
+        setReturnDate={setReturnDate}
+        numPeople={numPeople}
+        setNumPeople={setNumPeople}
         stateOptions={stateOptions}
         ticketType={ticketType}
         setTicketType={setTicketType}
