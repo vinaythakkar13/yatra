@@ -42,7 +42,6 @@ const RoomAssignmentModal: React.FC<RoomAssignmentModalProps> = ({
 }) => {
     const [mounted, setMounted] = React.useState(false);
     const [isFlipped, setIsFlipped] = React.useState(false);
-    const [isFlipping, setIsFlipping] = React.useState(false);
 
     React.useEffect(() => {
         setMounted(true);
@@ -71,12 +70,7 @@ const RoomAssignmentModal: React.FC<RoomAssignmentModalProps> = ({
     }, [isOpen]);
 
     const handleFlip = () => {
-        if (isFlipping) return;
-        setIsFlipping(true);
-        setTimeout(() => {
-            setIsFlipped(prev => !prev);
-            setIsFlipping(false);
-        }, 400);
+        setIsFlipped(prev => !prev);
     };
 
     if (!hotel || !registration || !mounted) return null;
@@ -152,7 +146,7 @@ const RoomAssignmentModal: React.FC<RoomAssignmentModalProps> = ({
                     >
                         {/* Glow aura behind card */}
                         <motion.div
-                            className="absolute inset-0 rounded-[2rem] blur-2xl"
+                            className="absolute inset-0 rounded-[2rem] blur-2xl pointer-events-none"
                             animate={{
                                 background: isFlipped
                                     ? 'radial-gradient(ellipse, rgba(251,191,36,0.35) 0%, transparent 70%)'
@@ -173,7 +167,12 @@ const RoomAssignmentModal: React.FC<RoomAssignmentModalProps> = ({
                         >
                             {/* ─── FRONT: Room Pass ─── */}
                             <div
-                                style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+                                style={{
+                                    backfaceVisibility: 'hidden',
+                                    WebkitBackfaceVisibility: 'hidden',
+                                    pointerEvents: isFlipped ? 'none' : 'auto',
+                                    zIndex: isFlipped ? 0 : 1
+                                }}
                                 className="w-full h-full flex flex-col bg-white rounded-[2rem] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.5)]"
                             >
                                 {/* Header */}
@@ -193,9 +192,9 @@ const RoomAssignmentModal: React.FC<RoomAssignmentModalProps> = ({
                                 </div>
 
                                 {/* Content */}
-                                <div 
-                                    className="bg-white px-5 py-5 overflow-y-auto premium-scrollbar flex-1 max-h-[calc(100vh-250px)] sm:max-h-[500px] relative z-[1] touch-pan-y"
-                                    style={{ transform: 'translateZ(0)', WebkitTransform: 'translateZ(0)' }}
+                                <div
+                                    className="bg-white px-5 py-5 overflow-y-auto premium-scrollbar flex-1 min-h-0 min-w-0 max-h-[calc(100vh-250px)] sm:max-h-[500px] relative z-[1] touch-pan-y pointer-events-auto"
+                                    style={{ transform: 'translateZ(1px)', WebkitTransform: 'translateZ(1px)', willChange: 'transform' }}
                                 >
                                     {/* Hotel */}
                                     <div className="text-center mb-4">
@@ -327,6 +326,8 @@ const RoomAssignmentModal: React.FC<RoomAssignmentModalProps> = ({
                                         left: 0,
                                         width: '100%',
                                         height: '100%',
+                                        pointerEvents: isFlipped ? 'auto' : 'none',
+                                        zIndex: isFlipped ? 1 : 0
                                     }}
                                     className="bg-white flex flex-col rounded-[2rem] overflow-hidden shadow-[0_30px_80px_rgba(0,0,0,0.5)]"
                                 >
@@ -340,7 +341,7 @@ const RoomAssignmentModal: React.FC<RoomAssignmentModalProps> = ({
 
                                         <button
                                             onClick={onClose}
-                                            className="absolute top-3 right-4 p-1.5 hover:bg-white/20 rounded-full transition-colors z-10"
+                                            className="absolute top-3 right-4 p-1.5 hover:bg-white/20 rounded-full transition-colors z-[20]"
                                         >
                                             <X className="w-4 h-4 text-white/80" />
                                         </button>
@@ -359,9 +360,9 @@ const RoomAssignmentModal: React.FC<RoomAssignmentModalProps> = ({
                                     </div>
 
                                     {/* Prasadam QR content */}
-                                    <div 
-                                        className="px-5 py-6 flex flex-col items-center overflow-y-auto premium-scrollbar flex-1 max-h-[calc(100vh-250px)] sm:max-h-[500px] relative z-[1] touch-pan-y"
-                                        style={{ transform: 'translateZ(0)', WebkitTransform: 'translateZ(0)' }}
+                                    <div
+                                        className="px-5 py-6 flex flex-col w-full overflow-y-auto premium-scrollbar flex-1 min-h-0 min-w-0 max-h-[calc(100vh-250px)] sm:max-h-[500px] relative z-[1] touch-pan-y pointer-events-auto"
+                                        style={{ transform: 'translateZ(1px)', WebkitTransform: 'translateZ(1px)', willChange: 'transform' }}
                                     >
                                         {/* Sacred divider */}
                                         <div className="flex items-center gap-2 mb-5 w-full">
@@ -371,7 +372,7 @@ const RoomAssignmentModal: React.FC<RoomAssignmentModalProps> = ({
                                         </div>
 
                                         {/* Big Prasadam QR */}
-                                        <div className="relative mb-4">
+                                        <div className="relative mb-4 flex justify-center w-full">
                                             {/* Glowing ring around QR */}
                                             <motion.div
                                                 className="absolute -inset-3 rounded-3xl"
@@ -382,7 +383,7 @@ const RoomAssignmentModal: React.FC<RoomAssignmentModalProps> = ({
                                             <div className="relative bg-white p-4 rounded-3xl border-2 border-amber-200 shadow-[0_0_30px_rgba(245,158,11,0.25)]">
                                                 <QRCodeSVG
                                                     value={prasadamQRValue}
-                                                    size={160}
+                                                    size={120}
                                                     level="M"
                                                     fgColor="#78350f"
                                                 />
