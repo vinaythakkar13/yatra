@@ -762,6 +762,23 @@ export const registrationApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ['Registration'],
     }),
+    /**
+     * Deliver Prasadam Endpoint
+     * POST /registrations/prasadam/deliver
+     */
+    deliverPrasadam: builder.mutation<{
+      success: boolean;
+      message?: string;
+      error?: string;
+      data?: any;
+    }, { pnr: string; yatraId: string }>({
+      query: (data) => ({
+        url: '/registrations/prasadam/deliver',
+        method: 'POST',
+        body: data,
+      }),
+      invalidatesTags: ['Registration'],
+    }),
   }),
 });
 
@@ -778,4 +795,5 @@ export const {
   useApproveDocumentMutation,
   useRejectDocumentMutation,
   useUpdateAllotmentStatusMutation,
+  useDeliverPrasadamMutation,
 } = registrationApi;

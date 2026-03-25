@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Gift, Users, CreditCard, Sparkles, CheckCircle2 } from 'lucide-react';
+import { X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 
 interface PrasadamInfoModalProps {
@@ -9,117 +9,290 @@ interface PrasadamInfoModalProps {
   data: {
     pnr: string;
     persons: number;
+    name?: string;
     [key: string]: any;
   } | null;
 }
 
+/* ─── Animated Check with ripples + sparkles ─── */
+const AnimatedCheck = () => {
+  const sparks = [
+    { angle: 30, dist: 54, delay: 0.70, color: '#c5a059', size: 5 },
+    { angle: 100, dist: 50, delay: 0.82, color: '#6a9e8a', size: 4 },
+    { angle: 175, dist: 52, delay: 0.76, color: '#e8c87a', size: 5 },
+    { angle: 250, dist: 48, delay: 0.88, color: '#6a9e8a', size: 3.5 },
+    { angle: 325, dist: 54, delay: 0.79, color: '#c5a059', size: 4 },
+    { angle: 60, dist: 46, delay: 0.93, color: '#e8c87a', size: 3.5 },
+  ];
+
+  return (
+    <div style={{ position: 'relative', width: 96, height: 96, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {/* Ripple rings */}
+      {[0, 1, 2].map(i => (
+        <motion.div
+          key={i}
+          style={{
+            position: 'absolute',
+            width: 80, height: 80,
+            borderRadius: '50%',
+            border: '1.5px solid rgba(106,158,138,0.55)',
+          }}
+          initial={{ scale: 0.85, opacity: 0.7 }}
+          animate={{ scale: 2.6, opacity: 0 }}
+          transition={{
+            delay: 0.55 + i * 0.28,
+            duration: 1.3,
+            repeat: Infinity,
+            repeatDelay: 0.5,
+            ease: 'easeOut',
+          }}
+        />
+      ))}
+
+      {/* Soft glow */}
+      <motion.div
+        style={{
+          position: 'absolute',
+          width: 96, height: 96,
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(106,158,138,0.22) 0%, transparent 70%)',
+        }}
+        initial={{ scale: 0.6, opacity: 0 }}
+        animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
+        transition={{ delay: 0.3, duration: 2.8, repeat: Infinity, ease: 'easeInOut' }}
+      />
+
+      {/* Circle */}
+      <motion.div
+        style={{
+          position: 'relative',
+          zIndex: 2,
+          width: 80, height: 80,
+          borderRadius: '50%',
+          background: 'linear-gradient(145deg, #eaf6f1 0%, #d2ece4 100%)',
+          boxShadow: '0 0 0 5px rgba(106,158,138,0.14), 0 10px 36px rgba(61,138,114,0.22)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}
+        initial={{ scale: 0, rotate: -30 }}
+        animate={{ scale: 1, rotate: 0 }}
+        transition={{ delay: 0.12, type: 'spring', damping: 13, stiffness: 270 }}
+      >
+        <svg width="38" height="38" viewBox="0 0 38 38" fill="none">
+          <motion.path
+            d="M8 19 L15.5 27 L30 11"
+            stroke="#2d7a62"
+            strokeWidth="3.4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            initial={{ pathLength: 0, opacity: 0 }}
+            animate={{ pathLength: 1, opacity: 1 }}
+            transition={{ delay: 0.42, duration: 0.52, ease: 'easeOut' }}
+          />
+        </svg>
+      </motion.div>
+
+      {/* Sparkle particles */}
+      {sparks.map(({ angle, dist, delay, color, size }, i) => {
+        const rad = (angle * Math.PI) / 180;
+        const x = Math.cos(rad) * dist;
+        const y = Math.sin(rad) * dist;
+        return (
+          <motion.div
+            key={i}
+            style={{
+              position: 'absolute',
+              width: size, height: size,
+              borderRadius: '50%',
+              background: color,
+              left: '50%', top: '50%',
+              marginLeft: -size / 2, marginTop: -size / 2,
+            }}
+            initial={{ x: 0, y: 0, scale: 0, opacity: 0 }}
+            animate={{ x: [0, x * 0.5, x], y: [0, y * 0.5, y], scale: [0, 1.6, 0], opacity: [0, 1, 0] }}
+            transition={{ delay, duration: 0.65, ease: 'easeOut' }}
+          />
+        );
+      })}
+    </div>
+  );
+};
+
+/* ─── Main Modal ─── */
 const PrasadamInfoModal: React.FC<PrasadamInfoModalProps> = ({ isOpen, onClose, data }) => {
+  useEffect(() => {
+    if (isOpen) {
+      const sy = window.scrollY;
+      document.body.style.cssText = `position:fixed;top:-${sy}px;left:0;right:0;overflow-y:scroll`;
+    } else {
+      const sy = document.body.style.top;
+      document.body.style.cssText = '';
+      window.scrollTo(0, parseInt(sy || '0') * -1);
+    }
+    return () => { document.body.style.cssText = ''; };
+  }, [isOpen]);
+
   if (!isOpen || !data) return null;
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+
         {/* Backdrop */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          transition={{ duration: 0.3 }}
           onClick={onClose}
+          style={{
+            position: 'absolute', inset: 0,
+            background: 'radial-gradient(ellipse at 50% 40%, rgba(250,246,237,0.96) 0%, rgba(242,235,218,0.97) 100%)',
+            backdropFilter: 'blur(14px)',
+          }}
         />
 
-        {/* Modal Outer Container */}
+        {/* Card */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: 20 }}
+          initial={{ opacity: 0, scale: 0.88, y: 24 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9, y: 20 }}
-          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className="relative bg-white rounded-[2rem] shadow-2xl w-full max-w-md overflow-hidden border border-heritage-text/10"
+          exit={{ opacity: 0, scale: 0.88, y: 24 }}
+          transition={{ type: 'spring', damping: 24, stiffness: 240 }}
+          style={{
+            position: 'relative',
+            width: '100%', maxWidth: 360,
+            maxHeight: '92vh',
+            display: 'flex', flexDirection: 'column',
+            borderRadius: '2.2rem',
+            background: 'linear-gradient(168deg, #fffef9 0%, #fdf8ed 55%, #f8f2e2 100%)',
+            boxShadow: '0 0 0 1px rgba(197,160,89,0.24), 0 36px 90px rgba(90,70,20,0.18), 0 8px 24px rgba(197,160,89,0.12)',
+            overflow: 'hidden',
+          }}
         >
-          {/* Success Banner */}
-          <div className="bg-green-500 py-3 px-6 flex items-center justify-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-white" />
-            <span className="text-white text-xs font-bold uppercase tracking-[0.2em]">QR Successfully Scanned</span>
-          </div>
+          {/* Top gold bar */}
+          <div style={{ height: 3, flexShrink: 0, background: 'linear-gradient(90deg, transparent, rgba(197,160,89,0.4) 20%, rgba(228,175,55,0.9) 50%, rgba(197,160,89,0.4) 80%, transparent)' }} />
 
-          {/* Header - Ornate Admin Theme */}
-          <div className="bg-heritage-maroon px-8 py-8 relative overflow-hidden text-center">
-            {/* Decorative background elements */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 blur-2xl" />
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-heritage-gold/10 rounded-full -ml-12 -mb-12 blur-xl" />
-            
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors z-20"
-            >
-              <X className="w-4 h-4 text-white/80" />
-            </button>
+          {/* Close btn */}
+          <button
+            onClick={onClose}
+            style={{
+              position: 'absolute', top: 14, right: 14, zIndex: 20,
+              width: 32, height: 32, borderRadius: '50%',
+              background: 'rgba(255,253,247,0.9)',
+              border: '1px solid rgba(197,160,89,0.22)',
+              boxShadow: '0 2px 10px rgba(100,80,20,0.1)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#b8a060', cursor: 'pointer',
+              backdropFilter: 'blur(6px)',
+            }}
+          >
+            <X size={13} strokeWidth={2.4} />
+          </button>
 
-            <div className="flex flex-col items-center relative z-10">
-              <div className="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center backdrop-blur-md mb-4 border border-white/20">
-                <Gift className="w-8 h-8 text-heritage-gold" />
-              </div>
-              <h3 className="text-2xl font-black text-white leading-tight mb-1">Prasadam Details</h3>
-              <div className="flex items-center gap-2 text-heritage-gold/80 italic text-sm">
-                <Sparkles className="w-3 h-3" />
-                <span>Divine Offering Pass</span>
-                <Sparkles className="w-3 h-3" />
-              </div>
+          {/* Scrollable area */}
+          <div style={{ overflowY: 'auto', flex: 1, scrollbarWidth: 'none' }}>
+            <div style={{ padding: '26px 26px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+
+              {/* Label */}
+              <motion.div
+                initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.07 }}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}
+              >
+                <div style={{ width: 32, height: 1, background: 'linear-gradient(90deg, transparent, rgba(197,160,89,0.65))' }} />
+                <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 8.5, fontWeight: 800, letterSpacing: '0.3em', textTransform: 'uppercase', color: '#c5a059' }}>
+                  Sacred Pass
+                </span>
+                <div style={{ width: 32, height: 1, background: 'linear-gradient(90deg, rgba(197,160,89,0.65), transparent)' }} />
+              </motion.div>
+
+              {/* Animated Check */}
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} style={{ marginBottom: 18 }}>
+                <AnimatedCheck />
+              </motion.div>
+
+              {/* Title */}
+              <motion.h2
+                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+                style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: '2rem', fontWeight: 600, color: '#1c1608', letterSpacing: '-0.01em', lineHeight: 1.08, marginBottom: 6 }}
+              >
+                Verified Successfully
+              </motion.h2>
+
+              {/* Subtitle */}
+              <motion.p
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.36 }}
+                style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: '0.92rem', fontStyle: 'italic', color: '#9a8060', lineHeight: 1.55, marginBottom: 20 }}
+              >
+                Please Provide Prasadam for{' '}
+                <strong style={{ fontStyle: 'normal', color: '#2d7a62', fontWeight: 700 }}>
+                  {data.persons} {data.persons === 1 ? 'Person' : 'Persons'}
+                </strong>
+              </motion.p>
+
+              {/* Divider */}
+              <motion.div
+                initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ delay: 0.4, duration: 0.45 }}
+                style={{ width: '100%', height: 1, marginBottom: 18, background: 'linear-gradient(90deg, transparent, rgba(197,160,89,0.28) 30%, rgba(197,160,89,0.28) 70%, transparent)' }}
+              />
+
+              {/* Name + PNR cards */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.44 }}
+                style={{ width: '100%', display: 'grid', gridTemplateColumns: data.name ? '1fr 1fr' : '1fr', gap: 10, marginBottom: 20 }}
+              >
+                {/* Name */}
+                {data.name && (
+                  <div style={{
+                    borderRadius: '1.05rem',
+                    padding: '14px 10px',
+                    background: 'linear-gradient(145deg, rgba(106,158,138,0.07), rgba(106,158,138,0.14))',
+                    border: '1px solid rgba(106,158,138,0.22)',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
+                  }}>
+                    <div style={{
+                      width: 30, height: 30, borderRadius: '50%',
+                      background: 'rgba(106,158,138,0.13)', border: '1px solid rgba(106,158,138,0.28)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 1,
+                    }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#3d8a72" strokeWidth="2.3" strokeLinecap="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+                      </svg>
+                    </div>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 7.5, fontWeight: 800, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#5a9080' }}>Name</span>
+                    <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13, fontWeight: 700, color: '#1c1608', letterSpacing: '0.02em', lineHeight: 1.25, wordBreak: 'break-word' }}>
+                      {data.name}
+                    </span>
+                  </div>
+                )}
+
+                {/* PNR */}
+                <div style={{
+                  borderRadius: '1.05rem',
+                  padding: '14px 10px',
+                  background: 'linear-gradient(145deg, rgba(197,160,89,0.07), rgba(197,160,89,0.14))',
+                  border: '1px solid rgba(197,160,89,0.25)',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
+                }}>
+                  <div style={{
+                    width: 30, height: 30, borderRadius: '50%',
+                    background: 'rgba(197,160,89,0.12)', border: '1px solid rgba(197,160,89,0.3)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 1,
+                  }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#c5a059" strokeWidth="2.3" strokeLinecap="round">
+                      <rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" />
+                    </svg>
+                  </div>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 7.5, fontWeight: 800, letterSpacing: '0.22em', textTransform: 'uppercase', color: '#b89448' }}>PNR</span>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontSize: 16, fontWeight: 800, color: '#1c1608', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+                    {data.pnr}
+                  </span>
+                </div>
+              </motion.div>
             </div>
           </div>
 
-          {/* Information Section */}
-          <div className="px-8 py-8 space-y-6 bg-heritage-bgMain/30">
-            {/* PNR Information */}
-            <div className="bg-white border border-heritage-highlight rounded-[1.5rem] p-5 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-heritage-maroon/5 flex items-center justify-center">
-                  <CreditCard className="w-6 h-6 text-heritage-maroon" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-black text-heritage-text/40 uppercase tracking-widest leading-none mb-1.5">Pass PNR</p>
-                  <p className="text-2xl font-black text-heritage-textDark tracking-wider uppercase">{data.pnr}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Guests Information */}
-            <div className="bg-white border border-heritage-highlight rounded-[1.5rem] p-5 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-heritage-primary/5 flex items-center justify-center">
-                  <Users className="w-6 h-6 text-heritage-primary" />
-                </div>
-                <div>
-                  <p className="text-[10px] font-black text-heritage-text/40 uppercase tracking-widest leading-none mb-1.5">Total Guests</p>
-                  <p className="text-2xl font-black text-heritage-textDark tracking-tight">
-                    {data.persons} <span className="text-sm font-bold text-heritage-text/40 ml-1">Persons</span>
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Verification Success Text */}
-            <div className="text-center pt-2">
-              <p className="text-[10px] font-bold text-green-600 uppercase tracking-[0.1em] flex items-center justify-center gap-1.5">
-                <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-                Authorized for Prasadam Distribution
-              </p>
-            </div>
-          </div>
-
-          {/* Action Button */}
-          <div className="px-8 pb-8 pt-2">
-            <Button
-              onClick={onClose}
-              className="w-full py-4 text-base font-black uppercase tracking-[0.2em] bg-heritage-maroon hover:bg-heritage-textDark text-white shadow-[0_10px_30px_rgba(131,25,35,0.3)] transition-all hover:-translate-y-0.5"
-            >
-              Close and Continue
-            </Button>
-          </div>
+          {/* Bottom gold bar */}
+          <div style={{ height: 3, flexShrink: 0, background: 'linear-gradient(90deg, transparent, rgba(197,160,89,0.38) 20%, rgba(228,175,55,0.8) 50%, rgba(197,160,89,0.38) 80%, transparent)' }} />
         </motion.div>
       </div>
     </AnimatePresence>
-
   );
 };
 

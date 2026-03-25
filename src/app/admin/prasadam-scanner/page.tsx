@@ -14,6 +14,8 @@ import {
   Gift,
   AlertCircle
 } from 'lucide-react';
+import { useDeliverPrasadamMutation } from '@/services/registrationApi';
+import { yatraStorage } from '@/utils/storage';
 import { Html5Qrcode, Html5QrcodeScannerState } from 'html5-qrcode';
 import { toast } from 'react-toastify';
 import PrasadamInfoModal from '@/components/admin/prasadam/PrasadamInfoModal';
@@ -29,6 +31,30 @@ export default function PrasadamScanner() {
   const [hasTorch, setHasTorch] = useState(false);
   const [availableCameras, setAvailableCameras] = useState<{ id: string; label: string }[]>([]);
   const [currentCameraIndex, setCurrentCameraIndex] = useState(0);
+
+  // API Mutation
+  const [deliverPrasadam, { isLoading: isAPILoading }] = useDeliverPrasadamMutation();
+
+  // Selected Yatra from storage (for manual fallback)
+  const [selectedYatraId, setSelectedYatraId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const yatraId = yatraStorage.getSelectedYatraId();
+    setSelectedYatraId(yatraId);
+
+    const handleStorageChange = () => {
+      const newYatraId = yatraStorage.getSelectedYatraId();
+      setSelectedYatraId(newYatraId);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    const interval = setInterval(handleStorageChange, 1000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
 
   // Modal State
   const [showInfoModal, setShowInfoModal] = useState(false);
@@ -71,7 +97,7 @@ export default function PrasadamScanner() {
       if (isHandlingStateChange.current) return;
       isHandlingStateChange.current = true;
 
-      const shouldBeScanning = !showManualEntry && !isProcessing && !cameraError && !showInfoModal;
+      const shouldBeScanning = !showManualEntry && !isProcessing && !cameraError && !showInfoModal && !isAPILoading;
 
       try {
         const container = document.getElementById(scannerRegionId);
@@ -189,25 +215,57 @@ export default function PrasadamScanner() {
   const onScanFailure = () => { };
 
   const processScanResult = async (decodedText: string) => {
-    if (isProcessing) return;
+    if (isProcessing || isAPILoading) return;
     setIsProcessing(true);
 
-    await stopScannerCleanly();
-
     try {
+      // 1. Validation: Verify DGNST exists
+      if (!decodedText.includes('DGNST')) {
+        toast.error('Incorrect QR Code', { position: 'top-center' });
+        setIsProcessing(false);
+        return;
+      }
+
+      // 2. Parse Data
       let parsed: any = null;
       try {
         parsed = JSON.parse(decodedText.trim());
-      } catch { }
+      } catch {
+        toast.error('Invalid QR Format', { position: 'top-center' });
+        setIsProcessing(false);
+        return;
+      }
 
-      if (parsed && parsed.origin === 'DGNST' && parsed.action === 'prasadam') {
-        setScannedData(parsed);
+      const { pnr, yatraId, persons } = parsed || {};
+
+      if (!pnr || !yatraId) {
+        toast.error('Incomplete QR Data', { position: 'top-center' });
+        setIsProcessing(false);
+        return;
+      }
+
+      // 3. Stop Scanner during API call to release resources
+      await stopScannerCleanly();
+
+      // 4. API Call
+      const response = await deliverPrasadam({ pnr, yatraId }).unwrap();
+
+      if (response.success) {
+        // 5. Show Success Popup with API data
+        // Priority: API data > QR data > Default
+        setScannedData({
+          pnr: response.data?.pnr || pnr,
+          persons: response.data?.persons || persons || 1,
+          name: response.data?.name || parsed?.name || ''
+        });
         setShowInfoModal(true);
+        toast.success('Prasadam Delivery Confirmed', { position: 'top-right' });
       } else {
-        toast.error('Incorrect QR Code', { position: 'top-center' });
+        toast.error(response.error || response.message || 'Verification Failed', { position: 'top-center' });
       }
     } catch (err: any) {
-      toast.error('Invalid Scan', { position: 'top-center' });
+      console.error("API Error:", err);
+      toast.error(err?.data?.message || err?.message || 'Error processing delivery', { position: 'top-center' });
     } finally {
       setIsProcessing(false);
     }
@@ -221,12 +279,38 @@ export default function PrasadamScanner() {
     setIsProcessing(false);
   };
 
-  const handleManualSubmit = (e: React.FormEvent) => {
+  const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (manualPnr.trim()) {
-      setScannedData({ pnr: manualPnr.trim(), persons: 1 });
-      setShowInfoModal(true);
-      setShowManualEntry(false);
+    if (!manualPnr.trim()) return;
+
+    if (!selectedYatraId) {
+      toast.error('Please select a Yatra from the header first', { position: 'top-center' });
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const response = await deliverPrasadam({
+        pnr: manualPnr.trim().toUpperCase(),
+        yatraId: selectedYatraId
+      }).unwrap();
+
+      if (response.success) {
+        setScannedData(response.data || { 
+          pnr: manualPnr.trim().toUpperCase(), 
+          persons: 1 
+        });
+        setShowInfoModal(true);
+        setShowManualEntry(false);
+        setManualPnr('');
+        toast.success('Prasadam Delivery Confirmed', { position: 'top-right' });
+      } else {
+        toast.error(response.error || response.message || 'Manual Verification Failed');
+      }
+    } catch (err: any) {
+      toast.error(err?.data?.message || 'Error processing manual delivery');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -270,7 +354,14 @@ export default function PrasadamScanner() {
             {/* Viewfinder Overlay */}
             <div className="absolute inset-0 pointer-events-none z-10">
               <AnimatePresence>
-                {!isScanning && !cameraError && (
+                {(isProcessing || isAPILoading) && (
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                    className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/60 backdrop-blur-sm z-30">
+                    <Loader2 className="w-10 h-10 text-heritage-maroon animate-spin mb-4" />
+                    <p className="text-[10px] font-black text-white uppercase tracking-widest">Processing...</p>
+                  </motion.div>
+                )}
+                {!isScanning && !cameraError && !isProcessing && !isAPILoading && (
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900">
                     <Loader2 className="w-10 h-10 text-heritage-maroon animate-spin mb-4" />
                     <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Initialising...</p>
