@@ -303,7 +303,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       {/* Main Content Area - Full Width */}
       <div className="flex-1 flex flex-col min-w-0 w-full lg:ml-20">
         {/* Top Header */}
-        <header className="bg-white/70 backdrop-blur-xl border-b border-white/40 px-6 py-4 flex items-center justify-between sticky top-0 z-30 w-full shadow-glass">
+        <header className="bg-white/70 backdrop-blur-xl border-b border-white/40 px-2 md:px-6 py-2.5 md:py-4 flex items-center justify-between sticky top-0 z-30 w-full shadow-glass transition-all">
           <div className="flex items-center gap-4 flex-wrap">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -316,13 +316,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               )}
             </button>
 
-            <h1 className="text-2xl font-bold text-heritage-textDark">
+            <h1 className="hidden sm:block text-lg md:text-2xl font-bold text-heritage-textDark truncate sm:max-w-none">
               {navItems.find(item => isActiveRoute(item.href, item.exact))?.label || 'Dashboard'}
             </h1>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 max-w-[360px]">
+          <div className="flex items-center gap-1.5 md:gap-4 flex-1 sm:flex-initial justify-end">
+            <div className="flex-1 sm:flex-initial flex items-center gap-2 max-w-none sm:max-w-[360px]">
               <SelectYatra
                 className="w-full"
                 value={selectedYatraId || undefined}
@@ -340,7 +340,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
             <button
               onClick={handleLogout}
-              className="p-2 rounded-full bg-heritage-secondary/20 text-heritage-textDark hover:bg-heritage-secondary/40 transition-colors"
+              className="p-2 md:p-2 rounded-full bg-heritage-secondary/20 text-heritage-textDark hover:bg-heritage-secondary/40 transition-all flex-shrink-0 active:scale-95"
               title="Logout"
             >
               <LogOut className="w-5 h-5" />

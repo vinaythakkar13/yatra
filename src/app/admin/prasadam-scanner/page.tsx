@@ -9,7 +9,6 @@ import {
   Loader2,
   RefreshCw,
   Zap,
-  Upload,
   SwitchCamera,
   Gift,
   AlertCircle
@@ -32,240 +31,212 @@ export default function PrasadamScanner() {
   const [availableCameras, setAvailableCameras] = useState<{ id: string; label: string }[]>([]);
   const [currentCameraIndex, setCurrentCameraIndex] = useState(-1);
 
-  // API Mutation
   const [deliverPrasadam, { isLoading: isAPILoading }] = useDeliverPrasadamMutation();
-
-  // Selected Yatra from storage (for manual fallback)
   const [selectedYatraId, setSelectedYatraId] = useState<string | null>(null);
 
   useEffect(() => {
     const yatraId = yatraStorage.getSelectedYatraId();
     setSelectedYatraId(yatraId);
-
-    const handleStorageChange = () => {
-      const newYatraId = yatraStorage.getSelectedYatraId();
-      setSelectedYatraId(newYatraId);
-    };
-
+    const handleStorageChange = () => setSelectedYatraId(yatraStorage.getSelectedYatraId());
     window.addEventListener('storage', handleStorageChange);
     const interval = setInterval(handleStorageChange, 1000);
-
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       clearInterval(interval);
     };
   }, []);
 
-  // Modal State
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [scannedData, setScannedData] = useState<any>(null);
 
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const isHandlingStateChange = useRef(false);
+  const isProcessingRef = useRef(false);
+  const isMountedRef = useRef(true);
   const scannerRegionId = "prasadam-qr-reader";
 
-  // ────────────────────────────────────────────────
-  //          CAMERA CLEANUP HELPER
-  // ────────────────────────────────────────────────
+  // ─── Clean stop ───────────────────────────────────────────────────────────
   const stopScannerCleanly = useCallback(async () => {
-    if (!scannerRef.current) return;
-    const currentState = scannerRef.current.getState();
-
+    const scanner = scannerRef.current;
+    if (!scanner) return;
     try {
-      if (currentState === Html5QrcodeScannerState.SCANNING) {
-        await scannerRef.current.stop();
+      if (scanner.getState() === Html5QrcodeScannerState.SCANNING) {
+        await scanner.stop();
       }
     } catch (err) {
-      console.warn("Stop camera failed during cleanup:", err);
-    } finally {
-      // In all cases, try to wipe the container to avoid React/html5-qrcode conflicts
+      console.warn("Stop failed:", err);
+    }
+    try {
       const el = document.getElementById(scannerRegionId);
       if (el) el.innerHTML = '';
-      setIsScanning(false);
-      setIsTorchOn(false);
-    }
+    } catch (_) { }
+    setIsScanning(false);
+    setIsTorchOn(false);
   }, []);
 
-  // ────────────────────────────────────────────────
-  //          MAIN LIFECYCLE EFFECT
-  // ────────────────────────────────────────────────
-  useEffect(() => {
-    let isMounted = true;
+  // ─── Start scanner ────────────────────────────────────────────────────────
+  const startScanner = useCallback(async (cameraIndexOverride?: number) => {
+    if (!isMountedRef.current) return;
 
-    const manageScanner = async () => {
-      if (isHandlingStateChange.current) return;
-      isHandlingStateChange.current = true;
+    // Always wipe the container first to avoid "already exists" errors
+    const el = document.getElementById(scannerRegionId);
+    if (!el) return;
+    el.innerHTML = '';
 
-      const shouldBeScanning = !showManualEntry && !isProcessing && !cameraError && !showInfoModal && !isAPILoading;
+    // Fresh instance every time
+    scannerRef.current = new Html5Qrcode(scannerRegionId, { verbose: false });
 
-      try {
-        const container = document.getElementById(scannerRegionId);
-        if (!container) return;
+    // Enumerate cameras
+    let cameras: { id: string; label: string }[] = [];
+    try {
+      cameras = await Html5Qrcode.getCameras();
+    } catch (err: any) {
+      const msg = err?.message || 'Camera permission denied';
+      console.error('[getCameras]', err);
+      if (isMountedRef.current) setCameraError(msg);
+      return;
+    }
 
-        if (!scannerRef.current) {
-          scannerRef.current = new Html5Qrcode(scannerRegionId, { verbose: false });
-        }
+    if (!cameras.length) {
+      if (isMountedRef.current) setCameraError('No cameras found on this device');
+      return;
+    }
 
-        const currentState = scannerRef.current.getState();
-        const isCurrentlyScanning = currentState === Html5QrcodeScannerState.SCANNING;
+    if (isMountedRef.current) setAvailableCameras(cameras);
 
-        if (shouldBeScanning && !isCurrentlyScanning) {
-          let cameras: any[] = [];
-          try {
-            cameras = await Html5Qrcode.getCameras();
-          } catch (err: any) {
-            console.error("getCameras failed:", err);
-            throw new Error("Cannot access camera list");
-          }
+    // Resolve camera
+    const idxToUse = cameraIndexOverride !== undefined ? cameraIndexOverride : currentCameraIndex;
+    let resolvedIndex: number;
+    let cameraConfig: any;
 
-          if (cameras.length === 0) {
-            throw new Error("No cameras detected on this device");
-          }
+    if (idxToUse >= 0 && idxToUse < cameras.length) {
+      resolvedIndex = idxToUse;
+      cameraConfig = { deviceId: { exact: cameras[resolvedIndex].id } };
+    } else {
+      // Prefer back/rear/environment camera
+      const backIdx = cameras.findIndex(c => /back|rear|environment/i.test(c.label));
+      resolvedIndex = backIdx !== -1 ? backIdx : 0;
+      cameraConfig = backIdx !== -1
+        ? { deviceId: { exact: cameras[resolvedIndex].id } }
+        : { facingMode: { ideal: 'environment' } };
+      if (isMountedRef.current) setCurrentCameraIndex(resolvedIndex);
+    }
 
-          if (!isMounted) return;
-
-          console.log("[Scanner] Detected Cameras:", cameras);
-          setAvailableCameras(cameras);
-
-          let cameraConfig: any;
-
-          // Use currentCameraIndex if it was already selected/set to a valid index >= 0
-          if (currentCameraIndex >= 0 && currentCameraIndex < cameras.length) {
-            cameraConfig = { deviceId: { exact: cameras[currentCameraIndex].id } };
-          } else {
-            // New selection: Prioritize back/rear camera
-            const back = cameras.find(c => /back|rear|environment/i.test(c.label));
-
-            if (back) {
-              console.log("[Scanner] Prioritizing Back Camera:", back.label);
-              cameraConfig = { deviceId: { exact: back.id } };
-              const backIdx = cameras.findIndex(c => c.id === back.id);
-              setCurrentCameraIndex(backIdx);
-            } else {
-              // Strictly fallback to first camera (likely web-cam on laptop)
-              console.log("[Scanner] Falling back to primary camera:", cameras[0].label);
-              cameraConfig = { deviceId: { exact: cameras[0].id } };
-              setCurrentCameraIndex(0);
-            }
-          }
-
-          try {
-            await scannerRef.current.start(
-              cameraConfig,
-              {
-                fps: 20,
-                qrbox: (w, h) => {
-                  const minDim = Math.min(w, h);
-                  const size = Math.max(50, Math.floor(minDim * 0.70));
-                  return { width: size, height: size };
-                },
-                aspectRatio: 1.0,
-              },
-              onScanSuccess,
-              onScanFailure
-            );
-
-            if (isMounted) {
-              setIsScanning(true);
-              try {
-                const caps = await scannerRef.current.getRunningTrackCapabilities();
-                setHasTorch(!!(caps as any)?.torch);
-              } catch {
-                setHasTorch(false);
-              }
-            }
-          } catch (startErr: any) {
-            console.warn("Primary start failed", startErr);
-          }
-        }
-        else if (!shouldBeScanning && isCurrentlyScanning) {
-          await stopScannerCleanly();
-        }
-
-      } catch (err: any) {
-        console.error("[Scanner Lifecycle]", err);
-        if (shouldBeScanning && isMounted) {
-          setCameraError(err.message || "Failed to start camera");
-          await stopScannerCleanly();
-        }
-      } finally {
-        isHandlingStateChange.current = false;
-      }
+    const scanConfig = {
+      fps: 30,
+      qrbox: (w: number, h: number) => {
+        const size = Math.max(180, Math.floor(Math.min(w, h) * 0.55));
+        return { width: size, height: size };
+      },
+      aspectRatio: 1.0,
+      disableFlip: false,
+      experimentalFeatures: { useBarCodeDetectorIfSupported: true },
     };
 
-    const timer = setTimeout(manageScanner, 500);
+    // Try fallback chain
+    const attempts: any[] = [
+      cameraConfig,
+      { facingMode: 'environment' },
+      { facingMode: 'user' },
+    ];
 
+    for (const config of attempts) {
+      try {
+        await scannerRef.current.start(config, scanConfig, onScanSuccess, () => { });
+        if (isMountedRef.current) {
+          setIsScanning(true);
+          setCameraError(null);
+          try {
+            const caps = await scannerRef.current.getRunningTrackCapabilities();
+            setHasTorch(!!(caps as any)?.torch);
+          } catch { setHasTorch(false); }
+        }
+        return; // success
+      } catch (err) {
+        console.warn('[Scanner start attempt failed]', config, err);
+        try { await scannerRef.current.stop(); } catch (_) { }
+        el.innerHTML = '';
+        scannerRef.current = new Html5Qrcode(scannerRegionId, { verbose: false });
+      }
+    }
+
+    if (isMountedRef.current) {
+      setCameraError('Could not open camera. Please allow camera access and retry.');
+    }
+  }, [currentCameraIndex]); // eslint-disable-line
+
+  // ─── Mount / unmount ──────────────────────────────────────────────────────
+  useEffect(() => {
+    isMountedRef.current = true;
     return () => {
-      clearTimeout(timer);
-      isMounted = false;
+      isMountedRef.current = false;
       stopScannerCleanly().catch(console.warn);
     };
-  }, [showManualEntry, isProcessing, cameraError, currentCameraIndex, stopScannerCleanly, showInfoModal]);
+  }, []); // eslint-disable-line
 
+  // ─── React to visibility changes ──────────────────────────────────────────
+  useEffect(() => {
+    const shouldScan = !showManualEntry && !showInfoModal && !cameraError;
+
+    if (shouldScan) {
+      const t = setTimeout(() => startScanner(), 150);
+      return () => clearTimeout(t);
+    } else {
+      stopScannerCleanly().catch(console.warn);
+    }
+  }, [showManualEntry, showInfoModal, cameraError]); // eslint-disable-line
+
+  // ─── Switch camera ────────────────────────────────────────────────────────
   const switchCamera = useCallback(async () => {
-    if (availableCameras.length < 2 || !scannerRef.current || !isScanning) return;
+    if (availableCameras.length < 2) return;
     const nextIndex = (currentCameraIndex + 1) % availableCameras.length;
     await stopScannerCleanly();
     setCurrentCameraIndex(nextIndex);
-  }, [availableCameras, currentCameraIndex, isScanning, stopScannerCleanly]);
+    setTimeout(() => startScanner(nextIndex), 150);
+  }, [availableCameras, currentCameraIndex, stopScannerCleanly, startScanner]);
 
+  // ─── Torch ───────────────────────────────────────────────────────────────
   const toggleTorch = async () => {
     if (!scannerRef.current || !hasTorch || !isScanning) return;
     try {
       const desired = !isTorchOn;
       await scannerRef.current.applyVideoConstraints({ advanced: [{ torch: desired } as any] });
       setIsTorchOn(desired);
-    } catch {
-      setHasTorch(false);
-    }
+    } catch { setHasTorch(false); }
   };
 
-  const onScanSuccess = (decodedText: string) => {
+  // ─── Scan callbacks ───────────────────────────────────────────────────────
+  const onScanSuccess = useCallback((decodedText: string) => {
+    if (isProcessingRef.current) return;
     processScanResult(decodedText);
-  };
-
-  const onScanFailure = () => { };
+  }, []); // eslint-disable-line
 
   const processScanResult = async (decodedText: string) => {
-    if (isProcessing || isAPILoading) return;
+    if (isProcessingRef.current) return;
+    isProcessingRef.current = true;
     setIsProcessing(true);
 
     try {
-      // 1. Validation: Verify DGNST exists
       if (!decodedText.includes('DGNST')) {
         toast.error('Incorrect QR Code', { position: 'top-center' });
-        setIsProcessing(false);
         return;
       }
 
-      // 2. Parse Data
       let parsed: any = null;
-      try {
-        parsed = JSON.parse(decodedText.trim());
-      } catch {
-        toast.error('Invalid QR Format', { position: 'top-center' });
-        setIsProcessing(false);
-        return;
-      }
+      try { parsed = JSON.parse(decodedText.trim()); }
+      catch { toast.error('Invalid QR Format', { position: 'top-center' }); return; }
 
       const { pnr, yatraId, persons } = parsed || {};
-
       if (!pnr || !yatraId) {
         toast.error('Incomplete QR Data', { position: 'top-center' });
-        setIsProcessing(false);
         return;
       }
 
-      // 3. Stop Scanner during API call to release resources
       await stopScannerCleanly();
 
-      // 4. API Call
       const response = await deliverPrasadam({ pnr, yatraId }).unwrap();
 
       if (response.success) {
-        // 5. Show Success Popup with API data
-        // Priority: API data > QR data > Default
         setScannedData({
           pnr: response.data?.pnr || pnr,
           persons: response.data?.persons || persons || 1,
@@ -280,39 +251,37 @@ export default function PrasadamScanner() {
       console.error("API Error:", err);
       toast.error(err?.data?.message || err?.message || 'Error processing delivery', { position: 'top-center' });
     } finally {
+      isProcessingRef.current = false;
       setIsProcessing(false);
     }
   };
 
+  // ─── Force reset ──────────────────────────────────────────────────────────
   const forceReset = async () => {
-    setIsProcessing(true);
-    setCameraError(null);
+    isProcessingRef.current = false;
+    setIsProcessing(false);
+    setCameraError(null);       // this triggers the visibility effect → startScanner
+    setCurrentCameraIndex(-1);
     await stopScannerCleanly();
     scannerRef.current = null;
-    setIsProcessing(false);
   };
 
+  // ─── Manual submit ────────────────────────────────────────────────────────
   const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!manualPnr.trim()) return;
-
     if (!selectedYatraId) {
       toast.error('Please select a Yatra from the header first', { position: 'top-center' });
       return;
     }
-
     setIsProcessing(true);
     try {
       const response = await deliverPrasadam({
         pnr: manualPnr.trim().toUpperCase(),
         yatraId: selectedYatraId
       }).unwrap();
-
       if (response.success) {
-        setScannedData(response.data || {
-          pnr: manualPnr.trim().toUpperCase(),
-          persons: 1
-        });
+        setScannedData(response.data || { pnr: manualPnr.trim().toUpperCase(), persons: 1 });
         setShowInfoModal(true);
         setShowManualEntry(false);
         setManualPnr('');
@@ -327,6 +296,7 @@ export default function PrasadamScanner() {
     }
   };
 
+  // ─── Render ───────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col h-full w-full bg-[#fdf8f3] rounded-[2rem] overflow-hidden border border-heritage-gold/20 shadow-xl relative">
       <style jsx global>{`
@@ -350,21 +320,18 @@ export default function PrasadamScanner() {
             <p className="text-[10px] text-heritage-text/40 font-black uppercase tracking-[0.1em]">Divine Registration Verification</p>
           </div>
         </div>
-
         <button onClick={forceReset} className="p-2 text-heritage-text/40 hover:text-heritage-maroon transition-colors">
           <RefreshCw className={`w-5 h-5 ${isProcessing ? 'animate-spin' : ''}`} />
         </button>
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center p-8 relative">
-        {/* Scanner Container */}
         <div className="relative group w-full max-w-[420px]">
           <div className="relative aspect-square rounded-[2.5rem] overflow-hidden bg-slate-900 shadow-2xl border-4 border-white">
             <div className="absolute inset-0 pointer-events-none z-0">
               <div id={scannerRegionId} className="w-full h-full pointer-events-auto" />
             </div>
 
-            {/* Viewfinder Overlay */}
             <div className="absolute inset-0 pointer-events-none z-10">
               <AnimatePresence>
                 {(isProcessing || isAPILoading) && (
@@ -374,8 +341,23 @@ export default function PrasadamScanner() {
                     <p className="text-[10px] font-black text-white uppercase tracking-widest">Processing...</p>
                   </motion.div>
                 )}
+
+                {cameraError && (
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                    className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900 z-30 px-8 text-center">
+                    <AlertCircle className="w-10 h-10 text-red-400 mb-4" />
+                    <p className="text-xs font-bold text-white/80 mb-2">Camera Error</p>
+                    <p className="text-[10px] text-white/40 mb-6">{cameraError}</p>
+                    <button onClick={forceReset}
+                      className="px-6 py-3 bg-heritage-maroon text-white text-xs font-bold rounded-xl uppercase tracking-widest">
+                      Retry
+                    </button>
+                  </motion.div>
+                )}
+
                 {!isScanning && !cameraError && !isProcessing && !isAPILoading && (
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900">
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                    className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900">
                     <Loader2 className="w-10 h-10 text-heritage-maroon animate-spin mb-4" />
                     <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Initialising...</p>
                   </motion.div>
@@ -385,13 +367,10 @@ export default function PrasadamScanner() {
               {isScanning && (
                 <div className="absolute inset-0">
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[70%] h-[70%] border border-white/10 rounded-2xl">
-                    {/* Simplified Corners */}
                     <div className="absolute top-0 left-0 w-10 h-10 border-t-4 border-l-4 border-heritage-gold rounded-tl-2xl" />
                     <div className="absolute top-0 right-0 w-10 h-10 border-t-4 border-r-4 border-heritage-gold rounded-tr-2xl" />
                     <div className="absolute bottom-0 left-0 w-10 h-10 border-b-4 border-l-4 border-heritage-gold rounded-bl-2xl" />
                     <div className="absolute bottom-0 right-0 w-10 h-10 border-b-4 border-r-4 border-heritage-gold rounded-br-2xl" />
-
-                    {/* Scanning Line */}
                     <motion.div
                       animate={{ top: ['10%', '90%'] }}
                       transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
@@ -404,23 +383,19 @@ export default function PrasadamScanner() {
           </div>
         </div>
 
-        {/* Essential Controls */}
         <div className="flex items-center justify-center gap-4 mt-10">
-          {/* <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 px-6 py-3 bg-white border border-heritage-gold/10 rounded-2xl text-heritage-textDark hover:bg-heritage-bgMain transition-colors hover:shadow-sm">
-            <Upload className="w-4 h-4 text-heritage-maroon" />
-            <span className="text-xs font-bold uppercase tracking-widest">Upload Image</span>
-          </button> */}
-
-          <button onClick={toggleTorch} className={`p-4 rounded-2xl border transition-all ${isTorchOn ? 'bg-heritage-gold text-white border-transparent shadow-lg' : 'bg-white text-heritage-textDark border-heritage-gold/10'}`}>
+          <button onClick={toggleTorch}
+            className={`p-4 rounded-2xl border transition-all ${isTorchOn ? 'bg-heritage-gold text-white border-transparent shadow-lg' : 'bg-white text-heritage-textDark border-heritage-gold/10'}`}>
             <Zap className={`w-5 h-5 ${isTorchOn ? 'fill-current' : ''}`} />
           </button>
-
-          <button onClick={switchCamera} className="p-4 bg-white border border-heritage-gold/10 rounded-2xl text-heritage-textDark hover:bg-heritage-bgMain transition-colors">
+          <button onClick={switchCamera}
+            className="p-4 bg-white border border-heritage-gold/10 rounded-2xl text-heritage-textDark hover:bg-heritage-bgMain transition-colors">
             <SwitchCamera className="w-5 h-5" />
           </button>
         </div>
 
-        <button onClick={() => setShowManualEntry(true)} className="mt-6 text-[10px] font-black text-heritage-text/40 hover:text-heritage-maroon transition-colors uppercase tracking-[0.2em] flex items-center gap-2 border-b border-transparent hover:border-heritage-maroon/20 pb-0.5">
+        <button onClick={() => setShowManualEntry(true)}
+          className="mt-6 text-[10px] font-black text-heritage-text/40 hover:text-heritage-maroon transition-colors uppercase tracking-[0.2em] flex items-center gap-2 border-b border-transparent hover:border-heritage-maroon/20 pb-0.5">
           <Keyboard className="w-3 h-3" />
           Enter PNR Manually
         </button>
@@ -431,9 +406,9 @@ export default function PrasadamScanner() {
         {showManualEntry && (
           <motion.div
             initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
-            className="absolute right-0 top-0 bottom-0 w-full lg:w-[400px] bg-white border-l border-heritage-gold/10 p-10 z-[100] shadow-2xl flex flex-col"
-          >
-            <button onClick={() => setShowManualEntry(false)} className="absolute top-8 right-8 p-2 text-heritage-text/30 hover:text-heritage-maroon transition-colors">
+            className="absolute right-0 top-0 bottom-0 w-full lg:w-[400px] bg-white border-l border-heritage-gold/10 p-10 z-[100] shadow-2xl flex flex-col">
+            <button onClick={() => setShowManualEntry(false)}
+              className="absolute top-8 right-8 p-2 text-heritage-text/30 hover:text-heritage-maroon transition-colors">
               <X className="w-6 h-6" />
             </button>
             <div className="mt-6 mb-10">
@@ -449,7 +424,8 @@ export default function PrasadamScanner() {
                 className="w-full bg-[#fdf8f3] border-2 border-heritage-highlight rounded-2xl px-6 py-5 font-bold text-xl tracking-widest text-heritage-textDark focus:border-heritage-maroon/40 outline-none transition-all uppercase"
                 autoFocus
               />
-              <button type="submit" className="w-full h-16 bg-heritage-maroon text-white font-bold rounded-2xl shadow-lg hover:bg-heritage-textDark active:scale-95 transition-all text-xs uppercase tracking-widest">
+              <button type="submit"
+                className="w-full h-16 bg-heritage-maroon text-white font-bold rounded-2xl shadow-lg hover:bg-heritage-textDark active:scale-95 transition-all text-xs uppercase tracking-widest">
                 Verify Pass Credentials
               </button>
             </form>

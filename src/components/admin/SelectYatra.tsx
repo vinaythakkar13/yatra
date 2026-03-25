@@ -109,42 +109,45 @@ const SelectYatra: React.FC<SelectYatraProps> = ({ value, onChange, className = 
                 wrapperClassName="yatra-selector"
                 dropdownPosition="auto"
                 closeOnClickInput={true}
+                dropdownHandle={false}
                 className="relative"
                 style={{
-                    border: '1px solid #C8A55C',
+                    border: 'none',
                     borderRadius: '12px',
-                    minHeight: '56px',
+                    minHeight: 'auto',
                     fontSize: '14px',
-                    backgroundColor: '#fff',
+                    backgroundColor: 'transparent',
                     width: '100%',
+                    padding: 0,
+                    boxShadow: 'none'
                 }}
                 contentRenderer={({ state }) => (
-                    <div className="w-full px-4 py-2 bg-white/80 backdrop-blur-sm rounded-xl hover:border-heritage-gold/50 transition-all duration-300 cursor-pointer">
+                    <div className="w-full px-4 py-2 bg-white rounded-xl border-2 border-heritage-gold transition-all duration-300 cursor-pointer shadow-sm hover:shadow-md group flex items-center min-h-[56px]">
                         {state.values.length > 0 ? (
-                            <div className="flex items-center gap-3">
-                                <div className="flex-shrink-0 p-2.5 rounded-lg bg-gradient-to-br from-kesari-light to-kesari-dark text-white shadow-md">
-                                    <Calendar className="w-5 h-5" />
+                            <div className="flex items-center gap-1.5 sm:gap-3">
+                                <div className="hidden sm:flex flex-shrink-0 p-2 rounded-lg bg-gradient-to-br from-kesari-light to-kesari-dark text-white shadow-md">
+                                    <Calendar className="w-4 h-4" />
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="text-sm font-bold text-heritage-textDark truncate">
+                                <div className="flex-1 min-w-0 py-0.5">
+                                    <div className="text-[10px] sm:text-sm font-bold text-heritage-textDark truncate leading-tight group-hover:text-heritage-primary transition-colors">
                                         {state.values[0].title}
                                     </div>
-                                    <div className="flex items-center gap-2 text-xs text-heritage-text/70 mt-0.5">
-                                        <span className="flex items-center gap-1">
-                                            <Calendar className="w-3 h-3" />
-                                            {moment(state.values[0].startDate).format('MMM DD')} - {moment(state.values[0].endDate).format('MMM DD, YYYY')}
+                                    <div className="flex items-center gap-1 text-[8px] sm:text-xs text-heritage-text/60 mt-0.5">
+                                        <span className="flex items-center gap-1 truncate">
+                                            <Calendar className="w-2 h-2 sm:w-3 h-3" />
+                                            {moment(state.values[0].startDate).format('MMM DD')} - {moment(state.values[0].endDate).format('MMM DD')}
                                         </span>
                                     </div>
                                 </div>
-                                <ChevronDown className="w-5 h-5 text-heritage-text/60 flex-shrink-0" />
+                                <ChevronDown className="w-3.5 h-3.5 sm:w-4 h-4 text-heritage-text/40 group-hover:text-heritage-primary transition-colors flex-shrink-0" />
                             </div>
                         ) : (
-                            <div className="flex items-center gap-3">
-                                <div className="flex-shrink-0 p-2.5 rounded-lg bg-heritage-highlight/30 border border-heritage-gold/20">
-                                    <Calendar className="w-5 h-5 text-heritage-text/50" />
+                            <div className="flex items-center gap-2 sm:gap-3">
+                                <div className="flex-shrink-0 p-1.5 sm:p-2 rounded-full bg-heritage-highlight/30 border border-heritage-gold/10">
+                                    <Calendar className="w-3 h-3 sm:w-4 h-4 text-heritage-text/40" />
                                 </div>
-                                <span className="text-sm text-heritage-text/60 font-medium">Select a Yatra</span>
-                                <ChevronDown className="w-5 h-5 text-heritage-text/40 ml-auto" />
+                                <span className="text-[10px] sm:text-sm text-heritage-text/50 font-medium">Select Yatra</span>
+                                <ChevronDown className="w-3 h-3 sm:w-4 h-4 text-heritage-text/30 ml-auto" />
                             </div>
                         )}
                     </div>
@@ -156,7 +159,7 @@ const SelectYatra: React.FC<SelectYatraProps> = ({ value, onChange, className = 
                     );
 
                     return (
-                        <div className="bg-white/95 backdrop-blur-xl border-2 rounded-xl shadow-glass mt-2 max-h-96 overflow-hidden animate-fade-in">
+                        <div className="bg-white border-2 border-heritage-gold rounded-xl shadow-2xl mt-1 overflow-hidden animate-fade-in flex flex-col" style={{ maxHeight: '450px' }}>
                             {/* Search Input */}
                             <div className="p-3 border-b bg-heritage-highlight/10 sticky top-0 backdrop-blur-sm">
                                 <input
@@ -169,7 +172,7 @@ const SelectYatra: React.FC<SelectYatraProps> = ({ value, onChange, className = 
                             </div>
 
                             {/* Options List */}
-                            <div className="max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-heritage-primary/40 scrollbar-track-heritage-highlight/30">
+                            <div className="flex-1 overflow-y-auto">
                                 {filtered.length > 0 ? (
                                     <div className="p-2">
                                         {filtered.map((yatra: YatraOption) => {
