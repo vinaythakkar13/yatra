@@ -137,7 +137,13 @@ export default function AdminLogin() {
         toast.success('Login successful! Redirecting...', {
           position: 'top-center',
         });
-        router.push('/admin');
+        
+        // Redirect based on role
+        if (admin.role === 'staff') {
+          router.push('/admin/prasadam-scanner');
+        } else {
+          router.push('/admin');
+        }
         return;
       } else {
         throw new Error(result.message || 'Login failed');

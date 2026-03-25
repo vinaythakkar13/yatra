@@ -71,9 +71,18 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   // Navigation items matching reference design
   const navItems: NavItem[] = [
     {
-      icon: LayoutDashboard, label: 'Dashboard', href: '/admin', exact: true,
+      icon: LayoutDashboard,
+      label: 'Dashboard',
+      href: '/admin',
+      exact: true,
+      allowedRoles: ['super_admin', 'admin']
     },
-    { icon: Users, label: 'Users', href: '/admin/users' },
+    {
+      icon: Users,
+      label: 'Users',
+      href: '/admin/users',
+      allowedRoles: ['super_admin', 'admin']
+    },
     {
       icon: CheckSquare,
       label: 'User Status',
@@ -87,7 +96,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       allowedRoles: ['super_admin', 'admin']
     },
     {
-      icon: LayoutGrid, label: 'Allotment', href: '/admin/allotment',
+      icon: LayoutGrid,
+      label: 'Allotment',
+      href: '/admin/allotment',
       allowedRoles: ['super_admin', 'admin']
     },
     {
@@ -100,22 +111,45 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       icon: Plus,
       label: 'Registration',
       href: '/admin/register',
-      allowedRoles: ['super_admin', 'admin']
+      allowedRoles: ['super_admin', 'admin',]
     },
     {
       icon: Scan,
       label: 'Prasadam Scanner',
       href: '/admin/prasadam-scanner',
-      allowedRoles: ['super_admin', 'admin']
+      allowedRoles: ['super_admin', 'admin', 'staff']
     }
   ];
 
 
   useEffect(() => {
+    const token = tokenStorage.getAccessToken();
+    const storedUser = userStorage.getUser();
+
+    if (!token || !storedUser) {
+      router.push('/admin/login');
+      return;
+    }
+
+    // Check if current path is allowed for the user's role
+    const currentNavItem = navItems.find(item => isActiveRoute(item.href, item.exact));
+    
+    // Default redirect for root /admin if navigation didn't found a match (or specifically for staff)
+    if (pathname === '/admin' && storedUser.role === 'staff') {
+      router.push('/admin/prasadam-scanner');
+      return;
+    }
+
+    if (currentNavItem && currentNavItem.allowedRoles && !currentNavItem.allowedRoles.includes(storedUser.role)) {
+      toast.error('You do not have permission to access this module', { position: 'top-center' });
+      router.push('/admin');
+      return;
+    }
+
     setIsAuthenticated(true);
     setIsChecking(false);
-    setUser({ role: 'admin', name: 'Test Admin' });
-  }, []);
+    setUser(storedUser);
+  }, [router, pathname]); // Added pathname as dependency
 
   const handleLogout = () => {
     // Clear all tokens and user data
@@ -298,7 +332,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             <div className="flex items-center gap-2 px-3 py-2 bg-white/70 border border-white/40 rounded-full shadow-glass-soft">
 
               <div className="hidden md:block">
-                <p className="text-xs text-heritage-text/70">Admin</p>
+                <p className="text-xs text-heritage-text/70 capitalize">{user?.role || 'Admin'}</p>
               </div>
 
 

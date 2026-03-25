@@ -125,25 +125,27 @@ export default function PrasadamScanner() {
 
           if (!isMounted) return;
 
+          console.log("[Scanner] Detected Cameras:", cameras);
           setAvailableCameras(cameras);
 
           let cameraConfig: any;
-          
+
           // Use currentCameraIndex if it was already selected/set to a valid index >= 0
           if (currentCameraIndex >= 0 && currentCameraIndex < cameras.length) {
             cameraConfig = { deviceId: { exact: cameras[currentCameraIndex].id } };
           } else {
             // New selection: Prioritize back/rear camera
             const back = cameras.find(c => /back|rear|environment/i.test(c.label));
-            
+
             if (back) {
+              console.log("[Scanner] Prioritizing Back Camera:", back.label);
               cameraConfig = { deviceId: { exact: back.id } };
               const backIdx = cameras.findIndex(c => c.id === back.id);
               setCurrentCameraIndex(backIdx);
             } else {
-              // Standard facingMode fallback for mobile (no specific labels found)
-              cameraConfig = { facingMode: "environment" };
-              // Default to 0 if we can't label it specifically
+              // Strictly fallback to first camera (likely web-cam on laptop)
+              console.log("[Scanner] Falling back to primary camera:", cameras[0].label);
+              cameraConfig = { deviceId: { exact: cameras[0].id } };
               setCurrentCameraIndex(0);
             }
           }
@@ -307,9 +309,9 @@ export default function PrasadamScanner() {
       }).unwrap();
 
       if (response.success) {
-        setScannedData(response.data || { 
-          pnr: manualPnr.trim().toUpperCase(), 
-          persons: 1 
+        setScannedData(response.data || {
+          pnr: manualPnr.trim().toUpperCase(),
+          persons: 1
         });
         setShowInfoModal(true);
         setShowManualEntry(false);
