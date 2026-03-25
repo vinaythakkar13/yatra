@@ -118,7 +118,7 @@ export default function Header() {
     if (href === '/spiritual') {
       return pathname === '/spiritual';
     }
-    return pathname.startsWith(href);
+    return pathname?.startsWith(href);
   };
 
   return (

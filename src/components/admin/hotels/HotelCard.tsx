@@ -6,6 +6,9 @@ import { Hotel, HotelRoom } from './steps/interface';
 import { useGenerateHotelCredentialsMutation } from '@/services/hotelApi';
 import { toast } from 'react-toastify';
 import CredentialsModal from './CredentialsModal';
+import PaymentConfirmationModal from './PaymentConfirmationModal';
+import { Banknote } from 'lucide-react';
+
 
 interface HotelCardProps {
   hotel: Hotel;
@@ -23,7 +26,10 @@ interface Credentials {
 const HotelCard: React.FC<HotelCardProps> = ({ hotel, onEdit, onDelete }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showCredModal, setShowCredModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [credentials, setCredentials] = useState<Credentials | null>(null);
+
+
 
   const [generateCredentials, { isLoading: isGenerating }] = useGenerateHotelCredentialsMutation();
 
@@ -192,6 +198,16 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onEdit, onDelete }) => {
             <Button
               variant="outline"
               size="sm"
+              onClick={() => setShowPaymentModal(true)}
+              className="h-9 border-green-200 text-green-700 hover:bg-green-50 text-xs font-semibold"
+            >
+              <Banknote className="w-3.5 h-3.5 mr-1.5" />
+              Payment Paid
+            </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => onEdit(hotel)}
               className="h-9 border-heritage-primary/20 text-heritage-primary hover:bg-heritage-primary/5 text-xs font-semibold"
             >
@@ -319,7 +335,21 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onEdit, onDelete }) => {
         credentials={credentials}
         onSendWhatsApp={handleSendWhatsApp}
       />
+
+      <PaymentConfirmationModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        onConfirm={() => {
+          setShowPaymentModal(false);
+          toast.success('Payment confirmation logic will go here.');
+        }}
+        hotelName={hotel.name}
+        totalAmount={getTotalPayments(hotel)}
+        advancePaid={Number(hotel.advance_paid_amount || 0)}
+        pendingAmount={getTotalPayments(hotel) - Number(hotel.advance_paid_amount || 0)}
+      />
     </>
+
   );
 };
 

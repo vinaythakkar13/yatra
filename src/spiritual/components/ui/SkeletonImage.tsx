@@ -31,7 +31,7 @@ export default function SkeletonImage({
     sizes,
 }: SkeletonImageProps) {
 
-     const [isLoading, setIsLoading] = useState(true);
+    const [isLoading, setIsLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
 
@@ -85,9 +85,8 @@ export default function SkeletonImage({
                         fill
                         priority={priority}
                         sizes={sizes || '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'}
-                        className={`transition-opacity duration-500 ${objectFitClasses[objectFit]} ${
-                            isLoading && isMounted ? 'opacity-0' : 'opacity-100'
-                        }`}
+                        className={`transition-opacity duration-500 ${objectFitClasses[objectFit]} ${isLoading && isMounted ? 'opacity-0' : 'opacity-100'
+                            }`}
                         onLoad={handleLoad}
                         onError={handleError}
                         unoptimized={src?.startsWith('http') || src?.startsWith('https')}
@@ -121,9 +120,8 @@ export default function SkeletonImage({
                     width={width}
                     height={height}
                     priority={priority}
-                    className={`transition-opacity duration-500 ${objectFitClasses[objectFit]} ${
-                        isLoading && isMounted ? 'opacity-0' : 'opacity-100'
-                    }`}
+                    className={`transition-opacity duration-500 ${objectFitClasses[objectFit]} ${isLoading && isMounted ? 'opacity-0' : 'opacity-100'
+                        }`}
                     onLoad={handleLoad}
                     onError={handleError}
                     unoptimized={src?.startsWith('http') || src?.startsWith('https')}

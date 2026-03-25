@@ -824,6 +824,7 @@ export default function HistoryPage() {
             check_in_status: data.data.registration.check_in_status ?? 'not_checked_in',
           } : null}
           yatra={data?.data?.yatra?.name || ''}
+          yatraId={data?.data?.yatra?.id || ''}
         />
       </div>
     </div>

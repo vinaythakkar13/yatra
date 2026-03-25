@@ -12,11 +12,11 @@ export default function ClientLayoutWrapper({
   const pathname = usePathname();
 
   // Check if current page is an admin page
-  const isAdminPage = pathname.startsWith('/admin');
+  const isAdminPage = pathname?.startsWith('/admin');
   // Check if current page is a spiritual module page
-  const isSpiritualPage = pathname.startsWith('/spiritual');
+  const isSpiritualPage = pathname?.startsWith('/spiritual');
   // Check if current page is a hotel module page
-  const isHotelPage = pathname.startsWith('/hotel');
+  const isHotelPage = pathname?.startsWith('/hotel');
 
   // Admin Layout
   if (isAdminPage || isHotelPage) {

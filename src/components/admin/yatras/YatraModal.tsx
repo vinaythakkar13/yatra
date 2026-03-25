@@ -169,7 +169,7 @@ const YatraModal: React.FC<YatraModalProps> = ({ isOpen, onClose, onSubmit, edit
         const file = e.target.files?.[0];
         if (file) {
             // Validate file type
-            if (!file.type.startsWith('image/')) {
+            if (!file.type?.startsWith('image/')) {
                 setValue('bannerImage', null);
                 return;
             }
@@ -186,7 +186,7 @@ const YatraModal: React.FC<YatraModalProps> = ({ isOpen, onClose, onSubmit, edit
         const file = e.target.files?.[0];
         if (file) {
             // Validate file type
-            if (!file.type.startsWith('image/')) {
+            if (!file.type?.startsWith('image/')) {
                 setValue('mobileBannerImage', null);
                 return;
             }

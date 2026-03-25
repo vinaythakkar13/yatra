@@ -249,7 +249,7 @@ function UserManagement() {
         setBedAssignments(current => {
           const newAssignments = { ...current };
           Object.keys(newAssignments).forEach(key => {
-            if (key.startsWith(`${roomNumber}-`)) {
+            if (key?.startsWith(`${roomNumber}-`)) {
               delete newAssignments[key];
             }
           });

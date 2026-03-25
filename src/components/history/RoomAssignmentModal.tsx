@@ -31,10 +31,11 @@ interface RoomAssignmentModalProps {
         check_in_status: 'not_checked_in' | 'checked_in' | 'checked_out';
     } | null;
     yatra: string;
+    yatraId: string;
 }
 
 function formatGoogleMapsUrl(url: string) {
-    if (url.startsWith("google.com/maps")) {
+    if (url?.startsWith("google.com/maps")) {
         return "https://www." + url;
     }
     return url;
@@ -45,7 +46,8 @@ const RoomAssignmentModal: React.FC<RoomAssignmentModalProps> = ({
     onClose,
     hotel,
     registration,
-    yatra
+    yatra,
+    yatraId
 }) => {
     const [mounted, setMounted] = React.useState(false);
     const [isFlipped, setIsFlipped] = React.useState(false);
@@ -96,6 +98,7 @@ const RoomAssignmentModal: React.FC<RoomAssignmentModalProps> = ({
         pnr: registration.pnr,
         action: 'prasadam',
         persons: registration.numberOfPersons,
+        yatraId: yatraId
     });
 
     // Room QR value

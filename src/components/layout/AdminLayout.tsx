@@ -15,8 +15,10 @@ import {
   Menu,
   X,
   LayoutGrid,
-  CheckSquare
+  CheckSquare,
+  Scan
 } from 'lucide-react';
+
 import { tokenStorage, userStorage, yatraStorage } from '@/utils/storage';
 import { toast } from 'react-toastify';
 import Tooltip from '@/components/ui/Tooltip';
@@ -99,8 +101,15 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       label: 'Registration',
       href: '/admin/register',
       allowedRoles: ['super_admin', 'admin']
+    },
+    {
+      icon: Scan,
+      label: 'Prasadam Scanner',
+      href: '/admin/prasadam-scanner',
+      allowedRoles: ['super_admin', 'admin']
     }
   ];
+
 
   useEffect(() => {
     setIsAuthenticated(true);

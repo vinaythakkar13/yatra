@@ -185,7 +185,7 @@ export default function NumberInput({
     const selectionStart = input.selectionStart || 0;
 
     // If typing '0' at the start and min > 0, prevent it
-    if (e.key === '0' && selectionStart === 0 && (currentValue === '' || currentValue.startsWith('0'))) {
+    if (e.key === '0' && selectionStart === 0 && (currentValue === '' || currentValue?.startsWith('0'))) {
       if (min > 0) {
         e.preventDefault();
         return;
