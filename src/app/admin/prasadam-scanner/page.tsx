@@ -30,7 +30,7 @@ export default function PrasadamScanner() {
   const [isTorchOn, setIsTorchOn] = useState(false);
   const [hasTorch, setHasTorch] = useState(false);
   const [availableCameras, setAvailableCameras] = useState<{ id: string; label: string }[]>([]);
-  const [currentCameraIndex, setCurrentCameraIndex] = useState(0);
+  const [currentCameraIndex, setCurrentCameraIndex] = useState(-1);
 
   // API Mutation
   const [deliverPrasadam, { isLoading: isAPILoading }] = useDeliverPrasadamMutation();
@@ -128,13 +128,24 @@ export default function PrasadamScanner() {
           setAvailableCameras(cameras);
 
           let cameraConfig: any;
-          if (availableCameras.length > 0 && currentCameraIndex < cameras.length) {
+          
+          // Use currentCameraIndex if it was already selected/set to a valid index >= 0
+          if (currentCameraIndex >= 0 && currentCameraIndex < cameras.length) {
             cameraConfig = { deviceId: { exact: cameras[currentCameraIndex].id } };
           } else {
+            // New selection: Prioritize back/rear camera
             const back = cameras.find(c => /back|rear|environment/i.test(c.label));
-            cameraConfig = back ? { deviceId: { exact: back.id } } : { facingMode: "environment" };
-            const backIndex = back ? cameras.findIndex(c => c.id === back.id) : -1;
-            if (backIndex >= 0) setCurrentCameraIndex(backIndex);
+            
+            if (back) {
+              cameraConfig = { deviceId: { exact: back.id } };
+              const backIdx = cameras.findIndex(c => c.id === back.id);
+              setCurrentCameraIndex(backIdx);
+            } else {
+              // Standard facingMode fallback for mobile (no specific labels found)
+              cameraConfig = { facingMode: "environment" };
+              // Default to 0 if we can't label it specifically
+              setCurrentCameraIndex(0);
+            }
           }
 
           try {
