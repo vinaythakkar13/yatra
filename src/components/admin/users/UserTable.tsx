@@ -261,7 +261,7 @@ const UserTable: React.FC<UserTableProps> = ({
                         <EyeSquareIcon size={24} />
                     </button>
 
-                    {userRole !== 'staff' && (
+                    {userRole === 'super_admin' && (
                         <>
                             {row?.user?.assignedRooms?.length > 0 ? (
                                 <>

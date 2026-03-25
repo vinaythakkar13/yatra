@@ -93,19 +93,19 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       icon: Hotel,
       label: 'Hotels',
       href: '/admin/hotels',
-      allowedRoles: ['super_admin', 'admin']
+      allowedRoles: ['super_admin']
     },
     {
       icon: LayoutGrid,
       label: 'Allotment',
       href: '/admin/allotment',
-      allowedRoles: ['super_admin', 'admin']
+      allowedRoles: ['super_admin']
     },
     {
       icon: Plane,
       label: 'Yatras',
       href: '/admin/yatras',
-      allowedRoles: ['super_admin', 'admin']
+      allowedRoles: ['super_admin']
     },
     {
       icon: Plus,
@@ -133,7 +133,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
     // Check if current path is allowed for the user's role
     const currentNavItem = navItems.find(item => isActiveRoute(item.href, item.exact));
-    
+
     // Default redirect for root /admin if navigation didn't found a match (or specifically for staff)
     if (pathname === '/admin' && storedUser.role === 'staff') {
       router.push('/admin/prasadam-scanner');

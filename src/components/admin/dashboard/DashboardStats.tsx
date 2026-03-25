@@ -89,7 +89,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ stats, userRole }) => {
                 description="People to be allotted"
             />
 
-            {userRole !== 'staff' && (
+            {userRole === 'super_admin' && (
                 <>
                     <StatCard
                         title="Available Rooms"

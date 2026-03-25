@@ -102,13 +102,12 @@ const UserStatusTable: React.FC<UserStatusTableProps> = ({
             header: 'Room Status',
             render: (row: any) => (
                 <span
-                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold w-fit ${
-                        row.status === 'checked in'
+                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold w-fit ${row.status === 'checked in'
                             ? 'bg-green-100 text-green-700'
                             : row.status === 'checked out'
-                            ? 'bg-blue-100 text-blue-700'
-                            : 'bg-yellow-100 text-yellow-700'
-                    }`}
+                                ? 'bg-blue-100 text-blue-700'
+                                : 'bg-yellow-100 text-yellow-700'
+                        }`}
                 >
                     {row.status ? row.status.charAt(0).toUpperCase() + row.status.slice(1) : ''}
                 </span>
@@ -119,7 +118,7 @@ const UserStatusTable: React.FC<UserStatusTableProps> = ({
             header: 'Actions',
             render: (row: any) => (
                 <div className="flex gap-2">
-                    {userRole !== 'staff' && (
+                    {userRole === 'super_admin' && (
                         <button
                             onClick={() => onUnassignRoom(row)}
                             className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
@@ -168,8 +167,8 @@ const UserStatusTable: React.FC<UserStatusTableProps> = ({
             >
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-1">
                     {viewRoomsData?.rooms.map((room, idx) => (
-                        <div 
-                            key={idx} 
+                        <div
+                            key={idx}
                             className="bg-white border border-heritage-gold/30 rounded-xl p-3 shadow-sm hover:shadow-md transition-shadow flex flex-col items-center justify-center text-center"
                         >
                             <span className="text-[10px] uppercase tracking-wider text-heritage-gold font-bold mb-1">
