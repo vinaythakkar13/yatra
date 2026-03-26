@@ -357,6 +357,20 @@ export const hotelApi = baseApi.injectEndpoints({
       },
       providesTags: ['Registration', 'Hotel'],
     }),
+
+    /**
+     * Set Payment Done Endpoint
+     * POST /hotels/set-payment-done
+     * Body: { hotelId }
+     */
+    setPaymentDone: builder.mutation<{ success: boolean; data: APIHotel }, { hotelId: string }>({
+      query: (body) => ({
+        url: '/hotels/set-payment-done',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Hotel'],
+    }),
   }),
 });
 
@@ -375,6 +389,7 @@ export const {
   useHotelCheckOutMutation,
   useHotelCheckInOutMutation,
   useGetRoomAllottedDataQuery,
+  useSetPaymentDoneMutation,
 } = hotelApi;
 
 /**

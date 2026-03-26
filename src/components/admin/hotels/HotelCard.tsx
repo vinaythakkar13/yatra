@@ -3,11 +3,12 @@ import { Hotel as HotelIcon, MapPin, Edit, Trash2, ChevronDown, ChevronUp, Home,
 import Button from '@/components/ui/Button';
 import Table from '@/components/ui/Table';
 import { Hotel, HotelRoom } from './steps/interface';
-import { useGenerateHotelCredentialsMutation } from '@/services/hotelApi';
+import { useGenerateHotelCredentialsMutation, useSetPaymentDoneMutation } from '@/services/hotelApi';
 import { toast } from 'react-toastify';
 import CredentialsModal from './CredentialsModal';
 import PaymentConfirmationModal from './PaymentConfirmationModal';
 import { Banknote } from 'lucide-react';
+import VerifiedBadgeIcon from '@/components/ui/svg/VerifiedIcon';
 
 
 interface HotelCardProps {
@@ -32,6 +33,7 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onEdit, onDelete }) => {
 
 
   const [generateCredentials, { isLoading: isGenerating }] = useGenerateHotelCredentialsMutation();
+  const [setPaymentDone, { isLoading: isUpdatingPayment }] = useSetPaymentDoneMutation();
 
   const getTotalRooms = (hotel: Hotel) => hotel.rooms?.length || 0;
   const getOccupiedRooms = (hotel: Hotel) =>
@@ -55,6 +57,20 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onEdit, onDelete }) => {
       }
     } catch (err: any) {
       toast.error(err?.data?.message || 'Error generating hotel credentials.');
+    }
+  };
+
+  const handleConfirmPayment = async () => {
+    try {
+      const result = await setPaymentDone({ hotelId: hotel.id }).unwrap();
+      if (result.success) {
+        toast.success('Payment marked as completed successfully!');
+        setShowPaymentModal(false);
+      } else {
+        toast.error('Failed to update payment status.');
+      }
+    } catch (err: any) {
+      toast.error(err?.data?.message || 'Error updating payment status.');
     }
   };
 
@@ -161,8 +177,11 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onEdit, onDelete }) => {
               <HotelIcon className="w-6 h-6" />
             </div>
             <div className="min-w-0">
-              <h2 className="text-xl md:text-2xl font-bold text-heritage-textDark mb-1.5 truncate">
+              <h2 className="text-xl md:text-2xl font-bold text-heritage-textDark mb-1.5 flex items-center gap-2 truncate">
                 {hotel.name}
+                {hotel.full_payment_paid && (
+                  <VerifiedBadgeIcon size={20} className="text-green-500 fill-green-500 flex-shrink-0" />
+                )}
               </h2>
               <div className="flex flex-wrap items-center gap-y-1 gap-x-3 text-sm text-heritage-text/70">
                 {hotel.address && (
@@ -199,10 +218,11 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onEdit, onDelete }) => {
               variant="outline"
               size="sm"
               onClick={() => setShowPaymentModal(true)}
-              className="h-9 border-green-200 text-green-700 hover:bg-green-50 text-xs font-semibold"
+              disabled={hotel.full_payment_paid}
+              className={`h-9 border-green-200 text-green-700 hover:bg-green-50 text-xs font-semibold ${hotel.full_payment_paid ? 'bg-green-50 opacity-100 border-green-100 cursor-default' : ''}`}
             >
               <Banknote className="w-3.5 h-3.5 mr-1.5" />
-              Payment Paid
+              {hotel.full_payment_paid ? 'Paid' : 'Payment Paid'}
             </Button>
 
             <Button
@@ -235,13 +255,18 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onEdit, onDelete }) => {
               ₹{getTotalPayments(hotel).toLocaleString('en-IN')}
             </div>
           </div>
-          <div className="bg-heritage-highlight/10 rounded-xl p-4 border border-heritage-highlight/20 transition-colors hover:bg-heritage-highlight/20">
+          <div className="bg-heritage-highlight/10 rounded-xl p-4 border border-heritage-highlight/20 transition-colors hover:bg-heritage-highlight/20 relative overflow-hidden">
             <div className="text-heritage-text/60 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5">
               <IndianRupee className="w-3.5 h-3.5" /> Advance Paid
             </div>
             <div className="text-xl font-bold text-heritage-textDark">
               ₹{Number(hotel.advance_paid_amount || 0).toLocaleString('en-IN')}
             </div>
+            {/* {hotel.full_payment_paid && (
+              <div className="absolute -right-6 -top-2 bg-green-500 text-white text-[8px] font-black uppercase py-4 px-8 rotate-[25deg] shadow-sm">
+                Paid
+              </div>
+            )} */}
           </div>
 
           {/* Rooms Overview */}
@@ -339,10 +364,8 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onEdit, onDelete }) => {
       <PaymentConfirmationModal
         isOpen={showPaymentModal}
         onClose={() => setShowPaymentModal(false)}
-        onConfirm={() => {
-          setShowPaymentModal(false);
-          toast.success('Payment confirmation logic will go here.');
-        }}
+        onConfirm={handleConfirmPayment}
+        isLoading={isUpdatingPayment}
         hotelName={hotel.name}
         totalAmount={getTotalPayments(hotel)}
         advancePaid={Number(hotel.advance_paid_amount || 0)}

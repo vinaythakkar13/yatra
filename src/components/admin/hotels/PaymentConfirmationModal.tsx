@@ -10,6 +10,7 @@ interface PaymentConfirmationModalProps {
   totalAmount: number;
   advancePaid: number;
   pendingAmount: number;
+  isLoading?: boolean;
 }
 
 const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
@@ -20,6 +21,7 @@ const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
   totalAmount,
   advancePaid,
   pendingAmount,
+  isLoading = false,
 }) => {
   if (!isOpen) return null;
 
@@ -95,9 +97,17 @@ const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
           </Button>
           <Button
             onClick={onConfirm}
+            disabled={isLoading}
             className="flex-1 py-3 bg-heritage-primary hover:bg-heritage-primary/90 text-white font-bold shadow-lg shadow-heritage-primary/20"
           >
-            Confirm Paid
+            {isLoading ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                Processing...
+              </>
+            ) : (
+              'Confirm Paid'
+            )}
           </Button>
         </div>
       </div>
