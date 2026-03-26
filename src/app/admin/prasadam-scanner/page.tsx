@@ -120,43 +120,68 @@ export default function PrasadamScanner() {
     isDetectingRef.current = false;
 
     try {
-      // ✅ SPEED FIX 5: Pre-load detector once and reuse. Avoid re-instantiating on every startCamera.
+      // ── Guard: mediaDevices unavailable in HTTP or some in-app browsers ──────
+      if (!navigator?.mediaDevices?.getUserMedia) {
+        setCameraError('Camera not supported. Please open in Chrome or Safari browser directly (not inside an app).');
+        return;
+      }
+
+      // ── Pre-load detector ────────────────────────────────────────────────────
       if (!detectorRef.current) {
         const Detector = await loadBarcodeDetector();
         detectorRef.current = new Detector({ formats: ['qr_code'] });
       }
 
+      // ── FIX 1: Request camera permission FIRST with a simple constraint ──────
+      // On mobile, enumerateDevices() returns empty labels until permission granted.
+      // So we ask for the camera first, then enumerate with real labels.
+      let initialStream: MediaStream | null = null;
+      try {
+        initialStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' } }
+        });
+      } catch (permErr: any) {
+        if (/permission|denied|notallowed/i.test(permErr.name + permErr.message)) {
+          setCameraError('Camera permission denied. Please allow camera access in your browser settings and reload.');
+        } else {
+          setCameraError(`Camera error: ${permErr.message || permErr.name}`);
+        }
+        return;
+      }
+
+      // ── FIX 2: Enumerate AFTER permission granted so labels are populated ────
       const devices = (await navigator.mediaDevices.enumerateDevices())
         .filter(d => d.kind === 'videoinput');
       setAvailableCameras(devices);
+
+      // Stop the initial stream; we'll restart with the correct device + settings
+      initialStream.getTracks().forEach(t => t.stop());
+      initialStream = null;
 
       if (!devices.length) {
         setCameraError('No camera found on this device');
         return;
       }
 
+      // ── Pick back camera ─────────────────────────────────────────────────────
       const backIdx = devices.findIndex(d => /back|rear|environment/i.test(d.label));
-      const idx = cameraIndex === 0 && backIdx >= 0 ? backIdx : cameraIndex;
+      const idx = cameraIndex === 0 && backIdx >= 0 ? backIdx : Math.min(cameraIndex, devices.length - 1);
       setCurrentCameraIndex(idx);
 
-      // ✅ SPEED FIX 6: Higher resolution = more pixels = better far-distance QR detection.
-      //    GPay uses 1080p on flagship devices. Use ideal 1920x1080 so the browser picks
-      //    the closest available. Also request continuous autofocus explicitly.
-      const constraints = {
+      // ── FIX 3: Simple, safe constraints — no min values that cause OverconstrainedError ──
+      // Advanced camera hints (AF, exposure) go into `advanced` array, not root level.
+      // Root-level unsupported constraints silently fail or throw on iOS Safari.
+      const constraints: MediaStreamConstraints = {
         video: {
-          deviceId: devices[idx] ? { exact: devices[idx].deviceId } : undefined,
-          facingMode: devices[idx] ? undefined : 'environment',
-          width: { ideal: 1920, min: 1280 },
-          height: { ideal: 1080, min: 720 },
-          // ✅ SPEED FIX 7: Explicitly request continuous AF + exposure.
-          //    Blurry frames are the #1 reason QR scans are slow at distance.
-          focusMode: 'continuous',
-          exposureMode: 'continuous',
-          whiteBalanceMode: 'continuous',
-        } as any
+          deviceId: devices[idx]?.deviceId ? { exact: devices[idx].deviceId } : undefined,
+          facingMode: devices[idx]?.deviceId ? undefined : { ideal: 'environment' },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        }
       };
 
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
+
       if (!isMountedRef.current) {
         stream.getTracks().forEach(t => t.stop());
         return;
@@ -165,28 +190,36 @@ export default function PrasadamScanner() {
 
       const video = videoRef.current!;
       video.srcObject = stream;
-
-      // ✅ SPEED FIX 8: Set low-latency hint on video element.
       (video as any).disablePictureInPicture = true;
 
-      try {
-        await video.play();
-      } catch (err: any) {
-        if (err.name !== 'AbortError') throw err;
-      }
+      // ── FIX 4: On iOS, video.play() must be called after srcObject is set ────
+      // Wrap in a promise and only proceed when metadata is loaded.
+      await new Promise<void>((resolve, reject) => {
+        const onReady = () => { video.removeEventListener('loadedmetadata', onReady); resolve(); };
+        video.addEventListener('loadedmetadata', onReady);
+        video.play().catch((err) => {
+          if (err.name !== 'AbortError') reject(err);
+          else resolve(); // AbortError is harmless on iOS
+        });
+        // Fallback if loadedmetadata never fires (some Android WebViews)
+        setTimeout(resolve, 3000);
+      });
 
+      if (!isMountedRef.current) return;
+
+      // ── FIX 5: Apply advanced constraints AFTER stream is live ───────────────
       const track = stream.getVideoTracks()[0];
-      const caps = track.getCapabilities() as any;
+      const caps = track.getCapabilities?.() as any ?? {};
       setHasTorch(!!caps?.torch);
 
-      // ✅ SPEED FIX 9: Apply zoom-out (wide angle) constraint if supported.
-      //    This increases the field of view and helps detect QR from farther away.
-      if (caps?.zoom) {
-        try {
-          await track.applyConstraints({
-            advanced: [{ zoom: caps.zoom.min } as any]
-          });
-        } catch { /* zoom not supported, ignore */ }
+      const advanced: any[] = [];
+      if (caps?.focusMode?.includes?.('continuous')) advanced.push({ focusMode: 'continuous' });
+      if (caps?.exposureMode?.includes?.('continuous')) advanced.push({ exposureMode: 'continuous' });
+      if (caps?.whiteBalanceMode?.includes?.('continuous')) advanced.push({ whiteBalanceMode: 'continuous' });
+      if (caps?.zoom) advanced.push({ zoom: caps.zoom.min });
+
+      if (advanced.length) {
+        try { await track.applyConstraints({ advanced }); } catch { /* best-effort */ }
       }
 
       setIsScanning(true);
@@ -194,8 +227,11 @@ export default function PrasadamScanner() {
 
     } catch (err: any) {
       console.error('[Camera]', err);
-      let msg = 'Failed to start camera';
-      if (/permission/i.test(err.message)) msg = 'Camera permission denied. Please enable in settings.';
+      let msg = 'Failed to start camera.';
+      if (/overconstrained/i.test(err.name)) msg = 'Camera settings not supported on this device. Try refreshing.';
+      else if (/permission|denied|notallowed/i.test(err.name + err.message)) msg = 'Camera permission denied. Please allow in browser settings.';
+      else if (/notfound|devicenotfound/i.test(err.name)) msg = 'No camera found on this device.';
+      else if (/notreadable|trackstarterror/i.test(err.name)) msg = 'Camera is in use by another app. Close it and try again.';
       setCameraError(msg);
     }
   }, [stopCamera, startScanLoop]);
