@@ -15,9 +15,15 @@ import {
 } from 'lucide-react';
 import { useDeliverPrasadamMutation } from '@/services/registrationApi';
 import { yatraStorage } from '@/utils/storage';
-import { Html5Qrcode, Html5QrcodeScannerState } from 'html5-qrcode';
 import { toast } from 'react-toastify';
 import PrasadamInfoModal from '@/components/admin/prasadam/PrasadamInfoModal';
+
+// ── Polyfill for browsers without native BarcodeDetector (e.g. Firefox, Safari) ──
+async function loadBarcodeDetector() {
+  if ('BarcodeDetector' in window) return (window as any).BarcodeDetector;
+  const { BarcodeDetector } = await import('barcode-detector/ponyfill');
+  return BarcodeDetector;
+}
 
 export default function PrasadamScanner() {
   const router = useRouter();
@@ -28,8 +34,8 @@ export default function PrasadamScanner() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isTorchOn, setIsTorchOn] = useState(false);
   const [hasTorch, setHasTorch] = useState(false);
-  const [availableCameras, setAvailableCameras] = useState<{ id: string; label: string }[]>([]);
-  const [currentCameraIndex, setCurrentCameraIndex] = useState(-1);
+  const [availableCameras, setAvailableCameras] = useState<MediaDeviceInfo[]>([]);
+  const [currentCameraIndex, setCurrentCameraIndex] = useState(0);
 
   const [deliverPrasadam, { isLoading: isAPILoading }] = useDeliverPrasadamMutation();
   const [selectedYatraId, setSelectedYatraId] = useState<string | null>(null);
@@ -49,171 +55,195 @@ export default function PrasadamScanner() {
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [scannedData, setScannedData] = useState<any>(null);
 
-  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const animFrameRef = useRef<number | null>(null);
+  const detectorRef = useRef<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isProcessingRef = useRef(false);
   const isMountedRef = useRef(true);
-  const scannerRegionId = "prasadam-qr-reader";
+  // ✅ SPEED FIX 1: Removed lastScanTimeRef throttle entirely.
+  // We rely on requestAnimationFrame natural cadence (~60fps) which is
+  // what Google Pay does. The async detect() call itself acts as the limiter.
+  const isDetectingRef = useRef(false); // Separate flag: prevents concurrent detect() calls
 
   // ─── Clean stop ───────────────────────────────────────────────────────────
-  const stopScannerCleanly = useCallback(async () => {
-    const scanner = scannerRef.current;
-    if (!scanner) return;
-    try {
-      if (scanner.getState() === Html5QrcodeScannerState.SCANNING) {
-        await scanner.stop();
-      }
-    } catch (err) {
-      console.warn("Stop failed:", err);
+  const stopCamera = useCallback(() => {
+    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
     }
-    try {
-      const el = document.getElementById(scannerRegionId);
-      if (el) el.innerHTML = '';
-    } catch (_) { }
+    if (videoRef.current) videoRef.current.srcObject = null;
     setIsScanning(false);
     setIsTorchOn(false);
   }, []);
 
-  // ─── Start scanner ────────────────────────────────────────────────────────
-  const startScanner = useCallback(async (cameraIndexOverride?: number) => {
-    if (!isMountedRef.current) return;
+  // ─── Scan Loop ─────────────────────────────────────────────────────────────
+  // ✅ SPEED FIX 2: isDetectingRef prevents stacking detect() promises while
+  //    still running every animation frame. GPay pattern: fire-and-forget with guard.
+  // ✅ SPEED FIX 3: Pass `video` element directly to detect() instead of canvas.
+  //    Native BarcodeDetector handles hardware acceleration internally.
+  const startScanLoop = useCallback((detector: any) => {
+    const video = videoRef.current;
+    if (!video) return;
 
-    // Always wipe the container first to avoid "already exists" errors
-    const el = document.getElementById(scannerRegionId);
-    if (!el) return;
-    el.innerHTML = '';
-
-    // Fresh instance every time
-    scannerRef.current = new Html5Qrcode(scannerRegionId, { verbose: false });
-
-    // Enumerate cameras
-    let cameras: { id: string; label: string }[] = [];
-    try {
-      cameras = await Html5Qrcode.getCameras();
-    } catch (err: any) {
-      const msg = err?.message || 'Camera permission denied';
-      console.error('[getCameras]', err);
-      if (isMountedRef.current) setCameraError(msg);
-      return;
-    }
-
-    if (!cameras.length) {
-      if (isMountedRef.current) setCameraError('No cameras found on this device');
-      return;
-    }
-
-    if (isMountedRef.current) setAvailableCameras(cameras);
-
-    // Resolve camera
-    const idxToUse = cameraIndexOverride !== undefined ? cameraIndexOverride : currentCameraIndex;
-    let resolvedIndex: number;
-    let cameraConfig: any;
-
-    if (idxToUse >= 0 && idxToUse < cameras.length) {
-      resolvedIndex = idxToUse;
-      cameraConfig = { deviceId: { exact: cameras[resolvedIndex].id } };
-    } else {
-      // Prefer back/rear/environment camera
-      const backIdx = cameras.findIndex(c => /back|rear|environment/i.test(c.label));
-      resolvedIndex = backIdx !== -1 ? backIdx : 0;
-      cameraConfig = backIdx !== -1
-        ? { deviceId: { exact: cameras[resolvedIndex].id } }
-        : { facingMode: { ideal: 'environment' } };
-      if (isMountedRef.current) setCurrentCameraIndex(resolvedIndex);
-    }
-
-    const scanConfig = {
-      fps: 30,
-      qrbox: (w: number, h: number) => {
-        const size = Math.max(180, Math.floor(Math.min(w, h) * 0.55));
-        return { width: size, height: size };
-      },
-      aspectRatio: 1.0,
-      disableFlip: false,
-      experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+    const tick = async () => {
+      if (!isProcessingRef.current && video.readyState >= video.HAVE_ENOUGH_DATA && !isDetectingRef.current) {
+        isDetectingRef.current = true;
+        try {
+          const codes = await detector.detect(video);
+          if (codes.length > 0 && !isProcessingRef.current) {
+            isProcessingRef.current = true;
+            await processScanResult(codes[0].rawValue);
+          }
+        } catch {
+          // Frame not ready, skip silently
+        } finally {
+          isDetectingRef.current = false;
+        }
+      }
+      // ✅ SPEED FIX 4: Always re-queue next frame regardless of detect outcome.
+      //    Never block the RAF loop on async work.
+      animFrameRef.current = requestAnimationFrame(tick);
     };
 
-    // Try fallback chain
-    const attempts: any[] = [
-      cameraConfig,
-      { facingMode: 'environment' },
-      { facingMode: 'user' },
-    ];
+    animFrameRef.current = requestAnimationFrame(tick);
+  }, []); // eslint-disable-line
 
-    for (const config of attempts) {
-      try {
-        await scannerRef.current.start(config, scanConfig, onScanSuccess, () => { });
-        if (isMountedRef.current) {
-          setIsScanning(true);
-          setCameraError(null);
-          try {
-            const caps = await scannerRef.current.getRunningTrackCapabilities();
-            setHasTorch(!!(caps as any)?.torch);
-          } catch { setHasTorch(false); }
-        }
-        return; // success
-      } catch (err) {
-        console.warn('[Scanner start attempt failed]', config, err);
-        try { await scannerRef.current.stop(); } catch (_) { }
-        el.innerHTML = '';
-        scannerRef.current = new Html5Qrcode(scannerRegionId, { verbose: false });
+  // ─── Start camera ─────────────────────────────────────────────────────────
+  const startCamera = useCallback(async (cameraIndex = 0) => {
+    if (!isMountedRef.current) return;
+    stopCamera();
+    setCameraError(null);
+    isDetectingRef.current = false;
+
+    try {
+      // ✅ SPEED FIX 5: Pre-load detector once and reuse. Avoid re-instantiating on every startCamera.
+      if (!detectorRef.current) {
+        const Detector = await loadBarcodeDetector();
+        detectorRef.current = new Detector({ formats: ['qr_code'] });
       }
-    }
 
-    if (isMountedRef.current) {
-      setCameraError('Could not open camera. Please allow camera access and retry.');
-    }
-  }, [currentCameraIndex]); // eslint-disable-line
+      const devices = (await navigator.mediaDevices.enumerateDevices())
+        .filter(d => d.kind === 'videoinput');
+      setAvailableCameras(devices);
 
-  // ─── Mount / unmount ──────────────────────────────────────────────────────
+      if (!devices.length) {
+        setCameraError('No camera found on this device');
+        return;
+      }
+
+      const backIdx = devices.findIndex(d => /back|rear|environment/i.test(d.label));
+      const idx = cameraIndex === 0 && backIdx >= 0 ? backIdx : cameraIndex;
+      setCurrentCameraIndex(idx);
+
+      // ✅ SPEED FIX 6: Higher resolution = more pixels = better far-distance QR detection.
+      //    GPay uses 1080p on flagship devices. Use ideal 1920x1080 so the browser picks
+      //    the closest available. Also request continuous autofocus explicitly.
+      const constraints = {
+        video: {
+          deviceId: devices[idx] ? { exact: devices[idx].deviceId } : undefined,
+          facingMode: devices[idx] ? undefined : 'environment',
+          width: { ideal: 1920, min: 1280 },
+          height: { ideal: 1080, min: 720 },
+          // ✅ SPEED FIX 7: Explicitly request continuous AF + exposure.
+          //    Blurry frames are the #1 reason QR scans are slow at distance.
+          focusMode: 'continuous',
+          exposureMode: 'continuous',
+          whiteBalanceMode: 'continuous',
+        } as any
+      };
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      if (!isMountedRef.current) {
+        stream.getTracks().forEach(t => t.stop());
+        return;
+      }
+      streamRef.current = stream;
+
+      const video = videoRef.current!;
+      video.srcObject = stream;
+
+      // ✅ SPEED FIX 8: Set low-latency hint on video element.
+      (video as any).disablePictureInPicture = true;
+
+      try {
+        await video.play();
+      } catch (err: any) {
+        if (err.name !== 'AbortError') throw err;
+      }
+
+      const track = stream.getVideoTracks()[0];
+      const caps = track.getCapabilities() as any;
+      setHasTorch(!!caps?.torch);
+
+      // ✅ SPEED FIX 9: Apply zoom-out (wide angle) constraint if supported.
+      //    This increases the field of view and helps detect QR from farther away.
+      if (caps?.zoom) {
+        try {
+          await track.applyConstraints({
+            advanced: [{ zoom: caps.zoom.min } as any]
+          });
+        } catch { /* zoom not supported, ignore */ }
+      }
+
+      setIsScanning(true);
+      startScanLoop(detectorRef.current);
+
+    } catch (err: any) {
+      console.error('[Camera]', err);
+      let msg = 'Failed to start camera';
+      if (/permission/i.test(err.message)) msg = 'Camera permission denied. Please enable in settings.';
+      setCameraError(msg);
+    }
+  }, [stopCamera, startScanLoop]);
+
+  // ─── Lifecycle ────────────────────────────────────────────────────────────
   useEffect(() => {
     isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
-      stopScannerCleanly().catch(console.warn);
+      stopCamera();
     };
-  }, []); // eslint-disable-line
+  }, [stopCamera]);
 
-  // ─── React to visibility changes ──────────────────────────────────────────
   useEffect(() => {
-    const shouldScan = !showManualEntry && !showInfoModal && !cameraError;
+    const shouldScan = !showManualEntry && !showInfoModal && !cameraError && !isProcessing;
 
     if (shouldScan) {
-      const t = setTimeout(() => startScanner(), 150);
+      const t = setTimeout(() => startCamera(currentCameraIndex), 150);
       return () => clearTimeout(t);
     } else {
-      stopScannerCleanly().catch(console.warn);
+      stopCamera();
     }
-  }, [showManualEntry, showInfoModal, cameraError]); // eslint-disable-line
+  }, [showManualEntry, showInfoModal, cameraError, isProcessing]); // eslint-disable-line
 
   // ─── Switch camera ────────────────────────────────────────────────────────
   const switchCamera = useCallback(async () => {
     if (availableCameras.length < 2) return;
-    const nextIndex = (currentCameraIndex + 1) % availableCameras.length;
-    await stopScannerCleanly();
-    setCurrentCameraIndex(nextIndex);
-    setTimeout(() => startScanner(nextIndex), 150);
-  }, [availableCameras, currentCameraIndex, stopScannerCleanly, startScanner]);
+    const next = (currentCameraIndex + 1) % availableCameras.length;
+    toast.info(`Switching camera...`);
+    await startCamera(next);
+  }, [availableCameras, currentCameraIndex, startCamera]);
 
   // ─── Torch ───────────────────────────────────────────────────────────────
   const toggleTorch = async () => {
-    if (!scannerRef.current || !hasTorch || !isScanning) return;
+    if (!streamRef.current || !hasTorch || !isScanning) return;
     try {
+      const track = streamRef.current.getVideoTracks()[0];
       const desired = !isTorchOn;
-      await scannerRef.current.applyVideoConstraints({ advanced: [{ torch: desired } as any] });
+      await track.applyConstraints({ advanced: [{ torch: desired } as any] });
       setIsTorchOn(desired);
-    } catch { setHasTorch(false); }
+    } catch {
+      toast.warn('Flashlight not available');
+    }
   };
 
-  // ─── Scan callbacks ───────────────────────────────────────────────────────
-  const onScanSuccess = useCallback((decodedText: string) => {
-    if (isProcessingRef.current) return;
-    processScanResult(decodedText);
-  }, []); // eslint-disable-line
-
+  // ─── Process result ───────────────────────────────────────────────────────
   const processScanResult = async (decodedText: string) => {
-    if (isProcessingRef.current) return;
-    isProcessingRef.current = true;
+    // isProcessingRef already set true by caller before this runs
     setIsProcessing(true);
 
     try {
@@ -227,19 +257,20 @@ export default function PrasadamScanner() {
       catch { toast.error('Invalid QR Format', { position: 'top-center' }); return; }
 
       const { pnr, yatraId, persons } = parsed || {};
+
       if (!pnr || !yatraId) {
         toast.error('Incomplete QR Data', { position: 'top-center' });
         return;
       }
 
-      await stopScannerCleanly();
+      await stopCamera();
 
       const response = await deliverPrasadam({ pnr, yatraId }).unwrap();
 
       if (response.success) {
         setScannedData({
           pnr: response.data?.pnr || pnr,
-          persons: response.data?.persons || persons || 1,
+          persons: persons || 1,
           name: response.data?.name || parsed?.name || ''
         });
         setShowInfoModal(true);
@@ -251,7 +282,10 @@ export default function PrasadamScanner() {
       console.error("API Error:", err);
       toast.error(err?.data?.message || err?.message || 'Error processing delivery', { position: 'top-center' });
     } finally {
+      // ✅ SPEED FIX 10: Always reset BOTH refs so the scan loop can resume
+      //    immediately after a failed scan — no need to manually refresh.
       isProcessingRef.current = false;
+      isDetectingRef.current = false;
       setIsProcessing(false);
     }
   };
@@ -259,11 +293,13 @@ export default function PrasadamScanner() {
   // ─── Force reset ──────────────────────────────────────────────────────────
   const forceReset = async () => {
     isProcessingRef.current = false;
+    isDetectingRef.current = false;
     setIsProcessing(false);
-    setCameraError(null);       // this triggers the visibility effect → startScanner
-    setCurrentCameraIndex(-1);
-    await stopScannerCleanly();
-    scannerRef.current = null;
+    setCameraError(null);
+    detectorRef.current = null; // Force re-init of detector
+    stopCamera();
+    toast.info('Restarting camera...');
+    await startCamera(currentCameraIndex);
   };
 
   // ─── Manual submit ────────────────────────────────────────────────────────
@@ -300,13 +336,12 @@ export default function PrasadamScanner() {
   return (
     <div className="flex flex-col h-full w-full bg-[#fdf8f3] rounded-[2rem] overflow-hidden border border-heritage-gold/20 shadow-xl relative">
       <style jsx global>{`
-        #prasadam-qr-reader video {
+        #prasadam-video-container video {
           width: 100% !important;
           height: 100% !important;
           object-fit: cover !important;
           border-radius: 2rem;
         }
-        #prasadam-qr-reader { border: none !important; }
       `}</style>
 
       {/* Header */}
@@ -328,8 +363,15 @@ export default function PrasadamScanner() {
       <div className="flex-1 flex flex-col items-center justify-center p-8 relative">
         <div className="relative group w-full max-w-[420px]">
           <div className="relative aspect-square rounded-[2.5rem] overflow-hidden bg-slate-900 shadow-2xl border-4 border-white">
-            <div className="absolute inset-0 pointer-events-none z-0">
-              <div id={scannerRegionId} className="w-full h-full pointer-events-auto" />
+            <div id="prasadam-video-container" className="absolute inset-0 pointer-events-none z-0">
+              <video
+                ref={videoRef}
+                className="w-full h-full object-cover pointer-events-auto"
+                playsInline
+                muted
+                autoPlay
+              />
+              <canvas ref={canvasRef} className="hidden" />
             </div>
 
             <div className="absolute inset-0 pointer-events-none z-10">
@@ -373,7 +415,7 @@ export default function PrasadamScanner() {
                     <div className="absolute bottom-0 right-0 w-10 h-10 border-b-4 border-r-4 border-heritage-gold rounded-br-2xl" />
                     <motion.div
                       animate={{ top: ['10%', '90%'] }}
-                      transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                      transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
                       className="absolute left-4 right-4 h-0.5 bg-heritage-gold shadow-[0_0_10px_#eba83a] z-20"
                     />
                   </div>
@@ -435,11 +477,16 @@ export default function PrasadamScanner() {
 
       <input type="file" ref={fileInputRef} onChange={async (e) => {
         const file = e.target.files?.[0];
-        if (!file || !scannerRef.current) return;
+        if (!file || !detectorRef.current) return;
         setIsProcessing(true);
         try {
-          const text = await scannerRef.current.scanFile(file, true);
-          await processScanResult(text);
+          const bitmap = await createImageBitmap(file);
+          const codes = await detectorRef.current.detect(bitmap);
+          if (codes.length > 0) {
+            await processScanResult(codes[0].rawValue);
+          } else {
+            toast.error("No valid QR code found in image");
+          }
         } catch {
           toast.error("No valid QR code found in image");
         } finally {

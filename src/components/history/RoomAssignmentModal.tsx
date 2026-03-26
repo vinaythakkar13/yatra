@@ -90,7 +90,7 @@ const RoomAssignmentModal: React.FC<RoomAssignmentModalProps> = ({
     const mLink = formatGoogleMapsUrl(h.mapLink || h.map_link);
 
     // Show Prasadam QR only if yatra includes 'haridwar'
-    const showPrasadam = yatra?.toLowerCase().includes('haridwar');
+    const showPrasadam = !yatra?.toLowerCase().includes('haridwar');
 
     // Prasadam QR value
     const prasadamQRValue = JSON.stringify({
