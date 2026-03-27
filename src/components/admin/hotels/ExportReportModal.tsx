@@ -20,13 +20,20 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({ isOpen, onClose, 
     const [currentStep, setCurrentStep] = useState<ModalStep>('selection');
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedHotelIds, setSelectedHotelIds] = useState<Set<string>>(new Set());
+    const [paymentFilter, setPaymentFilter] = useState<'all' | 'paid' | 'unpaid'>('all');
+
+    // Filter logic
+    const filteredHotels = useMemo(() => {
+        if (paymentFilter === 'all') return hotels;
+        return hotels.filter(h => paymentFilter === 'paid' ? h.full_payment_paid : !h.full_payment_paid);
+    }, [hotels, paymentFilter]);
 
     // Pagination logic
-    const totalPages = Math.ceil(hotels.length / ITEMS_PER_PAGE);
+    const totalPages = Math.ceil(filteredHotels.length / ITEMS_PER_PAGE);
     const currentHotels = useMemo(() => {
         const start = (currentPage - 1) * ITEMS_PER_PAGE;
-        return hotels.slice(start, start + ITEMS_PER_PAGE);
-    }, [hotels, currentPage]);
+        return filteredHotels.slice(start, start + ITEMS_PER_PAGE);
+    }, [filteredHotels, currentPage]);
 
     const selectedHotelsList = useMemo(() => {
         return hotels.filter(h => selectedHotelIds.has(h.id));
@@ -156,9 +163,32 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({ isOpen, onClose, 
             {currentStep === 'selection' ? (
                 <div className="space-y-4">
                     <div className="bg-heritage-highlight/20 p-4 rounded-xl border border-heritage-gold/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div>
+                        <div className="flex flex-col gap-2">
                             <p className="text-sm font-medium text-heritage-textDark">Select hotels to include in the report</p>
-                            <p className="text-xs text-heritage-text/60">Selected: {selectedHotelIds.size} hotels</p>
+                            <div className="flex items-center gap-3">
+                                <p className="text-xs text-heritage-text/60">Selected: {selectedHotelIds.size} hotels</p>
+                                <span className="text-heritage-gold/30">•</span>
+                                <div className="flex items-center bg-white/50 border border-heritage-gold/20 rounded-lg p-1">
+                                    <button
+                                        onClick={() => { setPaymentFilter('all'); setCurrentPage(1); }}
+                                        className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${paymentFilter === 'all' ? 'bg-heritage-primary text-white shadow-sm' : 'text-heritage-text/60 hover:text-heritage-primary'}`}
+                                    >
+                                        All
+                                    </button>
+                                    <button
+                                        onClick={() => { setPaymentFilter('paid'); setCurrentPage(1); }}
+                                        className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${paymentFilter === 'paid' ? 'bg-green-600 text-white shadow-sm' : 'text-heritage-text/60 hover:text-green-600'}`}
+                                    >
+                                        Paid
+                                    </button>
+                                    <button
+                                        onClick={() => { setPaymentFilter('unpaid'); setCurrentPage(1); }}
+                                        className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${paymentFilter === 'unpaid' ? 'bg-red-500 text-white shadow-sm' : 'text-heritage-text/60 hover:text-red-500'}`}
+                                    >
+                                        Not Paid
+                                    </button>
+                                </div>
+                            </div>
                         </div>
 
                         <button
@@ -178,6 +208,7 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({ isOpen, onClose, 
                                     <th className="p-4">Hotel Name</th>
                                     <th className="p-4">Address</th>
                                     <th className="p-4 text-center">Rooms</th>
+                                    <th className="p-4 text-center">Payment</th>
                                     <th className="p-4 text-right">Advance Paid</th>
                                     <th className="p-4 text-right">Total Amount</th>
                                     <th className="p-4 text-right">Remaining</th>
@@ -208,6 +239,13 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({ isOpen, onClose, 
                                             <td className="p-4 font-semibold text-heritage-textDark">{hotel.name}</td>
                                             <td className="p-4 text-heritage-text/70 truncate max-w-[200px]">{hotel.address}</td>
                                             <td className="p-4 text-center">{hotel.total_rooms}</td>
+                                            <td className="p-4 text-center">
+                                                {hotel.full_payment_paid ? (
+                                                    <span className="px-2 py-1 bg-green-100 text-green-700 text-[10px] font-bold rounded-full uppercase">Paid</span>
+                                                ) : (
+                                                    <span className="px-2 py-1 bg-red-100 text-red-700 text-[10px] font-bold rounded-full uppercase">Unpaid</span>
+                                                )}
+                                            </td>
                                             <td className="p-4 text-right">₹{hotelAdvance.toLocaleString()}</td>
                                             <td className="p-4 text-right">₹{hotelTotal.toLocaleString()}</td>
                                             <td className={`p-4 text-right font-medium ${hotelRemaining > 0 ? 'text-red-500' : 'text-green-600'}`}>
@@ -223,7 +261,7 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({ isOpen, onClose, 
                     {/* Pagination */}
                     <div className="flex items-center justify-between pt-2">
                         <p className="text-xs text-heritage-text/60">
-                            Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, hotels.length)} of {hotels.length} hotels
+                            Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredHotels.length)} of {filteredHotels.length} hotels
                         </p>
                         <div className="flex items-center gap-2">
                             <button

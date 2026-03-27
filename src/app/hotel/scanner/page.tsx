@@ -10,7 +10,6 @@ import { useHotelCheckInOutMutation } from '@/services/hotelApi';
 // ── Polyfill for browsers without native BarcodeDetector (e.g. Firefox, Safari) ──
 async function loadBarcodeDetector() {
     if ('BarcodeDetector' in window) return (window as any).BarcodeDetector;
-    // Fallback: zxing-wasm polyfill
     const { BarcodeDetector } = await import('barcode-detector/ponyfill');
     return BarcodeDetector;
 }
@@ -32,10 +31,10 @@ export default function QRScanner() {
     const streamRef = useRef<MediaStream | null>(null);
     const animFrameRef = useRef<number | null>(null);
     const detectorRef = useRef<any>(null);
-    const isProcessingRef = useRef(false); // prevent re-entrant scans
+    const isProcessingRef = useRef(false);
+    const isDetectingRef = useRef(false); // ✅ Separate flag — prevents stacking detect() calls
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const lastScanTimeRef = useRef<number>(0);
-
+    const isMountedRef = useRef(true);
 
     const [checkInOut] = useHotelCheckInOutMutation();
 
@@ -54,25 +53,26 @@ export default function QRScanner() {
     }, []);
 
     // ────────────────────────────────────────────────
-    //   SCAN LOOP — run detection on the video stream
+    //   SCAN LOOP
     // ────────────────────────────────────────────────
+    // ✅ Removed 100ms throttle — isDetectingRef guards concurrent calls instead.
+    //    RAF runs at ~60fps; detect() itself limits the rate naturally.
     const startScanLoop = useCallback((detector: any) => {
         const video = videoRef.current;
         if (!video) return;
 
         const tick = async () => {
-            if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                const now = Date.now();
-                // 🔑 Performance: Throttle calls to 10hz (100ms) to reduce CPU strain
-                if (now - lastScanTimeRef.current > 100 && !isProcessingRef.current) {
-                    lastScanTimeRef.current = now;
-                    try {
-                        const codes = await detector.detect(video);
-                        if (codes.length > 0) {
-                            isProcessingRef.current = true;
-                            await processScanResult(codes[0].rawValue);
-                        }
-                    } catch { /* frame not ready */ }
+            if (!isProcessingRef.current && video.readyState >= video.HAVE_ENOUGH_DATA && !isDetectingRef.current) {
+                isDetectingRef.current = true;
+                try {
+                    const codes = await detector.detect(video);
+                    if (codes.length > 0 && !isProcessingRef.current) {
+                        isProcessingRef.current = true;
+                        await processScanResult(codes[0].rawValue);
+                    }
+                } catch { /* frame not ready */ }
+                finally {
+                    isDetectingRef.current = false;
                 }
             }
             animFrameRef.current = requestAnimationFrame(tick);
@@ -81,80 +81,117 @@ export default function QRScanner() {
         animFrameRef.current = requestAnimationFrame(tick);
     }, []); // eslint-disable-line
 
-
     // ────────────────────────────────────────────────
     //   START CAMERA
     // ────────────────────────────────────────────────
     const startCamera = useCallback(async (cameraIndex = 0) => {
+        if (!isMountedRef.current) return;
         stopCamera();
         setCameraError(null);
+        isDetectingRef.current = false;
 
         try {
-            // Load BarcodeDetector (native or polyfill)
+            // ── Guard: mediaDevices unavailable in HTTP or in-app browsers ───────
+            if (!navigator?.mediaDevices?.getUserMedia) {
+                setCameraError('Camera not supported. Open in Chrome or Safari directly (not inside Instagram/WhatsApp).');
+                return;
+            }
+
+            // ── Load BarcodeDetector ─────────────────────────────────────────────
             if (!detectorRef.current) {
                 const Detector = await loadBarcodeDetector();
                 detectorRef.current = new Detector({ formats: ['qr_code'] });
             }
 
-            // Enumerate cameras
+            // ── FIX 1: Request permission FIRST with simple constraints ──────────
+            // On mobile, enumerateDevices() returns empty labels until permission
+            // is granted — so we ask first, then enumerate with real device info.
+            let initialStream: MediaStream | null = null;
+            try {
+                initialStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: { ideal: 'environment' } }
+                });
+            } catch (permErr: any) {
+                if (/permission|denied|notallowed/i.test(permErr.name + permErr.message)) {
+                    setCameraError('Camera permission denied. Please allow camera access in your browser settings and reload.');
+                } else {
+                    setCameraError(`Camera error: ${permErr.message || permErr.name}`);
+                }
+                return;
+            }
+
+            // ── FIX 2: Enumerate AFTER permission so labels are populated ────────
             const devices = (await navigator.mediaDevices.enumerateDevices())
                 .filter(d => d.kind === 'videoinput');
             setAvailableCameras(devices);
 
-            // Pick camera — prefer back/environment
-            let constraints: MediaStreamConstraints;
-            if (devices.length > 0) {
-                // First start: auto-pick back camera
-                const backIdx = devices.findIndex(d => /back|rear|environment/i.test(d.label));
-                const idx = cameraIndex === 0 && backIdx >= 0 ? backIdx : cameraIndex;
-                setCurrentCameraIndex(idx);
-                constraints = {
-                    video: {
-                        deviceId: { exact: devices[idx]?.deviceId },
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 },
-                        focusMode: 'continuous',      // 🔑 KEY: continuous autofocus
-                    } as any
-                };
-            } else {
-                constraints = {
-                    video: {
-                        facingMode: 'environment',
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 },
-                        focusMode: 'continuous',
-                    } as any
-                };
-            }
+            // Stop initial stream — we'll restart with proper device + settings
+            initialStream.getTracks().forEach(t => t.stop());
+            initialStream = null;
+
+            // ── Pick back camera ─────────────────────────────────────────────────
+            const backIdx = devices.findIndex(d => /back|rear|environment/i.test(d.label));
+            const idx = devices.length > 0
+                ? (cameraIndex === 0 && backIdx >= 0 ? backIdx : Math.min(cameraIndex, devices.length - 1))
+                : 0;
+            if (devices.length > 0) setCurrentCameraIndex(idx);
+
+            // ── FIX 3: Safe constraints — no min values, no root-level advanced props ──
+            // focusMode/exposureMode in root constraints cause iOS Safari to reject
+            // the entire constraint object. Apply via applyConstraints() after stream starts.
+            const constraints: MediaStreamConstraints = {
+                video: devices.length > 0 && devices[idx]?.deviceId
+                    ? { deviceId: { exact: devices[idx].deviceId }, width: { ideal: 1920 }, height: { ideal: 1080 } }
+                    : { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }
+            };
 
             const stream = await navigator.mediaDevices.getUserMedia(constraints);
-            streamRef.current = stream;
 
-            const video = videoRef.current!;
-            video.srcObject = stream;
-            
-            // 🔑 Fix: Handle the play promise to avoid uncaught "interrupted by a new load request" error
-            try {
-                await video.play();
-            } catch (err: any) {
-                if (err.name !== 'AbortError') {
-                    throw err; // Re-throw if it's not a standard abort
-                }
+            if (!isMountedRef.current) {
+                stream.getTracks().forEach(t => t.stop());
+                return;
             }
 
-            // Check torch support
+            streamRef.current = stream;
+            const video = videoRef.current!;
+            video.srcObject = stream;
+            (video as any).disablePictureInPicture = true;
+
+            // ── FIX 4: Wait for loadedmetadata before play() — required on iOS ───
+            await new Promise<void>((resolve) => {
+                const onReady = () => { video.removeEventListener('loadedmetadata', onReady); resolve(); };
+                video.addEventListener('loadedmetadata', onReady);
+                video.play().catch((err) => { if (err.name !== 'AbortError') console.warn('[play]', err); resolve(); });
+                setTimeout(resolve, 3000); // Fallback for stubborn Android WebViews
+            });
+
+            if (!isMountedRef.current) return;
+
+            // ── FIX 5: Apply advanced constraints AFTER stream is live ───────────
+            // getCapabilities() only works reliably after stream starts.
             const track = stream.getVideoTracks()[0];
-            const caps = track.getCapabilities() as any;
+            const caps = track.getCapabilities?.() as any ?? {};
             setHasTorch(!!caps?.torch);
+
+            const advanced: any[] = [];
+            if (caps?.focusMode?.includes?.('continuous')) advanced.push({ focusMode: 'continuous' });
+            if (caps?.exposureMode?.includes?.('continuous')) advanced.push({ exposureMode: 'continuous' });
+            if (caps?.whiteBalanceMode?.includes?.('continuous')) advanced.push({ whiteBalanceMode: 'continuous' });
+            if (caps?.zoom) advanced.push({ zoom: caps.zoom.min });
+            if (advanced.length) {
+                try { await track.applyConstraints({ advanced }); } catch { /* best-effort */ }
+            }
 
             setIsScanning(true);
             startScanLoop(detectorRef.current);
 
         } catch (err: any) {
             console.error('[Camera]', err);
-            let msg = 'Failed to start camera';
-            if (/permission/i.test(err.message)) msg = 'Camera permission denied. Please enable in settings.';
-            if (/notfound|unavailable/i.test(err.message)) msg = 'No camera found on this device.';
+            let msg = 'Failed to start camera.';
+            if (/overconstrained/i.test(err.name)) msg = 'Camera settings not supported. Try refreshing.';
+            else if (/permission|denied|notallowed/i.test(err.name + err.message)) msg = 'Camera permission denied. Please allow in browser settings.';
+            else if (/notfound|devicenotfound/i.test(err.name)) msg = 'No camera found on this device.';
+            else if (/notreadable|trackstarterror/i.test(err.name)) msg = 'Camera is in use by another app. Close it and retry.';
             setCameraError(msg);
         }
     }, [stopCamera, startScanLoop]);
@@ -163,12 +200,20 @@ export default function QRScanner() {
     //   LIFECYCLE
     // ────────────────────────────────────────────────
     useEffect(() => {
+        isMountedRef.current = true;
+        return () => {
+            isMountedRef.current = false;
+            stopCamera();
+        };
+    }, [stopCamera]);
+
+    useEffect(() => {
         if (!showManualEntry && !isProcessing) {
-            startCamera(currentCameraIndex);
+            const t = setTimeout(() => startCamera(currentCameraIndex), 150);
+            return () => clearTimeout(t);
         } else {
             stopCamera();
         }
-        return stopCamera;
     }, [showManualEntry]); // eslint-disable-line
 
     // ────────────────────────────────────────────────
@@ -227,8 +272,9 @@ export default function QRScanner() {
         } catch (err: any) {
             toast.error(err?.data?.message || err?.message || 'Scan failed. Please try again.', { position: 'top-center' });
         } finally {
-            setIsProcessing(false);
             isProcessingRef.current = false;
+            isDetectingRef.current = false;
+            setIsProcessing(false);
             router.push('/hotel/bookings');
         }
     };
@@ -257,10 +303,12 @@ export default function QRScanner() {
     };
 
     const forceReset = async () => {
+        isProcessingRef.current = false;
+        isDetectingRef.current = false;
         setCameraError(null);
         detectorRef.current = null;
-        isProcessingRef.current = false;
         setIsProcessing(false);
+        stopCamera();
         toast.info('Camera reset — restarting...');
         await startCamera(currentCameraIndex);
     };
@@ -271,7 +319,7 @@ export default function QRScanner() {
     };
 
     // ────────────────────────────────────────────────
-    //   RENDER — identical UI
+    //   RENDER
     // ────────────────────────────────────────────────
     return (
         <div className="fixed inset-0 bg-[#2D3139] flex flex-col font-sans z-50 overflow-hidden text-white">
@@ -289,7 +337,6 @@ export default function QRScanner() {
             <div className="flex-1 relative flex flex-col items-center justify-center">
                 <div className="relative w-[345px] h-[345px]">
 
-                    {/* Raw video element — no library wrapper */}
                     <video
                         ref={videoRef}
                         className="absolute inset-0 w-full h-full object-cover rounded-3xl z-0"
@@ -297,7 +344,6 @@ export default function QRScanner() {
                         muted
                         autoPlay
                     />
-                    {/* Hidden canvas for frame capture */}
                     <canvas ref={canvasRef} className="hidden" />
 
                     {/* Visual Overlay */}
@@ -309,7 +355,7 @@ export default function QRScanner() {
                         <motion.div
                             initial={{ top: '10%' }}
                             animate={{ top: '90%' }}
-                            transition={{ duration: 2, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
+                            transition={{ duration: 1.5, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
                             className="absolute left-2 right-2 h-[2px] bg-[#00E5FF] shadow-[0_0_20px_#00E5FF] z-20"
                         />
                         <div className="absolute inset-0 flex items-center justify-center opacity-20">
@@ -328,6 +374,14 @@ export default function QRScanner() {
                         <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-[#2D3139]/90 rounded-3xl text-center px-6">
                             <p className="text-red-400 text-sm font-semibold mb-4">{cameraError}</p>
                             <button onClick={forceReset} className="px-4 py-2 bg-[#00E5FF]/20 text-[#00E5FF] rounded-xl text-sm font-bold">Retry</button>
+                        </div>
+                    )}
+
+                    {/* Initialising state */}
+                    {!isScanning && !cameraError && !isProcessing && (
+                        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-[#2D3139]/80 rounded-3xl">
+                            <Loader2 className="w-8 h-8 text-[#00E5FF] animate-spin mb-3" />
+                            <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Initialising...</p>
                         </div>
                     )}
                 </div>
