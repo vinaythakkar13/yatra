@@ -70,6 +70,9 @@ export interface Hotel {
     is_active: boolean;
     advance_paid_amount: string;
     full_payment_paid: boolean;
+    adjustment_amount: string;
+    adjustment_type: 'discount' | 'premium' | null;
+    payment_comment: string | null;
     created_at: string;
     updated_at: string;
 

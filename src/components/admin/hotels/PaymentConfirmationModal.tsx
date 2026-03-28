@@ -5,7 +5,7 @@ import Button from '@/components/ui/Button';
 interface PaymentConfirmationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: (amount: number, type: 'discount' | 'premium', comment: string) => void;
   hotelName: string;
   totalAmount: number;
   advancePaid: number;
@@ -23,7 +23,23 @@ const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
   pendingAmount,
   isLoading = false,
 }) => {
+  const [adjustment, setAdjustment] = React.useState<string>('');
+  const [adjustmentType, setAdjustmentType] = React.useState<'premium' | 'discount'>('premium');
+  const [remarks, setRemarks] = React.useState<string>('');
+
   if (!isOpen) return null;
+
+  const adjValue = parseFloat(adjustment) || 0;
+  const finalAdjustment = adjustmentType === 'premium' ? adjValue : -adjValue;
+  const finalPending = pendingAmount + finalAdjustment;
+
+  const isAdjustmentMade = adjValue !== 0;
+  const isRemarksValid = !isAdjustmentMade || remarks.trim().length > 0;
+
+  const handleConfirm = () => {
+    if (!isRemarksValid) return;
+    onConfirm(adjValue, adjustmentType, remarks.trim());
+  };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 font-inter">
@@ -63,7 +79,7 @@ const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
         </div>
 
         {/* Content */}
-        <div className="px-6 py-6 space-y-4">
+        <div className="px-6 py-4 space-y-4">
           <div className="flex justify-between items-center py-2 border-b border-slate-100">
             <span className="text-sm text-slate-500 font-medium">Total Amount</span>
             <span className="font-bold text-slate-800">
@@ -76,12 +92,76 @@ const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
               ₹{advancePaid.toLocaleString('en-IN')}
             </span>
           </div>
-          <div className="flex justify-between items-center py-3 bg-slate-50 rounded-xl px-4">
+          <div className="flex justify-between items-center py-2 border-b border-slate-100">
+            <span className="text-sm text-slate-500 font-medium">Base Pending</span>
+            <span className="font-bold text-slate-800">
+              ₹{pendingAmount.toLocaleString('en-IN')}
+            </span>
+          </div>
+
+          {/* Adjustment Section */}
+          <div className="space-y-3 pt-2">
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              Adjustment (Extra Charge/Discount)
+            </label>
+            <div className="flex gap-2">
+              <div className="flex rounded-lg overflow-hidden border border-slate-200">
+                <button
+                  onClick={() => setAdjustmentType('premium')}
+                  className={`px-3 py-2 flex items-center justify-center transition-colors ${
+                    adjustmentType === 'premium' ? 'bg-heritage-primary text-white' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
+                  }`}
+                >
+                  +
+                </button>
+                <button
+                  onClick={() => setAdjustmentType('discount')}
+                  className={`px-3 py-2 flex items-center justify-center transition-colors ${
+                    adjustmentType === 'discount' ? 'bg-heritage-maroon text-white' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
+                  }`}
+                >
+                  -
+                </button>
+              </div>
+              <div className="relative flex-1">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">₹</div>
+                <input
+                  type="number"
+                  value={adjustment}
+                  onChange={(e) => setAdjustment(e.target.value)}
+                  placeholder="0"
+                  className="w-full pl-7 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-heritage-primary/20 focus:border-heritage-primary outline-none transition-all font-bold"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <div className="flex justify-between items-center">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                  Comment / Reason {isAdjustmentMade && <span className="text-heritage-maroon">*</span>}
+                </label>
+                {isAdjustmentMade && !remarks.trim() && (
+                  <span className="text-[10px] text-heritage-maroon font-bold animate-pulse">Required for adjustment</span>
+                )}
+              </div>
+              <input
+                type="text"
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
+                placeholder="e.g. Unused 2 rooms saved 10000"
+                className={`w-full px-4 py-2 bg-white border rounded-lg text-sm focus:ring-2 focus:ring-heritage-primary/20 focus:border-heritage-primary outline-none transition-all ${
+                  isAdjustmentMade && !remarks.trim() ? 'border-heritage-maroon/50 ring-2 ring-heritage-maroon/5' : 'border-slate-200'
+                }`}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center py-3 bg-slate-50 rounded-xl px-4 mt-2">
             <span className="text-sm text-slate-600 font-bold uppercase tracking-wider">
-              Pending Amount
+              Final Payment
             </span>
             <span className="text-xl font-black text-heritage-maroon">
-              ₹{pendingAmount.toLocaleString('en-IN')}
+              ₹{finalPending.toLocaleString('en-IN')}
             </span>
           </div>
         </div>
@@ -96,9 +176,11 @@ const PaymentConfirmationModal: React.FC<PaymentConfirmationModalProps> = ({
             Cancel
           </Button>
           <Button
-            onClick={onConfirm}
-            disabled={isLoading}
-            className="flex-1 py-3 bg-heritage-primary hover:bg-heritage-primary/90 text-white font-bold shadow-lg shadow-heritage-primary/20"
+            onClick={handleConfirm}
+            disabled={isLoading || !isRemarksValid}
+            className={`flex-1 py-3 bg-heritage-primary hover:bg-heritage-primary/90 text-white font-bold shadow-lg shadow-heritage-primary/20 transition-all ${
+              !isRemarksValid ? 'opacity-50 grayscale cursor-not-allowed scale-[0.98]' : ''
+            }`}
           >
             {isLoading ? (
               <>

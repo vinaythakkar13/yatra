@@ -41,9 +41,19 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onEdit, onDelete }) => {
   const getAvailableRooms = (hotel: Hotel) =>
     hotel.rooms?.filter((r: HotelRoom) => !r.is_occupied).length || 0;
 
+  const getBaseTotal = (hotel: Hotel) => {
+    return (hotel.rooms?.reduce((total, room) => total + (Number(room.charge_per_day) || 0), 0) || 0) * hotel.number_of_days;
+  };
+
   const getTotalPayments = (hotel: Hotel) => {
-    const total = hotel.rooms?.reduce((total, room) => total + (Number(room.charge_per_day) || 0), 0) || 0;
-    return total * hotel.number_of_days;
+    const baseTotal = getBaseTotal(hotel);
+    const adjustmentAmount = Number(hotel.adjustment_amount) || 0;
+    if (hotel.adjustment_type === 'premium') {
+      return baseTotal + adjustmentAmount;
+    } else if (hotel.adjustment_type === 'discount') {
+      return baseTotal - adjustmentAmount;
+    }
+    return baseTotal;
   };
 
   const handleGenerateCredentials = async () => {
@@ -60,9 +70,17 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onEdit, onDelete }) => {
     }
   };
 
-  const handleConfirmPayment = async () => {
+  const handleConfirmPayment = async (adjustmentAmount: number, adjustmentType: 'discount' | 'premium', paymentComment: string) => {
     try {
-      const result = await setPaymentDone({ hotelId: hotel.id }).unwrap();
+      const payload: any = { hotelId: hotel.id };
+      
+      if (adjustmentAmount > 0) {
+        payload.adjustmentAmount = adjustmentAmount;
+        payload.adjustmentType = adjustmentType;
+        payload.paymentComment = paymentComment;
+      }
+
+      const result = await setPaymentDone(payload).unwrap();
       if (result.success) {
         toast.success('Payment marked as completed successfully!');
         setShowPaymentModal(false);
@@ -247,12 +265,41 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onEdit, onDelete }) => {
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {/* Financial */}
-          <div className="bg-heritage-highlight/10 rounded-xl p-4 border border-heritage-highlight/20 transition-colors hover:bg-heritage-highlight/20">
-            <div className="text-heritage-text/60 text-xs font-bold uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <IndianRupee className="w-3.5 h-3.5" /> Total Payment
-            </div>
-            <div className="text-xl font-bold text-heritage-textDark">
-              ₹{getTotalPayments(hotel).toLocaleString('en-IN')}
+          <div className="bg-heritage-highlight/10 rounded-xl p-4 border border-heritage-highlight/20 transition-colors hover:bg-heritage-highlight/20 flex flex-col justify-between">
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-heritage-text/60 text-[10px] font-bold uppercase tracking-wider">
+                <div className="flex items-center gap-1.5">
+                  <IndianRupee className="w-3.5 h-3.5" /> Total Payment
+                </div>
+                {Number(hotel.adjustment_amount) > 0 && (
+                  <span>Breakdown</span>
+                )}
+              </div>
+              
+              {Number(hotel.adjustment_amount) > 0 ? (
+                <div className="space-y-2 mt-2">
+                  <div className="flex justify-between items-center text-sm font-medium text-slate-600">
+                    <span>Original Amount</span>
+                    <span className="font-bold">₹{getBaseTotal(hotel).toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className={`flex justify-between items-start gap-3 text-sm font-bold ${
+                    hotel.adjustment_type === 'premium' ? 'text-heritage-primary' : 'text-heritage-maroon'
+                  }`}>
+                    <span className="italic flex-1 break-words">"{hotel.payment_comment || (hotel.adjustment_type === 'premium' ? 'Extra' : 'Discount')}"</span>
+                    <span className="whitespace-nowrap">{hotel.adjustment_type === 'premium' ? '+' : '-'}₹{Number(hotel.adjustment_amount).toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex justify-between items-center pt-2.5 border-t border-heritage-highlight/20">
+                    <span className="font-extrabold text-slate-700 uppercase tracking-tight">Final Payment</span>
+                    <span className="text-2xl font-black text-heritage-maroon">
+                      ₹{getTotalPayments(hotel).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-2xl font-black text-heritage-textDark mt-1">
+                  ₹{getTotalPayments(hotel).toLocaleString('en-IN')}
+                </div>
+              )}
             </div>
           </div>
           <div className="bg-heritage-highlight/10 rounded-xl p-4 border border-heritage-highlight/20 transition-colors hover:bg-heritage-highlight/20 relative overflow-hidden">
@@ -367,9 +414,9 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onEdit, onDelete }) => {
         onConfirm={handleConfirmPayment}
         isLoading={isUpdatingPayment}
         hotelName={hotel.name}
-        totalAmount={getTotalPayments(hotel)}
+        totalAmount={getBaseTotal(hotel)}
         advancePaid={Number(hotel.advance_paid_amount || 0)}
-        pendingAmount={getTotalPayments(hotel) - Number(hotel.advance_paid_amount || 0)}
+        pendingAmount={getBaseTotal(hotel) - Number(hotel.advance_paid_amount || 0)}
       />
     </>
 

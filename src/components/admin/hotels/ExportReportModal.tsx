@@ -63,6 +63,17 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({ isOpen, onClose, 
     };
 
     const calculateTotalAmount = (hotel: APIHotel) => {
+        const baseTotal = hotel.rooms.reduce((sum, room) => sum + (parseFloat(room.charge_per_day) || 0), 0) * (hotel.number_of_days || 1);
+        const adjustmentAmount = parseFloat(hotel.adjustment_amount) || 0;
+        if (hotel.adjustment_type === 'premium') {
+            return baseTotal + adjustmentAmount;
+        } else if (hotel.adjustment_type === 'discount') {
+            return baseTotal - adjustmentAmount;
+        }
+        return baseTotal;
+    };
+
+    const getBaseTotal = (hotel: APIHotel) => {
         return hotel.rooms.reduce((sum, room) => sum + (parseFloat(room.charge_per_day) || 0), 0) * (hotel.number_of_days || 1);
     };
 
@@ -218,7 +229,7 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({ isOpen, onClose, 
                                 {currentHotels.map((hotel) => {
                                     const hotelTotal = calculateTotalAmount(hotel);
                                     const hotelAdvance = parseFloat(hotel.advance_paid_amount) || 0;
-                                    const hotelRemaining = hotelTotal - hotelAdvance;
+                                    const hotelRemaining = hotel.full_payment_paid ? 0 : hotelTotal - hotelAdvance;
                                     const isSelected = selectedHotelIds.has(hotel.id);
 
                                     return (
@@ -247,7 +258,16 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({ isOpen, onClose, 
                                                 )}
                                             </td>
                                             <td className="p-4 text-right">₹{hotelAdvance.toLocaleString()}</td>
-                                            <td className="p-4 text-right">₹{hotelTotal.toLocaleString()}</td>
+                                            <td className="p-4 text-right">
+                                                <div className="flex flex-col items-end">
+                                                    <span className="font-bold">₹{hotelTotal.toLocaleString()}</span>
+                                                    {parseFloat(hotel.adjustment_amount) > 0 && (
+                                                        <span className={`text-[10px] font-bold ${hotel.adjustment_type === 'premium' ? 'text-heritage-primary' : 'text-heritage-maroon'}`}>
+                                                            {hotel.adjustment_type === 'premium' ? '+' : '-'}₹{parseFloat(hotel.adjustment_amount).toLocaleString()}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
                                             <td className={`p-4 text-right font-medium ${hotelRemaining > 0 ? 'text-red-500' : 'text-green-600'}`}>
                                                 ₹{hotelRemaining.toLocaleString()}
                                             </td>
@@ -293,7 +313,7 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({ isOpen, onClose, 
                         {selectedHotelsList.map(hotel => {
                             const hotelTotal = calculateTotalAmount(hotel);
                             const hotelAdvance = parseFloat(hotel.advance_paid_amount) || 0;
-                            const hotelRemaining = hotelTotal - hotelAdvance;
+                            const hotelRemaining = hotel.full_payment_paid ? 0 : hotelTotal - hotelAdvance;
 
                             return (
                                 <div key={hotel.id} className="border border-heritage-gold/20 rounded-xl p-4 relative overflow-hidden group">
@@ -319,16 +339,36 @@ const ExportReportModal: React.FC<ExportReportModalProps> = ({ isOpen, onClose, 
                                             <p className="font-semibold text-green-600">₹{hotelAdvance.toLocaleString()}</p>
                                         </div>
                                         <div>
-                                            <p className="text-heritage-text/40">Total</p>
-                                            <p className="font-semibold">₹{hotelTotal.toLocaleString()}</p>
+                                            <p className="text-heritage-text/40">Original</p>
+                                            <p className="font-semibold text-slate-500">₹{getBaseTotal(hotel).toLocaleString()}</p>
+                                        </div>
+                                        {parseFloat(hotel.adjustment_amount) > 0 && (
+                                            <div>
+                                                <p className={`font-bold ${hotel.adjustment_type === 'premium' ? 'text-heritage-primary' : 'text-heritage-maroon'}`}>
+                                                    {hotel.adjustment_type === 'premium' ? 'Extra' : 'Discount'}
+                                                </p>
+                                                <p className={`font-semibold ${hotel.adjustment_type === 'premium' ? 'text-heritage-primary' : 'text-heritage-maroon'}`}>
+                                                    {hotel.adjustment_type === 'premium' ? '+' : '-'}₹{parseFloat(hotel.adjustment_amount).toLocaleString()}
+                                                </p>
+                                            </div>
+                                        )}
+                                        <div>
+                                            <p className="text-heritage-text/40">Final Total</p>
+                                            <p className="font-bold text-heritage-textDark">₹{hotelTotal.toLocaleString()}</p>
                                         </div>
                                         <div className="col-span-1">
                                             <p className="text-heritage-text/40">Remaining</p>
-                                            <p className={`font-semibold ${hotelRemaining > 0 ? 'text-red-500' : 'text-green-600'}`}>
+                                            <p className={`font-black ${hotelRemaining > 0 ? 'text-red-500' : 'text-green-600'}`}>
                                                 ₹{hotelRemaining.toLocaleString()}
                                             </p>
                                         </div>
                                     </div>
+
+                                    {hotel.payment_comment && (
+                                        <div className="mt-2 bg-slate-50 p-2 rounded border border-slate-100 italic text-[10px] text-slate-500">
+                                            "{hotel.payment_comment}"
+                                        </div>
+                                    )}
 
                                     {/* Room Stats Review */}
                                     <div className="mt-3 bg-heritage-highlight/20 rounded-lg p-2 border border-heritage-gold/10">

@@ -363,7 +363,15 @@ export const hotelApi = baseApi.injectEndpoints({
      * POST /hotels/set-payment-done
      * Body: { hotelId }
      */
-    setPaymentDone: builder.mutation<{ success: boolean; data: APIHotel }, { hotelId: string }>({
+    setPaymentDone: builder.mutation<
+      { success: boolean; data: APIHotel }, 
+      { 
+        hotelId: string; 
+        adjustmentAmount?: number; 
+        adjustmentType?: 'discount' | 'premium'; 
+        paymentComment?: string 
+      }
+    >({
       query: (body) => ({
         url: '/hotels/set-payment-done',
         method: 'POST',

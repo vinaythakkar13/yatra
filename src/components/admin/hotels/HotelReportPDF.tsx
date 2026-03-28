@@ -130,6 +130,17 @@ const HotelReportPDF: React.FC<HotelReportPDFProps> = ({ selectedHotels, yatraNa
     const totalAdvance = selectedHotels.reduce((sum, h) => sum + (parseFloat(h.advance_paid_amount) || 0), 0);
 
     const calculateTotalAmount = (hotel: APIHotel) => {
+        const baseTotal = hotel.rooms.reduce((sum, room) => sum + (parseFloat(room.charge_per_day) || 0), 0) * (hotel.number_of_days || 1);
+        const adjustmentAmount = parseFloat(hotel.adjustment_amount) || 0;
+        if (hotel.adjustment_type === 'premium') {
+            return baseTotal + adjustmentAmount;
+        } else if (hotel.adjustment_type === 'discount') {
+            return baseTotal - adjustmentAmount;
+        }
+        return baseTotal;
+    };
+
+    const getBaseTotal = (hotel: APIHotel) => {
         return hotel.rooms.reduce((sum, room) => sum + (parseFloat(room.charge_per_day) || 0), 0) * (hotel.number_of_days || 1);
     };
 
@@ -152,7 +163,10 @@ const HotelReportPDF: React.FC<HotelReportPDFProps> = ({ selectedHotels, yatraNa
     };
 
     const totalAmount = selectedHotels.reduce((sum, h) => sum + calculateTotalAmount(h), 0);
-    const totalRemaining = totalAmount - totalAdvance;
+    const totalRemaining = selectedHotels.reduce((sum, h) => {
+        if (h.full_payment_paid) return sum;
+        return sum + (calculateTotalAmount(h) - (parseFloat(h.advance_paid_amount) || 0));
+    }, 0);
 
     return (
         <Document>
@@ -190,14 +204,14 @@ const HotelReportPDF: React.FC<HotelReportPDFProps> = ({ selectedHotels, yatraNa
                     {selectedHotels.map((hotel, index) => {
                         const hotelTotal = calculateTotalAmount(hotel);
                         const hotelAdvance = parseFloat(hotel.advance_paid_amount) || 0;
-                        const hotelRemaining = hotelTotal - hotelAdvance;
+                        const hotelRemaining = hotel.full_payment_paid ? 0 : hotelTotal - hotelAdvance;
                         const roomStats = getRoomStats(hotel.rooms);
 
                         return (
                             <View key={hotel.id} style={styles.tableRow} wrap={false}>
                                 <View style={styles.col1}>
                                     <Text style={[styles.cellText, styles.bold]}>{hotel.name}</Text>
-                                    <Text style={[styles.cellText, { color: '#666', fontSize: 7, marginBottom: 2 }]}>{hotel.address}</Text>
+                                    <Text style={[styles.cellText, { color: '#666', fontSize: 7 }]}>{hotel.address}</Text>
 
                                     {/* Room Stats */}
                                     <View style={{ marginTop: 2 }}>
@@ -207,6 +221,20 @@ const HotelReportPDF: React.FC<HotelReportPDFProps> = ({ selectedHotels, yatraNa
                                             </Text>
                                         ))}
                                     </View>
+
+                                    {/* Adjustment Details & Comment in PDF */}
+                                    {(parseFloat(hotel.adjustment_amount) || 0) > 0 && (
+                                        <View style={{ marginTop: 2 }}>
+                                            <Text style={{ fontSize: 7, fontStyle: 'italic', fontWeight: 'bold', color: hotel.adjustment_type === 'premium' ? '#a8884a' : '#8a1b1b' }}>
+                                                {hotel.adjustment_type === 'premium' ? 'Extra Charge' : 'Discount Given'}: {hotel.adjustment_type === 'premium' ? '+' : '-'}₹{(parseFloat(hotel.adjustment_amount) || 0).toLocaleString()}
+                                            </Text>
+                                            {hotel.payment_comment && (
+                                                <Text style={{ fontSize: 7, color: '#6b7280', marginTop: 1, fontStyle: 'italic' }}>
+                                                    * {hotel.payment_comment}
+                                                </Text>
+                                            )}
+                                        </View>
+                                    )}
                                 </View>
                                 <View style={styles.col2}>
                                     <Text style={styles.cellText}>{hotel.total_rooms}</Text>
@@ -215,10 +243,22 @@ const HotelReportPDF: React.FC<HotelReportPDFProps> = ({ selectedHotels, yatraNa
                                     <Text style={styles.cellText}>₹{hotelAdvance.toLocaleString()}</Text>
                                 </View>
                                 <View style={styles.col4}>
-                                    <Text style={styles.cellText}>₹{hotelTotal.toLocaleString()}</Text>
+                                    {parseFloat(hotel.adjustment_amount) > 0 ? (
+                                        <View style={{ alignItems: 'flex-end' }}>
+                                            <Text style={{ fontSize: 7, color: '#6b7280' }}>₹{getBaseTotal(hotel).toLocaleString()}</Text>
+                                            <Text style={{ fontSize: 7, fontWeight: 'bold', color: hotel.adjustment_type === 'premium' ? '#a8884a' : '#8a1b1b' }}>
+                                                {hotel.adjustment_type === 'premium' ? '+' : '-'}₹{parseFloat(hotel.adjustment_amount).toLocaleString()}
+                                            </Text>
+                                            <View style={{ borderTopWidth: 0.5, borderTopColor: '#e5e7eb', marginTop: 1, paddingTop: 1 }}>
+                                                <Text style={[styles.cellText, styles.bold]}>₹{hotelTotal.toLocaleString()}</Text>
+                                            </View>
+                                        </View>
+                                    ) : (
+                                        <Text style={styles.cellText}>₹{hotelTotal.toLocaleString()}</Text>
+                                    )}
                                 </View>
                                 <View style={styles.col5}>
-                                    <Text style={[styles.cellText, { color: hotelRemaining > 0 ? '#dc2626' : '#059669' }]}>
+                                    <Text style={[styles.cellText, styles.bold, { color: hotelRemaining > 0 ? '#dc2626' : '#059669' }]}>
                                         ₹{hotelRemaining.toLocaleString()}
                                     </Text>
                                 </View>
@@ -238,17 +278,33 @@ const HotelReportPDF: React.FC<HotelReportPDFProps> = ({ selectedHotels, yatraNa
                             <Text style={styles.summaryLabel}>Total Advance:</Text>
                             <Text style={styles.summaryValue}>₹{totalAdvance.toLocaleString()}</Text>
                         </View>
-                        <View style={styles.summaryRow}>
-                            <Text style={styles.summaryLabel}>Grand Total:</Text>
-                            <Text style={styles.summaryValue}>₹{totalAmount.toLocaleString()}</Text>
-                        </View>
+                        
+                        {/* Breakdown of Adjustments in Summary */}
+                        {selectedHotels.some(h => parseFloat(h.adjustment_amount) > 0) && (
+                            <View style={{ borderTopWidth: 0.5, borderTopColor: '#e5e7eb', marginTop: 5, paddingTop: 5 }}>
+                                <View style={styles.summaryRow}>
+                                    <Text style={styles.summaryLabel}>Total Base Amount:</Text>
+                                    <Text style={styles.summaryValue}>₹{selectedHotels.reduce((sum, h) => sum + getBaseTotal(h), 0).toLocaleString()}</Text>
+                                </View>
+                                <View style={styles.summaryRow}>
+                                    <Text style={styles.summaryLabel}>Net Adjustments:</Text>
+                                    <Text style={[styles.summaryValue, { color: '#a8884a' }]}>
+                                        ₹{selectedHotels.reduce((sum, h) => {
+                                            const amt = parseFloat(h.adjustment_amount) || 0;
+                                            return sum + (h.adjustment_type === 'premium' ? amt : -amt);
+                                        }, 0).toLocaleString()}
+                                    </Text>
+                                </View>
+                            </View>
+                        )}
+
                         <View style={[styles.summaryRow, { borderTopWidth: 1, borderTopColor: '#e5e7eb', marginTop: 5, paddingTop: 5 }]}>
+                            <Text style={[styles.summaryLabel, styles.bold]}>Grand Total:</Text>
+                            <Text style={[styles.summaryValue, styles.bold]}>₹{totalAmount.toLocaleString()}</Text>
+                        </View>
+                        <View style={styles.summaryRow}>
                             <Text style={[styles.summaryLabel, styles.bold]}>Net Remaining:</Text>
                             <Text style={[styles.summaryValue, { color: '#dc2626' }]}>₹{totalRemaining.toLocaleString()}</Text>
-                        </View>
-                        <View style={styles.summaryRow}>
-                            <Text style={styles.summaryLabel}>Number of Days:</Text>
-                            <Text style={styles.summaryValue}>{selectedHotels[0]?.number_of_days || 0}</Text>
                         </View>
 
                     </View>
